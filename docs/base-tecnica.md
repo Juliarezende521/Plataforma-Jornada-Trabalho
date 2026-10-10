@@ -45,6 +45,10 @@ O primeiro teste backend falhou por indisponibilidade de anexação dinâmica de
 
 ## Não concluído
 
-Autenticação de contas reais; persistência SQL Server; migrations/entidades/seed; eventos e cálculo de jornada; idempotência/concorrência; histórico; autorização por recurso; integração temporal JDBC; validação de navegador/dispositivos reais; gestor/RH e correções. O CI será considerado aprovado apenas após conferir sua execução no GitHub.
+Autenticação de contas reais; persistência SQL Server; migrations/entidades/seed; eventos e cálculo de jornada; idempotência/concorrência; histórico; autorização por recurso; integração temporal JDBC; validação de navegador/dispositivos reais; gestor/RH e correções.
+
+## Evidência de CI
+
+O workflow [Foundation checks — execução 38086503464](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38086503464), associado ao commit `38d74a8`, concluiu com sucesso os jobs backend e frontend. Os jobs repetem builds e testes da base, sem SQL Server. O envio inicial omitiu o lockfile e falhou no setup do frontend; o commit seguinte adicionou o arquivo e a nova execução foi aprovada. A árvore publicada foi comparada com os arquivos locais revisados, incluindo o lockfile.
 
 Próxima etapa: modelagem detalhada de contas/colaboradores, migrations e autenticação, com teste em SQL Server real antes de declarar a persistência pronta.
