@@ -20,4 +20,4 @@ npm run build
 npm test -- --watch=false
 ```
 
-Testes de componentes/serviço simulam HTTP, incluindo token CSRF, renovação, timeout e logout. Não comprovam SQL Server nem cookies de navegador. Nenhum framework E2E está configurado.
+Testes de componentes/serviço simulam HTTP, incluindo token CSRF, renovação, timeout e logout. Separadamente, Playwright executa dois percursos reais em Chromium desktop/360 px na CI com SQL Server e HTTPS. Os dois foram aprovados na execução 38090975052. Consulte [validação integrada](../docs/validacao-integrada.md) para evidências, certificados locais de teste e limitações. O harness é iniciado pelo workflow auth-integration, não por npm test.

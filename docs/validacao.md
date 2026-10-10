@@ -1,6 +1,6 @@
 # Plano de validação, riscos e evidências
 
-Status: os cenários de negócio T01–T26 permanecem pendentes de validação completa. Testes limitados da fundação, inclusive parte do comportamento de CSRF/consulta sem sessão, foram executados e estão descritos em [base-tecnica.md](base-tecnica.md). Não equivalem ao aceite destes cenários completos.
+Status: T01 e T23 aprovados para autenticação implementada na CI 38090975052 com SQL Server real/HTTPS/Chromium. T02/T18/T20 possuem evidências parciais de acesso, schema de contas e viewports; jornada completa e acessibilidade continuam pendentes. Demais cenários de negócio não foram aceitos. Evidências: [validacao-integrada.md](validacao-integrada.md).
 
 ## Estratégia de testes
 
@@ -60,12 +60,12 @@ Para concorrência, usar barreira de sincronização ou disparo coordenado em m�
 
 | Evidência | Conteúdo necessário | Estado atual |
 |---|---|---|
-| Execução limpa | Commit, ambiente, versões, comandos exatos, logs sanitizados e resultado | Pendente |
-| Testes automatizados | Comando, commit, testes/falhas e relatório gerado | Pendente |
+| Execução limpa | Commit, ambiente, versões, comandos exatos, logs sanitizados e resultado | Checkout limpo/CI de autenticação aprovado; execução local/produto completo pendente |
+| Testes automatizados | Comando, commit, testes/falhas e relatório gerado | 12 backend + 14 frontend + 2 SQL Server + 2 percursos E2E aprovados; jornada pendente |
 | Testes manuais | T20/T22 e demais fluxos, ambiente e resultado observado | Pendente |
-| Banco | Histórico Flyway, constraints e contagens relevantes | Pendente |
-| Segurança | Resultado de acesso cruzado, CSRF, logout e inspeção de segredos | Pendente |
-| Interface | Capturas fictícias e descrição do fluxo | Pendente |
+| Banco | Histórico Flyway, constraints e contagens relevantes | V1, persistência/constraints de contas e seed repetido aprovados; jornada pendente |
+| Segurança | Resultado de acesso cruzado, CSRF, logout e inspeção de segredos | Identidades isoladas, CSRF/logout/cookies/expiração aprovados; autorização de jornada pendente |
+| Interface | Capturas fictícias e descrição do fluxo | Quatro capturas de autenticação revisadas/preservadas; demais telas pendentes |
 
 Não publicar cookies, tokens, strings de conexão com senha ou dumps reais. Evidência de uma execução local não comprova prontidão de produção.
 

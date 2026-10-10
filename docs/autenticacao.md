@@ -1,10 +1,10 @@
 # Etapa 2 — Contas, colaboradores e autenticação
 
-Registro da implementação backend. A interface foi implementada na etapa seguinte, descrita em [login-angular.md](login-angular.md). As pendências de navegador/SQL Server continuam abertas.
+Registro da implementação backend. A interface foi implementada na etapa seguinte, descrita em [login-angular.md](login-angular.md). Migrations, persistência e fluxo integrado de autenticação foram depois aprovados em SQL Server real/Chromium; ver [validacao-integrada.md](validacao-integrada.md).
 
 ## Revisão de aderência
 
-RF01/RF02: backend implementa login/logout por sessão; aceite completo exige SQL Server e interface. RNF03: identidade deriva do principal autenticado, não de ID recebido; isolamento de jornadas continua pendente. RNF04: BCrypt custo 12, CSRF inclusive no login/logout, troca de ID de sessão e resposta genérica. RNF02/RNF09: migration/entidades/seed implementados, mas execução contra banco e clone limpo ainda não comprovados.
+RF01/RF02: backend implementa login/logout por sessão, aprovados com interface e SQL Server real na CI 38090975052. RNF03: identidade deriva do principal autenticado, não de ID recebido; isolamento de jornadas continua pendente. RNF04: BCrypt custo 12, CSRF inclusive no login/logout, troca de ID de sessão e resposta genérica. RNF02/RNF09: migration/entidades/seed validados em checkout limpo da CI; schema de jornada e reprodução local do avaliador permanecem pendentes.
 
 Conta de acesso e colaborador são entidades diferentes, em relação 1:1. Não existe cadastro público nem endpoint administrativo. Usuário sem colaborador ou inativo não autentica. A única autoridade implementada é EMPLOYEE; gestor/RH permanecem P1. Email é normalizado com strip e lowercase Locale.ROOT (decisão de identificador case-insensitive). UUIDs são atribuídos em Java. Nome Unicode e fuso IANA são preservados, sem inferir país pelo fuso.
 
@@ -45,7 +45,7 @@ Teste opt-in, contra banco de teste real, com DB_* configuradas:
 ./mvnw -Dtest=SqlServerIT test
 ```
 
-Esse teste inicializa Flyway e Hibernate validate e verifica persistência/releitura de conta com nome Unicode/fuso IANA; seus inserts são revertidos, mas a migration permanece. Ele não é executado na suite padrão por usar sufixo IT e ainda não foi executado aqui. Falta ampliar para unicidade/FKs, seed repetido, reinício e login consultando SQL Server.
+Esse teste inicializa Flyway e Hibernate validate, verifica persistência/releitura de conta com nome Unicode/fuso IANA e rejeição de email duplicado/colaborador órfão. Inserts são revertidos, mas a migration permanece. Não é executado na suite padrão por usar sufixo IT; seus dois testes foram aprovados contra SQL Server na CI 38090975052. Seed repetido, reinício e login real foram validados separadamente pelo script de CI e Playwright.
 
 ## Evidências e pendências
 

@@ -1,6 +1,6 @@
 # Levantamento de requisitos — Plataforma de Jornada de Trabalho
 
-Status: baseline proposta para implementação, sem requisitos ou testes considerados concluídos.
+Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server real/HTTPS/Chromium, conforme [validacao-integrada.md](validacao-integrada.md). Requisitos de jornada e aceite global permanecem pendentes; RNFs têm evidências parciais, não aprovação integral.
 
 ## Objetivo e fontes
 

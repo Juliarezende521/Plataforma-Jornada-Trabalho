@@ -1,6 +1,6 @@
 # EAP — Plataforma de Jornada de Trabalho
 
-Status: planejamento, sem estimativa de prazo aprovada. Base 1.2.1 implementada; 1.2.2/1.2.3 possuem migration e seed implementados, com execução SQL Server pendente. 1.3.1 tem backend e interface implementados/testados com dependências simuladas; integração real em navegador e SQL Server pendentes. 1.3.2 não está concluído sem os recursos de jornada. Evidências: [base-tecnica.md](base-tecnica.md), [autenticacao.md](autenticacao.md) e [login-angular.md](login-angular.md).
+Status: sem estimativa de prazo aprovada. Base 1.2.1 implementada; schema de contas/seed de 1.2.2/1.2.3 e autenticação 1.3.1 aprovados em SQL Server real/Chromium na CI 38090975052. Schema completo de jornada, execução local do avaliador e acessibilidade/dispositivos físicos continuam pendentes. 1.3.2 não está concluído sem os recursos de jornada. Evidências atualizadas: [validacao-integrada.md](validacao-integrada.md).
 
 ## Estrutura de entregas
 

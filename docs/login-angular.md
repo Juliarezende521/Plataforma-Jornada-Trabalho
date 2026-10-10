@@ -1,5 +1,7 @@
 # Etapa 3 — Login no Angular
 
+Registro histórico da implementação da interface. A validação posterior em SQL Server real/Chromium foi aprovada e está descrita em [validacao-integrada.md](validacao-integrada.md). As pendências originais abaixo devem ser lidas junto ao resultado atualizado.
+
 ## Aderência e estrutura
 
 RF01/RF02: tela de acesso, consulta de identidade e logout; cadastro público não implementado. RNF04: sessão no servidor, CSRF por endpoint e renovação após login. RNF01/RNF12: formulário fluido, labels, autocomplete, teclado com foco visível, erros vinculados aos campos e feedback anunciado. Validação manual de navegador/celular continua pendente. A implementação usa Reactive Forms tipados, AuthService separado da apresentação e signals para estado, sem novas dependências.

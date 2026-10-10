@@ -46,7 +46,7 @@ erDiagram
 | idempotency_request | id UUID, employee_id, request_key, payload_hash, result_event_id | FK; chave única por colaborador; resultado do comando confirmado |
 | audit_entry | id UUID, actor_user_id opcional, action, entity_id, recorded_at_utc, correlation_id | Dados mínimos; ausência de cookies, senhas e tokens |
 
-V1 implementa app_user e employee com UUID/uniqueidentifier, comprimentos, nullability, unicidade e FK. manager_id e demais tabelas continuam propostas. O DDL e o mapeamento ainda precisam ser validados em SQL Server real. Contrato atual de autenticação: [autenticacao.md](autenticacao.md).
+V1 implementa app_user e employee com UUID/uniqueidentifier, comprimentos, nullability, unicidade e FK. DDL/mapeamento foram aprovados em SQL Server 2022 CU20, na CI 38090975052; manager_id e demais tabelas continuam propostas. Contrato de autenticação: [autenticacao.md](autenticacao.md). Evidências: [validacao-integrada.md](validacao-integrada.md).
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
