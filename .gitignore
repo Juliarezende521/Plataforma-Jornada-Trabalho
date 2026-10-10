@@ -1,0 +1,30 @@
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Java / Maven
+**/target/
+*.class
+
+# Angular / Node
+**/node_modules/
+**/dist/
+**/.angular/
+**/coverage/
+
+# IDE e sistema
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs locais
+*.log
