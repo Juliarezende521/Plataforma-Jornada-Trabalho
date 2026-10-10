@@ -1,6 +1,6 @@
 # EAP — Plataforma de Jornada de Trabalho
 
-Status: planejamento, sem estimativa de prazo aprovada. A estrutura de código do pacote 1.2.1 foi iniciada, com builds/testes descritos em [base-tecnica.md](base-tecnica.md). O pacote 1.2 ainda não está concluído: schema e ambiente SQL Server permanecem pendentes.
+Status: planejamento, sem estimativa de prazo aprovada. Base 1.2.1 implementada; 1.2.2/1.2.3 possuem migration e seed implementados, com execução SQL Server pendente. 1.3.1 tem fluxo backend testado com serviço de contas simulado; interface e integração real pendentes. 1.3.2 não está concluído sem os recursos de jornada. Evidências: [base-tecnica.md](base-tecnica.md) e [autenticacao.md](autenticacao.md).
 
 ## Estrutura de entregas
 

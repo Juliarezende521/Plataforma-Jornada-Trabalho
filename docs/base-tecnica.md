@@ -2,6 +2,8 @@
 
 Data: 10/10/2026. Esta etapa não entrega o sistema de jornada completo.
 
+Registro histórico da primeira etapa. O estado atual e as mudanças seguintes estão em [autenticacao.md](autenticacao.md); as afirmações abaixo descrevem a base antes da implementação de contas.
+
 ## Implementado
 
 - Backend Java 17/Spring Boot 3.5.16, com Maven Wrapper 3.3.4/Maven 3.9.11.

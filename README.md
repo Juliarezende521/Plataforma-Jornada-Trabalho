@@ -2,7 +2,7 @@
 
 Plataforma web de registro e consulta de jornada para a empresa fictícia **Dungeons & Dragons Group**, com colaboradores no Brasil e Europa, trabalho remoto e viagens internacionais.
 
-**Status: base técnica em desenvolvimento.** Backend Spring Boot e frontend Angular estão estruturados, com uma rota de diagnóstico e uma tela para verificar comunicação. Login, jornada, histórico, entidades e migrations de negócio ainda não estão implementados. Consulte o [registro da etapa](docs/base-tecnica.md) para evidências e limitações. Os requisitos descrevem o escopo planejado, não recursos já entregues.
+**Status: implementação incremental.** Backend com entidades de usuário/colaborador, migration inicial e fluxo de autenticação por sessão. Testes de segurança usam contas simuladas; a integração com SQL Server real ainda não foi executada. Frontend continua na tela de diagnóstico, sem login. Jornada e histórico ainda não estão implementados. Consulte [autenticação e persistência](docs/autenticacao.md) para contratos, testes e limitações e [base técnica](docs/base-tecnica.md) para o registro histórico da primeira etapa.
 
 ## Tecnologias escolhidas
 
@@ -77,11 +77,11 @@ npm run build
 npm test -- --watch=false
 ```
 
-Os testes backend usam explicitamente bootstrap, sem banco. Verificam status público, bloqueio de consulta sem autenticação e CSRF com usuário sintético. Não comprovam autenticação real, persistência nem regras de jornada. O workflow de CI repete builds/testes; sua aprovação deve ser conferida no GitHub.
+Os testes backend padrão usam bootstrap ou testes unitários, sem banco. Exercitam login por senha com serviço de contas simulado, sessão, CSRF, logout, modelo e limite de tentativas. Não comprovam SQL Server nem regras de jornada. O teste opt-in SqlServerIT exige banco real e variáveis de conexão. O workflow de CI repete builds/testes; sua aprovação deve ser conferida no GitHub.
 
-### Configuração futura do SQL Server
+### Configuração do SQL Server (integração pendente)
 
-.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Ainda não há scripts SQL de negócio; migrations e entidades serão implementadas e testadas juntas.
+.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Flyway aplica V1__create_accounts_and_employees.sql e Hibernate valida o schema. Esse fluxo foi implementado, mas ainda precisa ser executado em SQL Server real. Contas fictícias são provisionadas somente pelo perfil evaluation com EVALUATION_PASSWORD externa; veja [instruções](docs/autenticacao.md).
 
 A conexão publicada deve validar TLS/certificado. Não usar sa como conta da aplicação. O usuário de migrations terá DDL, separado do usuário de execução. Secure=false existe somente no perfil bootstrap local, vinculado a 127.0.0.1 para permitir HTTP de desenvolvimento. Não publicar senhas reais.
 
@@ -89,8 +89,8 @@ O SQL Server deverá executar em ambiente suportado. A conexão será configurá
 
 ## Próximas entregas
 
-1. Detalhar modelo e validar ambiente SQL Server.
-2. Implementar migrations, entidades e autenticação.
+1. Validar migration, mapeamento e autenticação com SQL Server real.
+2. Integrar login/logout/CSRF ao Angular e testar cookies em navegador.
 3. Implementar registro, cálculo, autorização e consultas.
 4. Construir interface e executar os testes críticos.
 5. Registrar evidências, revisar documentação e validar execução limpa.

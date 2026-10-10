@@ -24,6 +24,9 @@ spring:
     locations: classpath:db/migration
 server:
   port: ${PORT:8080}
+  tomcat:
+    max-http-form-post-size: 8KB
+    max-parameter-count: 10
   error:
     include-message: never
     include-stacktrace: never
