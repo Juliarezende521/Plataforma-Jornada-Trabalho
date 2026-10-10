@@ -13,7 +13,9 @@ Plataforma web de registro e consulta de jornada para a empresa fictícia **Dung
 | Banco de dados | Microsoft SQL Server |
 | Persistência | Spring Data JPA/Hibernate |
 | Segurança | Spring Security, sessão e proteção CSRF |
-| Evolução do banco | Flyway |
+| Versionamento do schema no SQL Server (migrations) | Flyway |
+
+**O banco de dados é o Microsoft SQL Server.** O Flyway executa e registra a versão dos scripts SQL que criam ou alteram tabelas nesse banco. Spring Data JPA/Hibernate faz o acesso aos dados pela aplicação.
 
 Java foi escolhido pela experiência da desenvolvedora. Angular segue o direcionamento do desafio. SQL Server combina familiaridade acadêmica e a informação recebida sobre sua utilização pela empresa. O backend difere do ecossistema Microsoft predominante; esse trade-off está documentado.
 
@@ -44,7 +46,7 @@ Consulta por gestor/RH e correções auditadas são complementos priorizados ap�
 
 ### Diagnóstico local sem banco
 
-Pré-requisitos: Git, JDK 17 e Node 24.19.0. O Maven Wrapper baixa Maven na primeira execução; não é necessário instalá-lo globalmente. A primeira execução exige internet para baixar dependências. Não existem contas demonstrativas.
+Pré-requisitos: Git, JDK 17 e Node 24.19.0. O Maven Wrapper baixa Maven na primeira execução; não é necessário instalá-lo globalmente. A primeira execução exige internet para baixar dependências. No perfil bootstrap não existem contas demonstrativas; elas são provisionadas apenas no perfil evaluation com SQL Server.
 
 Clone o repositório e abra dois terminais. Este modo **não valida SQL Server** e não deve ser utilizado em produção.
 
