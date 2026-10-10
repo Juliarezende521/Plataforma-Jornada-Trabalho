@@ -1,6 +1,6 @@
 # Plataforma de Jornada de Trabalho — documentação inicial
 
-Status: proposta de solução; não representa funcionalidades implementadas ou testes executados.
+Status: proposta de solução de negócio. A base técnica implementada e seus testes estão descritos em [base-tecnica.md](base-tecnica.md); funcionalidades de jornada e critérios abaixo continuam planejados.
 
 ## 1. Interpretação do problema
 

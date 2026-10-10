@@ -1,6 +1,6 @@
 # Plano de validação, riscos e evidências
 
-Status: todos os cenários pendentes. Não há testes executados ou resultados aprovados nesta etapa.
+Status: os cenários de negócio T01–T26 permanecem pendentes de validação completa. Testes limitados da fundação, inclusive parte do comportamento de CSRF/consulta sem sessão, foram executados e estão descritos em [base-tecnica.md](base-tecnica.md). Não equivalem ao aceite destes cenários completos.
 
 ## Estratégia de testes
 

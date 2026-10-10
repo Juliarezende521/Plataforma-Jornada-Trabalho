@@ -1,0 +1,25 @@
+<main class="shell">
+  <header>
+    <p class="company">Dungeons &amp; Dragons Group</p>
+    <h1>Jornada de trabalho</h1>
+    <p>Uma base para acompanhar equipes em diferentes lugares.</p>
+  </header>
+  <section aria-labelledby="stage-heading">
+    <span class="badge">Em desenvolvimento</span>
+    <h2 id="stage-heading">Base técnica da plataforma</h2>
+    <p>Esta etapa verifica a comunicação entre Angular e Spring Boot.</p>
+    <p>Login, registro de jornada e histórico ainda não estão disponíveis.</p>
+    <button type="button" (click)="checkConnection()" [disabled]="connection() === 'loading'">
+      {{ connection() === 'loading' ? 'Verificando…' : 'Verificar conexão com a API' }}
+    </button>
+    <div class="feedback" role="status" aria-live="polite">
+      @switch (connection()) {
+        @case ('idle') { <p>Inicie o backend para verificar a conexão.</p> }
+        @case ('loading') { <p>Aguardando resposta da API.</p> }
+        @case ('success') { <p>Conexão confirmada. Isso não comprova conexão com SQL Server.</p> }
+        @case ('error') { <p>Não foi possível confirmar a conexão. Confira o backend e tente novamente.</p> }
+      }
+    </div>
+  </section>
+  <footer>Registro internacional: instantes UTC e fusos de referência serão tratados no backend.</footer>
+</main>

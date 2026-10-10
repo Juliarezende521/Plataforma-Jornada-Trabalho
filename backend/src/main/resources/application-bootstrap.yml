@@ -1,0 +1,22 @@
+# Explicit local diagnostic mode: NO persistence or business operations.
+spring:
+  datasource:
+    url: ""
+    username: ""
+    password: ""
+  flyway:
+    enabled: false
+    url: ""
+    user: ""
+    password: ""
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+server:
+  address: 127.0.0.1
+  servlet:
+    session:
+      cookie:
+        secure: false
