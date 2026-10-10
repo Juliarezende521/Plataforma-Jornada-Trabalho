@@ -15,6 +15,7 @@ class SqlServerIT {
     @Autowired EmployeeRepository employees;
     @Autowired PasswordEncoder encoder;
     @Autowired jakarta.persistence.EntityManager entityManager;
+    @Autowired javax.sql.DataSource dataSource;
 
     @Test
     void persistsUnicodeAndIanaZoneThenReloadsAccountGraph() {
@@ -28,5 +29,33 @@ class SqlServerIT {
         assertEquals("João avaliação", loaded.getEmployee().getName());
         assertEquals("America/Sao_Paulo", loaded.getEmployee().getReferenceTimeZoneId());
         assertTrue(encoder.matches("test-password-only", loaded.getPasswordHash()));
+    }
+
+    @Test
+    void databaseRejectsDuplicateEmailAndOrphanEmployee() throws Exception {
+        try (var connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                String email = java.util.UUID.randomUUID() + "@example.invalid";
+                try (var insert = connection.prepareStatement("INSERT INTO dbo.app_user (id,email,password_hash,active) VALUES (?,?,?,1)")) {
+                    insert.setString(1, java.util.UUID.randomUUID().toString());
+                    insert.setString(2, email);
+                    insert.setString(3, encoder.encode("test-password-only"));
+                    insert.executeUpdate();
+                    insert.setString(1, java.util.UUID.randomUUID().toString());
+                    var duplicate = assertThrows(java.sql.SQLException.class, insert::executeUpdate);
+                    assertEquals(2627, duplicate.getErrorCode());
+                }
+                connection.rollback();
+                try (var insert = connection.prepareStatement("INSERT INTO dbo.employee (id,user_id,name,reference_time_zone_id) VALUES (?,?,?,?)")) {
+                    insert.setString(1, java.util.UUID.randomUUID().toString());
+                    insert.setString(2, java.util.UUID.randomUUID().toString());
+                    insert.setNString(3, "João avaliação");
+                    insert.setString(4, "Europe/Amsterdam");
+                    var orphan = assertThrows(java.sql.SQLException.class, insert::executeUpdate);
+                    assertEquals(547, orphan.getErrorCode());
+                }
+            } finally { connection.rollback(); }
+        }
     }
 }
