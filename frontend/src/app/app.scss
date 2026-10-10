@@ -12,3 +12,14 @@ button:disabled { opacity: .7; cursor: wait; }
 button:focus-visible { outline: 3px solid #b45309; outline-offset: 4px; }
 .feedback { min-height: 4rem; color: #334155; }
 footer { margin-top: 1.5rem; font-size: .9rem; }
+.shell { max-width: 42rem; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+label { display: block; margin-top: .75rem; font-weight: 600; }
+input { display: block; width: 100%; min-height: 3rem; padding: .75rem; margin-top: .4rem; border: 1px solid #64748b; border-radius: .5rem; color: inherit; background: white; font: inherit; }
+input:focus-visible { outline: 3px solid #30458a; outline-offset: 2px; }
+input[aria-invalid="true"] { border-color: #a32020; }
+.field-error { min-height: 1.4rem; margin: .25rem 0; color: #a32020; font-size: .875rem; }
+.hint { color: #475569; }
+.secondary { background: white; color: #30458a; border: 1px solid #30458a; }
+dd { margin: .3rem 0 1rem; overflow-wrap: anywhere; }
+dt { font-weight: 600; }

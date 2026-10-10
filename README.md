@@ -2,7 +2,7 @@
 
 Plataforma web de registro e consulta de jornada para a empresa fictícia **Dungeons & Dragons Group**, com colaboradores no Brasil e Europa, trabalho remoto e viagens internacionais.
 
-**Status: implementação incremental.** Backend com entidades de usuário/colaborador, migration inicial e fluxo de autenticação por sessão. Testes de segurança usam contas simuladas; a integração com SQL Server real ainda não foi executada. Frontend continua na tela de diagnóstico, sem login. Jornada e histórico ainda não estão implementados. Consulte [autenticação e persistência](docs/autenticacao.md) para contratos, testes e limitações e [base técnica](docs/base-tecnica.md) para o registro histórico da primeira etapa.
+**Status: implementação incremental.** Backend com entidades de usuário/colaborador, migration inicial e autenticação por sessão. Angular possui tela de login, consulta de identidade e logout integrados ao contrato HTTP. Testes de segurança usam contas simuladas; a integração com SQL Server real e a validação de navegador ainda não foram executadas. Jornada e histórico ainda não estão implementados. Consulte [autenticação e persistência](docs/autenticacao.md), [login Angular](docs/login-angular.md) e [base técnica](docs/base-tecnica.md) para evidências e limitações.
 
 ## Tecnologias escolhidas
 
@@ -67,7 +67,7 @@ npm ci
 npm start
 ```
 
-Abra http://localhost:4200 e clique em “Verificar conexão com a API”. O proxy encaminha /api para http://127.0.0.1:8080. GET /api/status identifica a etapa FOUNDATION e informa journeyAvailable=false. Não retorna dados pessoais nem configuração do ambiente.
+Abra http://localhost:4200. A interface consulta /api/me e mostra o formulário quando não há sessão. O proxy encaminha /api para http://127.0.0.1:8080. Bootstrap não tem contas: tentativas de login retornam erro genérico e não demonstram autenticação com banco. GET /api/status continua disponível para diagnóstico da base, com journeyAvailable=false.
 
 ### Build e testes
 
@@ -92,7 +92,7 @@ O SQL Server deverá executar em ambiente suportado. A conexão será configurá
 ## Próximas entregas
 
 1. Validar migration, mapeamento e autenticação com SQL Server real.
-2. Integrar login/logout/CSRF ao Angular e testar cookies em navegador.
+2. Validar login/logout/CSRF no navegador, cookies em HTTPS e uso no celular.
 3. Implementar registro, cálculo, autorização e consultas.
 4. Construir interface e executar os testes críticos.
 5. Registrar evidências, revisar documentação e validar execução limpa.

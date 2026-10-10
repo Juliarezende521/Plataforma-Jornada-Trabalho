@@ -1,5 +1,7 @@
 # Etapa 2 — Contas, colaboradores e autenticação
 
+Registro da implementação backend. A interface foi implementada na etapa seguinte, descrita em [login-angular.md](login-angular.md). As pendências de navegador/SQL Server continuam abertas.
+
 ## Revisão de aderência
 
 RF01/RF02: backend implementa login/logout por sessão; aceite completo exige SQL Server e interface. RNF03: identidade deriva do principal autenticado, não de ID recebido; isolamento de jornadas continua pendente. RNF04: BCrypt custo 12, CSRF inclusive no login/logout, troca de ID de sessão e resposta genérica. RNF02/RNF09: migration/entidades/seed implementados, mas execução contra banco e clone limpo ainda não comprovados.
@@ -49,6 +51,6 @@ Esse teste inicializa Flyway e Hibernate validate e verifica persistência/relei
 
 Execução local de ./mvnw -o --batch-mode verify em 10/10/2026: **12 testes aprovados, zero falhas/erros/ignorados; build e empacotamento aprovados**. Testes padrão cobrem status/proteção, modelo, principal de conta inativa/sem colaborador, login válido, senha errada/conta inexistente, troca de sessão, CSRF real obtido por endpoint/renovação, logout e limite por endereço/expiração. O serviço de contas é simulado nos testes HTTP, não o filtro de senha ou o PasswordEncoder. O teste de integração opt-in não faz parte desses 12; não há evidência SQL Server nem CI desta etapa nesta contagem.
 
-Não declarar autenticação ponta a ponta ou persistência prontas sem: executar SqlServerIT; validar constraints/seed e privilégios; integrar Angular; verificar cookies e expiração reais; testar duas identidades sem vazamento; repetir instruções em clone limpo. Frontend/status continuam honestamente indicando jornada indisponível.
+Não declarar autenticação ponta a ponta ou persistência prontas sem: executar SqlServerIT; validar constraints/seed e privilégios; verificar integração Angular/backend em navegador, cookies e expiração reais; testar duas identidades sem vazamento; repetir instruções em clone limpo. Frontend/status continuam honestamente indicando jornada indisponível.
 
 Esta etapa contribui para modelagem, organização por domínio, decisões documentadas, testes e segurança. Experiência de uso da autenticação ainda depende da próxima interface; aprovação do desafio depende do produto completo, não apenas destes testes.

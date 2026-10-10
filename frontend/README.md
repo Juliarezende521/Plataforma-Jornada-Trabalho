@@ -1,23 +1,23 @@
-# Frontend — base técnica
+# Frontend — autenticação
 
-Interface Angular gerada com CLI 22.2.2 e adaptada para a etapa FOUNDATION. Não é a interface final de registro de jornada. O botão de diagnóstico consulta /api/status por proxy local e não comprova conexão com SQL Server.
+Angular CLI 22.2.2, com formulário de login, restauração de sessão, consulta de identidade e logout. Jornada/histórico ainda não implementados. Não há cadastro público, login fictício ou credenciais embutidas.
 
 ## Execução
 
-Com Node 24.19.0, execute neste diretório:
+Com Node 24.19.0:
 
 ```bash
 npm ci
 npm start
 ```
 
-Acesse http://localhost:4200. Para verificar conexão, o backend precisa estar iniciado em bootstrap, conforme o [README principal](../README.md).
+Abra http://localhost:4200. /api é encaminhado ao backend local. Bootstrap permite renderizar a tela e testar erro de login, mas não tem contas. Login real exige SQL Server e ambiente HTTPS que preserve o cookie Secure. Consulte [README principal](../README.md), [contrato backend](../docs/autenticacao.md) e [registro da etapa](../docs/login-angular.md).
 
-## Verificação
+## Build e testes
 
 ```bash
 npm run build
 npm test -- --watch=false
 ```
 
-Os testes verificam renderização, comunicação simulada por HttpTestingController e tratamento de erro. Não são testes end-to-end de navegador nem validação de jornada. Nenhum framework E2E está configurado nesta etapa.
+Testes de componentes/serviço simulam HTTP, incluindo token CSRF, renovação, timeout e logout. Não comprovam SQL Server nem cookies de navegador. Nenhum framework E2E está configurado.
