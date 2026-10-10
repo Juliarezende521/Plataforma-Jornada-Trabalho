@@ -37,6 +37,9 @@ Consulta por gestor/RH e correções auditadas são complementos priorizados ap�
 | Documento | Finalidade |
 |---|---|
 | [Requisitos](docs/requisitos.md) | Origem, prioridade e critérios de aceite |
+| [Stakeholders](docs/stakeholders.md) | Interessados, contextos de uso e hipóteses a validar |
+| [Histórias de usuário](docs/historias-usuario.md) | Necessidades e aceite rastreáveis aos requisitos/testes |
+| [Experiência do usuário/IHC](docs/experiencia-usuario.md) | Fluxos, acessibilidade, inspeção e plano de teste de usabilidade |
 | [Arquitetura e decisões](docs/arquitetura.md) | Modelo, segurança, contratos e trade-offs |
 | [EAP](docs/eap.md) | Pacotes de entrega e dependências |
 | [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |

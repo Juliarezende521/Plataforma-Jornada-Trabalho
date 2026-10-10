@@ -12,6 +12,8 @@ A EAP decompõe o produto e a entrega em pacotes verificáveis. Não é um crono
 | 1.1 | 1 | Especificação | Escopo, requisitos, regras e decisões |
 | 1.1.1 | 1.1 | Requisitos e critérios | Levantamento rastreável ao enunciado |
 | 1.1.2 | 1.1 | Modelo e decisões | Arquitetura, entidades e regras temporais |
+| 1.1.3 | 1.1 | Contexto e histórias | Stakeholders, hipóteses e critérios de aceite rastreáveis |
+| 1.1.4 | 1.1 | Planejamento de interação | Fluxos, acessibilidade e plano de avaliação de IHC |
 | 1.2 | 1 | Base executável | Backend, frontend e banco configurados |
 | 1.2.1 | 1.2 | Estrutura de código | Projetos, wrappers e configurações por ambiente |
 | 1.2.2 | 1.2 | Schema versionado | Flyway e constraints em SQL Server |
@@ -49,6 +51,8 @@ A EAP decompõe o produto e a entrega em pacotes verificáveis. Não é um crono
 | 1.7.2 | RF17/RF18 | Núcleo estável e perfil RH | Registro original preservado; sem autoaprovação; cálculo usa revisão válida |
 
 Qualidade ocorre em cada pacote, embora as evidências consolidadas pertençam a 1.6. Não deixar segurança ou testes somente para o final.
+
+1.1.3/1.1.4 possuem documentos iniciais em [stakeholders.md](stakeholders.md), [historias-usuario.md](historias-usuario.md) e [experiencia-usuario.md](experiencia-usuario.md). Isso não conclui 1.6.2: faltam testes de usabilidade com participantes e verificação de acessibilidade/dispositivos. Rever UX05/UX06 e recuperação HU14 antes dos pacotes de jornada dependentes.
 
 ## Sequência sugerida de trabalho
 

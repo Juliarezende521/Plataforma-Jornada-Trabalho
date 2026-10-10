@@ -4,6 +4,8 @@ Status: T01 e T23 aprovados para autenticação implementada na CI 38090975052 c
 
 ## Estratégia de testes
 
+Plano de IHC, inspeção inicial e roteiro de participantes: [experiencia-usuario.md](experiencia-usuario.md). T20 tem evidência de viewport, mas não aprovação de teclado, leitor de tela ou teste com usuários. Histórias HU01–HU18 mapeiam os cenários abaixo sem afirmar implementação das histórias futuras.
+
 - Domínio: relógio fixo, sequências, cálculo e regras de fuso sem dependência da hora atual.
 - API/segurança: sessão real de teste, DTOs, status HTTP, CSRF e isolamento entre usuários.
 - Integração: SQL Server real para migrations, tipo temporal, constraints e concorrência; não declarar H2 equivalente.

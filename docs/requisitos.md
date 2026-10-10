@@ -4,6 +4,8 @@ Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server
 
 ## Objetivo e fontes
 
+Documentos derivados: [stakeholders](stakeholders.md), [histórias de usuário](historias-usuario.md) e [experiência/IHC](experiencia-usuario.md). Eles não ampliam o escopo nem substituem esta baseline; riscos UX05/UX06 precisam de revisão antes da implementação da jornada.
+
 Centralizar as marcações e consultas de jornada da Dungeons & Dragons Group, com colaboradores no Brasil e Europa, inclusive remotos e em viagem. Fonte principal: enunciado fornecido na entrevista. Fonte complementar: escolha de Java pela desenvolvedora e informação recebida de que a empresa utiliza SQL Server; não houve entrevista adicional com RH ou usuários.
 
 Origem E = explícita no enunciado; C = derivada do contexto; D = decisão de projeto. Prioridade P0 = núcleo de entrega; P1 = complemento após o núcleo. A prioridade é nossa proposta, não uma classificação informada pela empresa. “Núcleo” inclui decisões necessárias à confiabilidade; não significa que todas foram exigidas textualmente.
@@ -88,4 +90,4 @@ RN01–RN12 são definidas em proposta.md e constituem a referência para estado
 
 ## Definição de pronto do núcleo
 
-RF01–RF14 e RNF aplicáveis implementados; migrations executadas em SQL Server vazio; testes críticos aprovados com evidências; interface utilizável; README reproduzido; limitações declaradas; repositório sem segredos. Todos os itens estão inicialmente pendentes.
+RF01–RF14 e RNF aplicáveis implementados; migrations executadas em SQL Server vazio; testes críticos aprovados com evidências; interface utilizável; README reproduzido; limitações declaradas; repositório sem segredos. O núcleo não está concluído: RF01/RF02 e schema de contas possuem evidência integrada; jornada, restante do schema e avaliação completa de IHC continuam pendentes.
