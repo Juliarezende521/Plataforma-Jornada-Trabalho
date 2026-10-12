@@ -4,6 +4,8 @@ Status: T01 e T23 aprovados para autenticação implementada na CI 38090975052 c
 
 ## Estratégia de testes
 
+Antes de implementar/encerrar cada etapa, aplicar o [protocolo de revisão recorrente](checklist-revisoes.md), incluindo segunda análise de cada achado para verificar falsos positivos, evidências e severidade. Esse protocolo define análises e testes a selecionar; não é evidência de execução automática.
+
 Plano de IHC, inspeção inicial e roteiro de participantes: [experiencia-usuario.md](experiencia-usuario.md). T20 tem evidência de viewport, mas não aprovação de teclado, leitor de tela ou teste com usuários. Histórias HU01–HU18 mapeiam os cenários abaixo sem afirmar implementação das histórias futuras.
 
 - Domínio: relógio fixo, sequências, cálculo e regras de fuso sem dependência da hora atual.

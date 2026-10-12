@@ -44,6 +44,7 @@ Regularização mínima de saída esquecida, com solicitação própria e decis�
 | [Modelo inicial de jornada](docs/modelo-jornada.md) | Domínio online, evidências dos testes e limites da etapa; sem persistência/API de jornada |
 | [EAP](docs/eap.md) | Pacotes de entrega e dependências |
 | [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |
+| [Checklist de revisão por etapa](docs/checklist-revisoes.md) | Qualidade, segurança, desempenho, legibilidade e segunda análise dos achados em todas as próximas etapas |
 | [Proposta inicial](docs/proposta.md) | Contexto, regras e matriz dos oito critérios de avaliação |
 
 ## Execução e testes
