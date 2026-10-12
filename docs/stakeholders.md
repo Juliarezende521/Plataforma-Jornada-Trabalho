@@ -8,7 +8,7 @@ Status: levantamento derivado do enunciado, não pesquisa de campo. Não houve e
 |---|---|---|---|---|
 | ST01 | Colaboradores Brasil/Europa | Usuários diretos P0 | Registrar e consultar a própria jornada com clareza de horários e confirmação | Validar linguagem, rotina, erros e uso no celular; sem acesso a colegas |
 | ST02 | Gestores | Usuários diretos P1 | Acompanhar colaboradores vinculados, sem depender de mensagens dispersas | Validar vínculo de equipe e consultas; não marcar por colaboradores |
-| ST03 | RH | Usuários diretos P1 e interessados no P0 | Identificar pendências e entender totais; tratar correções se implementadas | Validar regras de pausas, correção e resumo; não presumir poder de editar originais |
+| ST03 | RH | Aprovador mínimo P0 planejado; consulta geral P1 | Decidir saída esquecida no escopo autorizado; consulta operacional ampla futura | Validar regras e responsabilidade de aprovação; não editar originais nem autoaprovar |
 | ST04 | Diretoria | Patrocinadora no cenário fictício | Centralização e apoio ao crescimento internacional | Validar objetivos e prioridades; não implica perfil administrativo na aplicação |
 | ST05 | Equipe técnica/manutenção | Interessada operacional, inferida | Execução reproduzível, evolução e segurança | Validar configurações, permissões e documentação; não implica painel de administração |
 | ST06 | Técnico avaliador da empresa | Avaliador externo da entrega | Executar a solução e verificar os critérios do desafio | Código, evidências e contas fictícias; sem acesso privilegiado a dados reais |
@@ -32,8 +32,8 @@ Remoto, viajante e usuário de celular são contextos que podem se sobrepor; nã
 ## Perguntas para validação com interessados
 
 1. ST01/ST03: quais pausas existem e quais devem ser descontadas? RN04 é hipótese do MVP, não regra trabalhista.
-2. ST01/ST03: é necessário encerrar uma jornada durante pausa? RN05 exige retorno antes da saída e pode não representar a rotina real.
-3. ST01/ST03: como resolver uma saída esquecida antes da próxima entrada? Correção P1 deixa um bloqueio operacional no P0.
+2. ST01/ST03: encerrar diretamente durante pausa atende à rotina? RN05 revisada em 11/10/2026 permite saída sem retorno artificial e desconta a pausa final; decisão assumida, ainda sem validação dos interessados.
+3. ST01/ST03: quem atende pedidos de saída esquecida e em quanto tempo? Recorte mínimo RF17/RF18 antecipado para P0 em 11/10/2026 pela desenvolvedora; ainda não implementado nem validado com RH. Até aprovação, nova entrada segue bloqueada.
 4. ST01/ST03: como escolher/alterar o fuso de referência e explicar a data de início no resumo mensal?
 5. ST01: português atende aos usuários da Europa? Inglês/i18n é hipótese de evolução, não funcionalidade entregue.
 6. ST02/ST03: como determinar equipes, escopo de consulta e responsabilidade pela aprovação de correções?

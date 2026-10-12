@@ -57,9 +57,10 @@ Rastreabilidade: ST01; RF05; T03/T05. Dependências: HU04/HU07/HU14.
 Como colaborador, quero registrar a saída para concluir minha jornada e consultar sua duração.
 
 - Dado Trabalhando, quando marco saída, então vejo Encerrada e duração calculada a partir dos instantes confirmados.
-- Dado Em pausa, a baseline RN05 rejeita saída; interface deve explicar a restrição, sem fabricar retorno/saída.
+- Dado Em pausa, quando marco saída, então a jornada é encerrada no instante confirmado e a pausa final termina nesse instante, sem evento de retorno artificial nem inclusão da pausa na duração trabalhada.
+- Dado entrada 09h, pausa 12h e saída 12h30, então consulto 3 eventos, 3h trabalhadas e 30min de pausa. Repetir a saída com a mesma chave não gera outro evento.
 
-Rastreabilidade: ST01/ST03; RF06; RN05; T03/T05. Dependências: HU03–HU05/HU14. Antes de implementar, resolver ou manter explicitamente a questão UX05 do plano UX; esta história não aprova RN05 como regra real do RH.
+Rastreabilidade: ST01/ST03; RF06; RN04/RN05; T03/T05/T27. Dependências: HU03/HU04/HU07/HU14 e cálculo temporal. RN05 revisada em 11/10/2026 é decisão assumida do projeto; UX05 ainda requer implementação e validação, não aprovação como regra real do RH.
 
 ### HU07 — Entender a jornada atual
 
@@ -120,9 +121,9 @@ Rastreabilidade: ST01; RF12; RN04/RN06/RN08; T04/T06/T08/T09. Dependências: HU0
 Como colaborador, quero identificar jornada sem saída para não confundir registros incompletos com horas definitivas.
 
 - Dado jornada aberta, então vejo pendência/estado atual e eventual duração marcada como provisória; ela não compõe o consolidado.
-- Nova entrada permanece bloqueada; não há saída automática nem edição direta pelo usuário. Sem HU17/HU18, a limitação de regularização precisa estar visível.
+- Nova entrada permanece bloqueada até saída efetiva; não há saída automática nem edição direta. Oferecer HU17/HU18 no recorte P0 quando implementadas, com status do pedido e explicação da espera/rejeição.
 
-Rastreabilidade: ST01/ST03; RF13; RN09; T11. Dependências: HU07/HU10. Risco UX06: avaliar o recorte de correção antes do núcleo de jornada.
+Rastreabilidade: ST01/ST03; RF13; RN09; T11/T28. Dependências: HU07/HU10/HU17/HU18. UX06 recebeu recorte P0 autorizado em 11/10/2026; atendimento pelo aprovador ainda é limitação operacional.
 
 ### HU14 — Recuperar uma marcação sem duplicá-la
 
@@ -130,9 +131,10 @@ Como colaborador com conexão instável, quero confirmar uma tentativa cujo resu
 
 - Dado resposta perdida, então a tela informa resultado não confirmado, reconcilia no servidor e reutiliza a mesma chave/payload ao repetir aquela tentativa.
 - Repetição confirmada retorna o resultado original; chave reutilizada com payload diferente gera 409. Clique duplo, duas abas e concorrência também exigem proteção no servidor.
-- Sem conexão, não simular sucesso ou registro offline. Sem poder reconciliar após reload, bloquear nova tentativa automática e consultar estado; estratégia de retenção da chave ainda deve ser detalhada.
+- Antes do envio, guardar diário mínimo da tentativa (chave, identidade, tipo e jornada alvo) sem credenciais; falha de armazenamento bloqueia envio. Após reload/timeout, confirmar mesma identidade, consultar recibo autenticado e atualizar estado. Recibo ausente não comprova que a requisição anterior terminou.
+- Sem conexão, não simular sucesso ou registro offline. Repetição depende de ação explícita, mantém chave/payload e informa que marcação ainda não gravada receberá horário do novo processamento. Troca de conta não permite recuperar tentativa alheia; múltiplas abas e limpeza do armazenamento seguem as limitações do protocolo canônico.
 
-Rastreabilidade: ST01; RF14; RN12; RNF05/RNF06; T12/T13/T14/T15/T22. Dependências: idempotência persistida, transação e protocolo de recuperação. Não está implementado.
+Rastreabilidade: ST01; RF14; RN12; RNF05/RNF06; T12/T13/T14/T15/T22/T31–T34. Dependências: idempotência persistida, transação e recibo autenticado. Protocolo decidido em 11/10/2026 em requisitos.md; não está implementado/testado.
 
 ## Complementos P1 — não implementados
 
@@ -152,21 +154,29 @@ Dado perfil RH autorizado, quando consulto, então recebo dados no escopo permit
 
 Rastreabilidade: ST03; RF16; RNF03/RNF11; T25. Dependências: núcleo estável e autorização de RH; sem cálculo legal de folha.
 
-### HU17 — Solicitar correção
+## Regularização mínima P0 — não implementada
 
-Como colaborador, quero propor uma correção com motivo para regularizar uma marcação incorreta sem apagar o original.
+Recorte autorizado em 11/10/2026: somente saída esquecida; outras correções continuam P1. Regras canônicas em requisitos.md. Esta seção não implementa autoridade de aprovação ou concede consulta geral de RH.
 
-Dado registro próprio, quando envio proposta válida e justificativa, então a solicitação fica pendente e o registro original permanece; horários locais ambíguos exigem escolha explícita do instante, e inexistentes são rejeitados.
+### HU17 — Solicitar regularização de saída esquecida
 
-Rastreabilidade: ST01/ST03; RF17; RNF07/RNF11/RNF14; T26. Dependências: modelo de revisão/auditoria e fluxo de decisão. Prioridade P1 vigente; qualquer mudança deve ser registrada.
+Como colaborador, quero informar a saída esquecida com justificativa para regularizar minha jornada sem apagar os originais.
+
+- Dado jornada própria aberta, quando envio saída válida, fuso/offset e justificativa, então um pedido fica PENDING e o original permanece; instantes antes do último evento ou futuros são rejeitados. Horários inexistentes são rejeitados e ambíguos exigem offset válido.
+- Dado pedido pendente, então vejo proposta/status sem tratá-lo como saída confirmada; repetição idempotente não duplica, novo pedido simultâneo é rejeitado e posso cancelar meu pedido ainda pendente. Rejeição permite nova solicitação, sem apagar a anterior.
+- Dado saída online legítima enquanto há pedido, então a jornada encerra e o pedido superado fica cancelado com auditoria.
+
+Rastreabilidade: ST01/ST03; RF17 recorte P0; RNF07/RNF11/RNF14; T26/T28/T29/T30. Dependências: HU13, modelo de revisão/auditoria e idempotência. Outros tipos de correção permanecem P1.
 
 ### HU18 — Decidir correção
 
-Como profissional de RH autorizado, quero aprovar ou rejeitar uma solicitação para manter registros rastreáveis.
+Como aprovador autorizado, quero decidir uma solicitação de saída esquecida no meu escopo para regularizar a jornada com rastreabilidade.
 
-Dado que não sou o solicitante, quando decido, então decisão e autoria ficam auditadas; aprovação altera a visão efetiva/cálculo, não apaga o original. Autoaprovação é rejeitada.
+- Dado escopo autorizado e outro solicitante, quando aprovo pedido válido, então decisão, revisão efetiva, cálculo/encerramento e auditoria são atômicos; o histórico distingue saída manual de evento online. Nova entrada é liberada sem apagar originais.
+- Autoaprovação ou acesso fora de escopo é rejeitado no servidor. Pedido com jornada/versão alterada não é aplicado; decisões concorrentes ou repetidas não reaplicam correção.
+- Quando rejeito com motivo, então o colaborador vê a decisão e pode solicitar novamente; jornada continua pendente e não entra no consolidado.
 
-Rastreabilidade: ST03; RF18; RNF03/RNF05/RNF14; T26. Dependências: HU17 e permissões do RH.
+Rastreabilidade: ST03; RF18 recorte P0; RNF03/RNF05/RNF14; T26/T28/T30. Dependências: HU17, permissões/escopo provisionados e transações. Consulta geral RF16 e outras correções não fazem parte dessa autorização mínima.
 
 ## Qualidade transversal e controle de mudanças
 

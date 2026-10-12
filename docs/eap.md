@@ -25,6 +25,7 @@ A EAP decompõe o produto e a entrega em pacotes verificáveis. Não é um crono
 | 1.4.1 | 1.4 | Eventos e estados | Entrada, pausa, retorno e saída |
 | 1.4.2 | 1.4 | Integridade | Transação, concorrência e idempotência |
 | 1.4.3 | 1.4 | Datas e duração | UTC, fusos, madrugada e múltiplas pausas |
+| 1.4.4 | 1.4 | Regularização mínima P0 | Pedido de saída esquecida, decisão, revisão efetiva, autorização e auditoria |
 | 1.5 | 1 | Consulta e interface | Experiência web completa |
 | 1.5.1 | 1.5 | API de consulta | Atual, histórico, detalhe e resumo |
 | 1.5.2 | 1.5 | Interface de jornada | Marcação responsiva com feedback |
@@ -35,7 +36,7 @@ A EAP decompõe o produto e a entrega em pacotes verificáveis. Não é um crono
 | 1.6.3 | 1.6 | Repositório final | README, documentos, evidências e revisão de segredos |
 | 1.7 | 1 | Complementos condicionais P1 | Somente após estabilizar o núcleo |
 | 1.7.1 | 1.7 | Consulta de gestor/RH | Escopo de acesso validado |
-| 1.7.2 | 1.7 | Correções auditadas | Solicitação, decisão e revisão efetiva |
+| 1.7.2 | 1.7 | Correções ampliadas | Outros tipos além da saída esquecida P0 |
 
 ## Dicionário dos pacotes
 
@@ -48,11 +49,12 @@ A EAP decompõe o produto e a entrega em pacotes verificáveis. Não é um crono
 | 1.5 | RF07–RF11/RF13; RNF01/RNF12/RNF13 | 1.3/1.4 | Consulta isolada e paginada; interface com loading/erro/vazio/sucesso |
 | 1.6 | RNF08–RNF14 | Entregas incrementais de 1.2–1.5 | Testes aprovados e README reproduzido desde banco vazio |
 | 1.7.1 | RF15/RF16 | Núcleo estável | Permissões de equipe e RH testadas |
-| 1.7.2 | RF17/RF18 | Núcleo estável e perfil RH | Registro original preservado; sem autoaprovação; cálculo usa revisão válida |
+| 1.4.4 | RF17/RF18 recorte P0 | 1.2/1.3/1.4.1–1.4.3 e HU13 | Saída esquecida regularizada sem apagar originais; escopo/autoaprovação/concorrência testados; interface mínima e revisão efetiva |
+| 1.7.2 | RF17/RF18 extensão P1 | Núcleo estável e 1.4.4 | Outros tipos de correção preservam originais, autorização e cálculo efetivo |
 
 Qualidade ocorre em cada pacote, embora as evidências consolidadas pertençam a 1.6. Não deixar segurança ou testes somente para o final.
 
-1.1.3/1.1.4 possuem documentos iniciais em [stakeholders.md](stakeholders.md), [historias-usuario.md](historias-usuario.md) e [experiencia-usuario.md](experiencia-usuario.md). Isso não conclui 1.6.2: faltam testes de usabilidade com participantes e verificação de acessibilidade/dispositivos. Rever UX05/UX06 e recuperação HU14 antes dos pacotes de jornada dependentes.
+1.1.3/1.1.4 possuem documentos iniciais em [stakeholders.md](stakeholders.md), [historias-usuario.md](historias-usuario.md) e [experiencia-usuario.md](experiencia-usuario.md). Isso não conclui 1.6.2: faltam testes de usabilidade com participantes e verificação de acessibilidade/dispositivos. Em 11/10/2026, UX05 recebeu RN05/T27, UX06 recebeu recorte P0 RF17/RF18 e HU14 recebeu protocolo de recuperação T31–T34, todos sem implementação/aceite. Detalhar contratos da regularização e implementar/testar os protocolos antes do aceite dos pacotes dependentes.
 
 ## Sequência sugerida de trabalho
 
@@ -60,7 +62,7 @@ Qualidade ocorre em cada pacote, embora as evidências consolidadas pertençam a
 2. Base executável, migrations e autenticação com consulta própria simples.
 3. Fluxo vertical de entrada até saída, com cálculo e testes.
 4. Pausas, fusos, idempotência, concorrência e histórico.
-5. Interface responsiva, recuperação de erros e revisão de acesso.
+5. Regularização mínima de saída esquecida; interface responsiva, recuperação de erros e revisão de acesso.
 6. Execução limpa, documentação final e evidências.
 7. Complementos P1 conforme prazo, sem comprometer o núcleo.
 

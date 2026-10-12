@@ -23,7 +23,7 @@ Usamos as [heurísticas de Nielsen](https://www.nngroup.com/articles/ten-usabili
 | Recuperação | Explicar problema e próximo passo sem culpar a pessoa | Testar falhas e consultar resultado no servidor |
 | Simplicidade e ajuda | Priorizar tarefa diária e explicar apenas as regras relevantes | Sem controles falsos ou painel genérico sem função |
 
-Controle e liberdade não significam apagar uma marcação ou desfazer evento confirmado. Correção exige o fluxo auditado P1. Não oferecer botão Desfazer que altere registros silenciosamente.
+Controle e liberdade não significam apagar uma marcação ou desfazer evento confirmado. Saída esquecida exige regularização auditada mínima P0; outras correções permanecem P1. Não oferecer botão Desfazer que altere registros silenciosamente.
 
 ## Fluxos e estados de interação
 
@@ -39,15 +39,15 @@ Existe evidência integrada em [validacao-integrada.md](validacao-integrada.md);
 |---|---|---|
 | Sem jornada aberta | Nenhuma jornada em andamento | Entrada; só mudar para Trabalhando após confirmação |
 | Trabalhando | Última marcação, data/fuso, duração provisória se disponível | Iniciar pausa ou registrar saída |
-| Em pausa | Início da pausa e regra de cálculo | Retorno; baseline RN05 não permite saída, com explicação visível |
+| Em pausa | Início da pausa e regra de cálculo | Retorno ou registrar saída; saída encerra a jornada e a pausa final sem fabricar retorno (RN05 revisada) |
 | Pedido em andamento | Ação solicitada e aguardando resposta | Bloquear nova submissão local; não inventar horário confirmado |
 | Resultado desconhecido | Tentativa ainda sem confirmação | Reconciliar/repetir a mesma tentativa com idempotência; não criar outra chave automaticamente |
 | Encerrada | Eventos e duração fechada | Consultar detalhe; nova entrada pode abrir outra jornada sem sobreposição |
-| Pendência anterior | Jornada continua aberta e total não consolidado | Explicar bloqueio; não apresentar correção inexistente como disponível |
+| Pendência anterior | Jornada continua aberta e total não consolidado | Explicar bloqueio e oferecer solicitação de saída esquecida quando implementada; exibir proposta/fuso, justificativa, status e motivo de rejeição, sem prometer aprovação imediata |
 
 Estados técnicos não devem aparecer como códigos 401/403/409. Conflito deve apresentar o estado recuperado e motivo compreensível. Não ocultar a explicação de um botão indisponível em tooltip acessível apenas por mouse. Não exigir confirmação modal em toda marcação por hábito; avaliar risco de clique e custo da tarefa antes de decidir.
 
-Horário exibido no registro vem da confirmação do servidor; relógio do dispositivo não é comprovante. Não há offline. A estratégia para recuperar a chave de tentativa após reload ainda precisa ser definida (HU14); não confundir memória de componente com proteção persistida do backend.
+Horário exibido no registro vem da confirmação do servidor; relógio do dispositivo não é comprovante. Não há offline. HU14 usa diário mínimo local antes do envio e consulta autenticada do recibo após reload/timeout, conforme requisitos.md. Consulta sem recibo não comprova falha: repetir exige ação explícita com mesma chave/payload. Avisar que tentativa não gravada receberá horário do novo processamento; não confundir diário local com proteção persistida do backend. Sem armazenamento válido, bloquear envio e explicar a limitação.
 
 ### Consulta, viagens e resumo — proposta
 
@@ -100,11 +100,11 @@ Gravidade preliminar: 1 = cosmético; 2 = dificuldade relevante contornável; 3 
 | UX02 | Verificar sessão pode ser linguagem técnica | Texto atual; compreensão não medida; 2 | Testar Verificar acesso como alternativa, sem alterar contrato HTTP |
 | UX03 | Falta orientação de suporte para conta/senha | Sem cadastro/recuperação e sem canal fornecido; 2 | Obter canal legítimo; não criar link/contato fictício |
 | UX04 | Português pode não atender parte da equipe europeia | Frontend pt-BR; hipótese de contexto; 2 | Confirmar idiomas; avaliar i18n sem ampliar P0 silenciosamente |
-| UX05 | Exigir retorno antes de saída em pausa pode não representar trabalho real | RN05 proposta; 3 | Rever com cenário/RH antes de codificar; não sugerir retorno artificial como solução |
-| UX06 | Saída esquecida bloqueia nova entrada sem correção P0 | RF13 e correção P1; 3 | Reavaliar recorte de correção ou manter limitação explícita; não reparar via banco/auto-saída |
+| UX05 | Exigir retorno antes de saída em pausa pode não representar trabalho real | Restrição anterior; 3 | Decisão documentada em 11/10/2026: RN05 permite saída direta. Implementação, T27 e compreensão da pausa final ainda pendentes; não declarar risco resolvido em uso |
+| UX06 | Saída esquecida bloqueia nova entrada; depende de regularização | Risco operacional; 3 | Recorte RF17/RF18 antecipado para P0 em 11/10/2026; implementar e testar solicitação/decisão. Até aprovação, bloqueio permanece; não reparar via banco/auto-saída |
 | UX07 | Fuso IANA isolado pode ser difícil de interpretar | Captura mostra America/Sao_Paulo; 2 | Avaliar rótulo amigável sem perder informação técnica/histórica |
 
-UX05/UX06 são riscos da proposta de jornada, não bugs observados na interface atual. Não houve alteração de RN05, prioridade de correção ou código nesta etapa documental.
+UX05/UX06 são riscos da proposta de jornada, não bugs observados na interface atual. Em 11/10/2026, RN05 passou a permitir saída durante pausa (RF06/HU06/T27) e a regularização mínima de saída esquecida de RF17/RF18 foi antecipada para P0 com autorização da desenvolvedora. Não houve implementação ou testes desses comportamentos; UX06 mantém dependência operacional do aprovador, sem prazo de atendimento definido.
 
 ## Plano de teste de usabilidade
 
@@ -127,6 +127,6 @@ Roteiro de relatório futuro: data/commit/ambiente, método e limitações, part
 
 ## Próximas ações e vínculo com avaliação
 
-Antes do código de jornada: resolver/registrar UX05/UX06 e detalhar recuperação HU14. Na próxima melhoria de interface: testar foco/teclado, rótulos, suporte e contraste; sem quebrar login/CSRF. Depois: testar reflow/zoom, Safari/dispositivo físico e fluxos completos. Revisar regras, histórias, interface e testes em conjunto.
+Antes do código de jornada: aplicar protocolo HU14 decidido em 11/10/2026 e detalhar contratos do recorte RF17/RF18; aplicar RN05 revisada e planejar T27 para UX05. Implementar e retestar regularização de UX06 e recuperação HU14, incluindo compreensão de espera, rejeição e horário de repetição. Na próxima melhoria de interface: testar foco/teclado, rótulos, suporte e contraste; sem quebrar login/CSRF. Depois: testar reflow/zoom, Safari/dispositivo físico e fluxos completos. Revisar regras, histórias, interface e testes em conjunto.
 
 Interpretação do cenário: contextos internacionais e hipóteses explícitas. Organização/modelagem: ST → HU → RF/RN → T. Comunicação/decisões: riscos e limites registrados. Experiência/boas práticas: prevenção, recuperação e avaliação planejadas. Qualidade de código permanece sustentada por implementação/testes, não por este documento sozinho.

@@ -32,13 +32,14 @@ Esta primeira versão prioriza registros confiáveis, cálculo explicável e exe
 - Tratamento de fusos, autorização no servidor, idempotência e concorrência.
 - Interface responsiva com estados de carregamento, sucesso e erro.
 - Migrations, dados fictícios para avaliação e instruções de execução.
+- Regularização mínima de saída esquecida, com solicitação, decisão autorizada e revisão auditada (RF17/RF18, recorte P0 aprovado em 11/10/2026).
 
 ### Complemento priorizado após estabilizar o núcleo
 
 - Consulta por gestor apenas dos colaboradores vinculados à sua equipe e consulta por RH de todos os colaboradores.
-- Solicitação de correção com justificativa e aprovação pelo RH, preservando o registro original e a trilha de auditoria.
+- Correções de outros tipos de marcação, além da saída esquecida, preservando originais e auditoria.
 
-Sem correção implementada, uma marcação esquecida permanece como pendência visível; não será reparada por edição direta no banco. A documentação final deve declarar essa limitação.
+A saída esquecida permanece pendente até aprovação da regularização mínima ou saída online legítima; não há saída automática, edição direta no banco ou garantia de atendimento imediato. O recorte, permissões e regras são definidos em [requisitos.md](requisitos.md#regularização-mínima-de-saída-esquecida--decisão-p0).
 
 ### Fora do escopo inicial
 
@@ -54,7 +55,7 @@ Estas regras são hipóteses documentadas, pois não constam integralmente no en
 |RN02|O colaborador registra somente a própria jornada                          |A identidade vem da sessão; o cliente não escolhe o autor                                           |
 |RN03|Existe no máximo uma jornada aberta por colaborador                       |Evita sobreposição e totais duplicados                                                              |
 |RN04|São permitidas múltiplas pausas; todas são descontadas neste MVP          |Simplifica o cálculo, sem presumir regras locais de pausas remuneradas                              |
-|RN05|Saída durante pausa é rejeitada; deve haver retorno antes                 |Mantém a sequência e o cálculo inequívocos                                                          |
+|RN05|Saída pode encerrar jornada trabalhando ou em pausa; neste último caso, delimita a pausa final sem gerar retorno|Evita marcação artificial e mantém o cálculo por intervalos de trabalho|
 |RN06|A jornada pode atravessar a meia-noite                                    |Viagens e diferentes rotinas tornam o limite de dia civil inadequado                                |
 |RN07|O fuso de referência do colaborador é congelado ao abrir a jornada        |Trocar de país ou fuso de visualização não redistribui o histórico                                  |
 |RN08|A jornada pertence à data de início nesse fuso de referência              |Estabelece um critério estável de consulta e agrupamento mensal                                     |
@@ -73,12 +74,19 @@ Transições permitidas:
 |Trabalhando       |Início de pausa|Em pausa      |
 |Em pausa          |Retorno        |Trabalhando   |
 |Trabalhando       |Saída          |Encerrada     |
+|Em pausa          |Saída          |Encerrada     |
 
 Qualquer outra transição é rejeitada pelo backend. Desabilitar um botão no frontend melhora a experiência, mas não substitui essa validação.
 
 Duração trabalhada de uma jornada encerrada = soma dos intervalos entre entrada/retorno e início de pausa/saída, calculados a partir dos instantes UTC. Armazenar e calcular com precisão definida; arredondar somente na apresentação, sem arredondar cada intervalo antes da soma.
 
 Exemplo: 09:00 entrada, 12:00 pausa, 13:00 retorno e 18:00 saída, no mesmo fuso e sem mudança de offset: 8 horas trabalhadas. Uma jornada em andamento pode mostrar duração provisória até o instante atual do servidor, claramente identificada como provisória.
+
+### Revisão RN05 — saída durante pausa (11/10/2026)
+
+Decisão assumida para o desafio, ainda sem validação de RH e sem implementação: permitir saída diretamente do estado Em pausa. A saída delimita o fim da pausa final e encerra a jornada na mesma transação; persistir apenas o evento de saída solicitado, sem sintetizar retorno ou novo início de pausa. O intervalo entre o início dessa pausa e a saída não integra a duração trabalhada, conforme RN04. O backend determina o instante e valida identidade, estado, ordem temporal, concorrência e idempotência como nas demais transições.
+
+Exemplo determinístico: entrada 09:00, pausa 12:00 e saída 12:30, no mesmo fuso e sem mudança de offset: 3 eventos, 3h trabalhadas, 30min de pausa e jornada encerrada. Uma saída repetida com a mesma chave retorna o resultado original; uma nova saída com outra chave após encerramento é rejeitada, sem evento adicional. Não presumir regra remuneratória ou obrigação trabalhista para Brasil/Europa. Essa revisão substitui a restrição anterior de retorno obrigatório; aprovação do comportamento depende dos testes e da interface futura.
 
 ## 6. Estratégia temporal
 
@@ -157,7 +165,7 @@ A coluna numérica `version` de `@Version` é independente do tipo `rowversion` 
 
 O estado da jornada e seus eventos devem mudar na mesma transação. Usar concorrência otimista com um campo numérico `version` anotado com `@Version`, além de constraints no banco. A criação simultânea de duas jornadas também precisa ser protegida; versionamento de uma jornada ainda inexistente não resolve esse caso. Se houver conflito, a transação deve ser revertida integralmente; não continuar consultando/gravar na mesma transação marcada para rollback. Repetições devem reavaliar o estado em nova transação, preservando a chave idempotente.
 
-Se o fluxo de correção for implementado, adicionar solicitação e revisão aprovada contendo justificativa, autor, aprovador e valores anteriores/novos. O cálculo passa a usar a revisão efetiva sem apagar eventos originais. O próprio solicitante não aprova sua correção.
+No recorte P0 de regularização de saída esquecida, adicionar solicitação e revisão aprovada contendo justificativa, autor, aprovador e valores anteriores/novos. O cálculo passa a usar a saída efetiva sem apagar eventos originais nem simular marcação online. O próprio solicitante não aprova sua correção. Outras correções permanecem P1; regras canônicas em requisitos.md.
 
 ## 9. Contrato de API proposto
 
@@ -169,12 +177,13 @@ Se o fluxo de correção for implementado, adicionar solicitação e revisão ap
 |GET /api/me                              |Identidade e permissões atuais                            |
 |GET /api/me/work-sessions/current        |Jornada aberta e ações permitidas                         |
 |POST /api/me/work-events                 |Registrar evento com chave de idempotência                |
+|GET /api/me/work-event-requests/{key}     |Consultar recibo próprio para recuperar tentativa incerta |
 |GET /api/me/work-sessions?from=&to=&page=|Histórico próprio paginado                                |
 |GET /api/me/work-sessions/{id}           |Eventos e cálculo de uma jornada própria                  |
 |GET /api/team/work-sessions              |Consulta do gestor, se implementada                       |
 |GET /api/hr/work-sessions                |Consulta do RH, se implementada                           |
 
-Na marcação online, o payload contém o tipo de evento; não recebe um timestamp arbitrário ou EmployeeId escolhido pelo cliente. Documentar limites de período, paginação, formatos de data e semântica inclusiva/exclusiva dos filtros.
+Na marcação online, o payload contém tipo e expectedWorkSessionId (null na entrada; ID alvo nas outras transições), validado contra jornada própria aberta; não recebe timestamp arbitrário ou EmployeeId escolhido pelo cliente. Recuperação após falha/reload segue [requisitos.md](requisitos.md#recuperação-de-marcação-online--decisão-p0), com diário mínimo antes do envio e consulta autenticada do recibo. Documentar limites de período, paginação, formatos de data e semântica inclusiva/exclusiva dos filtros.
 
 Usar Problem Details para erros, sem stack traces. Exemplos: 401 para sessão ausente; 403 para operação sem permissão; 404 para recurso não visível ou inexistente; 409 para transição incompatível, conflito de concorrência ou reutilização de chave com outro payload. Payload inválido recebe 400. Repetição válida com a mesma chave retorna o resultado original, sem criar outro evento.
 
@@ -201,7 +210,7 @@ Contas demonstrativas devem usar apenas dados fictícios e existir somente no mo
 
 - Tela inicial com estado atual, última marcação confirmada, fuso e próxima ação válida.
 - Botão bloqueado durante o envio e confirmação somente após resposta de sucesso do servidor.
-- Em timeout, manter a mesma chave na repetição e consultar o estado: a resposta pode ter se perdido após a gravação.
+- Em timeout/reload, consultar recibo próprio pela chave preservada antes do envio e atualizar estado; repetição explícita mantém chave/payload, sem envio automático ou horário retroativo. A resposta pode ter se perdido após a gravação.
 - Histórico com filtro por período, total fechado e quantidade de jornadas pendentes, apresentados separadamente.
 - Horários formatados conforme a localidade da interface, mantendo o fuso explícito.
 - Navegação por teclado, labels, foco visível, contraste e mensagens que não dependam apenas de cor.
@@ -246,7 +255,7 @@ Ordem sugerida:
 3. Implementar estados, persistência, UTC, autorização e concorrência.
 4. Implementar telas de registro e consulta responsivas.
 5. Executar testes de fusos, acesso indevido, repetição e persistência.
-6. Adicionar consulta de gestor/RH e correção somente se o núcleo estiver estável e houver prazo.
+6. Incluir regularização mínima de saída esquecida e seus testes antes do aceite do núcleo; consulta geral de gestor/RH e outras correções somente após núcleo estável e conforme prazo.
 7. Atualizar documentação com comportamento real, revisar segredos e preparar o repositório público.
 
 Antes de cada funcionalidade: identificar requisito atendido, regra assumida, risco de segurança, critério de aceite e complexidade justificada. Depois: conferir código, comportamento observado e correspondência com a documentação.

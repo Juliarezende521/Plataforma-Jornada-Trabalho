@@ -30,7 +30,7 @@ Versões nesta base: Java 17, Spring Boot 3.5.16, Maven 3.9.11 (Wrapper), Angula
 - Autorização por usuário, transações, idempotência e controle de concorrência.
 - Interface responsiva e execução reproduzível.
 
-Consulta por gestor/RH e correções auditadas são complementos priorizados após estabilizar o núcleo. Folha de pagamento, cálculo legal de horas extras, geolocalização e operação offline estão fora do escopo inicial.
+Regularização mínima de saída esquecida, com solicitação própria e decisão auditada por aprovador autorizado, integra o núcleo planejado (RF17/RF18, recorte P0); ainda não implementada. Consulta geral por gestor/RH e outras correções permanecem P1. Folha de pagamento, cálculo legal de horas extras, geolocalização e operação offline estão fora do escopo inicial.
 
 ## Documentação
 
