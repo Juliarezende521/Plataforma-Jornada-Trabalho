@@ -12,6 +12,8 @@ Plano de IHC, inspeção inicial e roteiro de participantes: [experiencia-usuari
 - Interface: fluxo completo, responsividade, teclado, estados vazios, erros e timeout.
 - Execução: clone limpo e banco vazio, usando exclusivamente os passos publicados.
 
+Evolução na PR #1: modelo online unitário compilado/testado e regressão de autenticação repetida com sucesso, conforme [modelo-jornada.md](modelo-jornada.md). Commit de código/ajuste 2d15a39, Foundation checks 38199549465 e SQL Server/browser 38199549481. Isso não aprova os cenários completos de jornada abaixo: persistência/API/interface de jornada ainda ausentes.
+
 ## Casos de teste rastreáveis
 
 | ID | Requisito | Cenário | Resultado esperado |
@@ -77,7 +79,7 @@ Para concorrência, usar barreira de sincronização ou disparo coordenado em m�
 | Evidência | Conteúdo necessário | Estado atual |
 |---|---|---|
 | Execução limpa | Commit, ambiente, versões, comandos exatos, logs sanitizados e resultado | Checkout limpo/CI de autenticação aprovado; execução local/produto completo pendente |
-| Testes automatizados | Comando, commit, testes/falhas e relatório gerado | 12 backend + 14 frontend + 2 SQL Server + 2 percursos E2E aprovados; jornada pendente |
+| Testes automatizados | Comando, commit, testes/falhas e relatório gerado | PR #1: 24 backend (12 base + 12 domínio) + 14 frontend + 2 SQL Server + 2 percursos E2E de autenticação aprovados no commit 2d15a39; jornada completa pendente |
 | Testes manuais | T20/T22 e demais fluxos, ambiente e resultado observado | Pendente |
 | Banco | Histórico Flyway, constraints e contagens relevantes | V1, persistência/constraints de contas e seed repetido aprovados; jornada pendente |
 | Segurança | Resultado de acesso cruzado, CSRF, logout e inspeção de segredos | Identidades isoladas, CSRF/logout/cookies/expiração aprovados; autorização de jornada pendente |

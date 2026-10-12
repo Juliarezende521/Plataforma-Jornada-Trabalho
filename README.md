@@ -41,6 +41,7 @@ Regularização mínima de saída esquecida, com solicitação própria e decis�
 | [Histórias de usuário](docs/historias-usuario.md) | Necessidades e aceite rastreáveis aos requisitos/testes |
 | [Experiência do usuário/IHC](docs/experiencia-usuario.md) | Fluxos, acessibilidade, inspeção e plano de teste de usabilidade |
 | [Arquitetura e decisões](docs/arquitetura.md) | Modelo, segurança, contratos e trade-offs |
+| [Modelo inicial de jornada](docs/modelo-jornada.md) | Domínio online, evidências dos testes e limites da etapa; sem persistência/API de jornada |
 | [EAP](docs/eap.md) | Pacotes de entrega e dependências |
 | [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |
 | [Proposta inicial](docs/proposta.md) | Contexto, regras e matriz dos oito critérios de avaliação |
