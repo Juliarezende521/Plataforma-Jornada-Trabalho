@@ -1,6 +1,6 @@
 # Modelo inicial de jornada — domínio online
 
-Modelo iniciado em 11/10/2026 e validado em CI em 12/10/2026. Status: compilação/empacotamento backend e 24 testes aprovados (12 existentes + 12 novos de domínio); build frontend e seus 14 testes aprovados. Não há endpoints, mapeamento JPA ou migrations de jornada. O produto continua oferecendo somente autenticação integrada; journeyAvailable permanece false. Branch validate/journey-domain, PR #1 em rascunho, sem integração automática à main.
+Modelo iniciado em 11/10/2026 e validado em CI em 12/10/2026. Validação inicial: compilação/empacotamento backend e 24 testes aprovados (12 existentes + 12 novos de domínio); build frontend e seus 14 testes aprovados. PR #1, inicialmente em rascunho na branch validate/journey-domain, integrada à main em 12/10/2026 após autorização e CI do head final 23363f5 aprovada; merge f88ffe6. A refatoração posterior e suas contagens atualizadas estão em [revisao-qualidade.md](revisao-qualidade.md). Não há endpoints, mapeamento JPA ou migrations de jornada; journeyAvailable permanece false.
 
 ## Revisão antes da implementação
 
@@ -48,4 +48,4 @@ A repetição com o ajuste, commit 2d15a39e6d5449c77b32f9819196e6d9df1b27c6, che
 
 Aceite desta fatia: modelo online compilado e testes unitários aprovados, com regressão da autenticação existente aprovada no commit indicado. Persistência/reconstituição do agregado, transações/versão, uma jornada aberta por colaborador, autorização por recurso, recibos/idempotência e regularização auditada são critérios das próximas fatias, não garantias deste código.
 
-Não integrar automaticamente à main. Atualizações documentais posteriores não alteram o código testado; conferir também a CI do head final da PR antes de integrar. Próximo passo: decisão de integração; depois implementar/testar migrations, mapeamento/reconstituição e serviços com Clock/identidade. Somente após essas validações expor API/interface de jornada e validar com SQL Server real.
+A PR #1 foi integrada mediante autorização em 12/10/2026, após Foundation checks 38200186898 e SQL Server/browser 38200186913 aprovados no head final 23363f5. Os registros acima preservam o histórico do desenvolvimento/validação; o modelo está na main. Próximo passo, após revisão/refatoração de qualidade: implementar/testar migrations, mapeamento/reconstituição e serviços com Clock/identidade. Somente após essas validações expor API/interface de jornada e validar com SQL Server real.
