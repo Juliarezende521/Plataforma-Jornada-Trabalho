@@ -1,5 +1,5 @@
 :host { display: block; }
-.shell { max-width: 54rem; margin: 0 auto; padding: 3rem 1.25rem; }
+.shell { max-width: 42rem; margin: 0 auto; padding: 3rem 1.25rem; }
 .company { font-weight: 700; color: #3857ab; }
 h1 { font-size: clamp(2rem, 6vw, 3rem); margin: .5rem 0; }
 header > p:last-child, footer { color: #475569; line-height: 1.6; }
@@ -12,7 +12,6 @@ button:disabled { opacity: .7; cursor: wait; }
 button:focus-visible { outline: 3px solid #b45309; outline-offset: 4px; }
 .feedback { min-height: 4rem; color: #334155; }
 footer { margin-top: 1.5rem; font-size: .9rem; }
-.shell { max-width: 42rem; }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 label { display: block; margin-top: .75rem; font-weight: 600; }
 input { display: block; width: 100%; min-height: 3rem; padding: .75rem; margin-top: .4rem; border: 1px solid #64748b; border-radius: .5rem; color: inherit; background: white; font: inherit; }

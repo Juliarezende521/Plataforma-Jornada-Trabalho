@@ -3,7 +3,8 @@ package io.github.juliarezende521.workjourney.journey;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import io.github.juliarezende521.workjourney.time.ReferenceTimeZones;
+import io.github.juliarezende521.workjourney.time.UtcInstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,13 +30,11 @@ public final class WorkSession {
     private WorkSession(UUID employeeId, UUID actorUserId, String zoneId, Instant serverInstant) {
         this.employeeId = Objects.requireNonNull(employeeId, "Employee is required");
         this.actorUserId = Objects.requireNonNull(actorUserId, "Actor is required");
-        if (zoneId == null || !ZoneId.getAvailableZoneIds().contains(zoneId)) {
-            throw new IllegalArgumentException("An IANA reference zone is required");
-        }
-        Instant instant = normalize(serverInstant);
+        var referenceZone = ReferenceTimeZones.requireValid(zoneId);
+        Instant instant = UtcInstants.normalize(serverInstant);
         this.id = UUID.randomUUID();
-        this.referenceTimeZoneId = zoneId;
-        this.workDate = instant.atZone(ZoneId.of(zoneId)).toLocalDate();
+        this.referenceTimeZoneId = referenceZone.getId();
+        this.workDate = instant.atZone(referenceZone).toLocalDate();
         this.workingSince = instant;
         events.add(event(WorkEventType.ENTRY, instant));
     }
@@ -47,32 +46,16 @@ public final class WorkSession {
 
     public void record(WorkEventType type, Instant serverInstant) {
         Objects.requireNonNull(type, "Event type is required");
-        Instant instant = normalize(serverInstant);
+        Instant instant = UtcInstants.normalize(serverInstant);
         if (instant.isBefore(lastInstant())) {
             throw new IllegalArgumentException("Event cannot precede the last event");
         }
-        WorkState next = switch (type) {
-            case ENTRY -> throw new IllegalStateException("Entry already exists");
-            case PAUSE_START -> {
-                requireState(WorkState.WORKING);
-                yield WorkState.PAUSED;
-            }
-            case PAUSE_END -> {
-                requireState(WorkState.PAUSED);
-                yield WorkState.WORKING;
-            }
-            case EXIT -> {
-                if (state == WorkState.CLOSED) {
-                    throw new IllegalStateException("Session is already closed");
-                }
-                yield WorkState.CLOSED;
-            }
-        };
+        WorkState next = state.nextFor(type);
         // Validate before changing any field; rejected commands leave this aggregate unchanged.
         WorkEvent event = event(type, instant);
-        if (state == WorkState.WORKING) {
-            completedWork = completedWork.plus(Duration.between(workingSince, instant));
-        }
+        Duration updatedWork = state == WorkState.WORKING
+                ? completedWork.plus(Duration.between(workingSince, instant)) : completedWork;
+        completedWork = updatedWork;
         workingSince = next == WorkState.WORKING ? instant : null;
         state = next;
         if (next == WorkState.CLOSED) closedAtUtc = instant;
@@ -81,7 +64,7 @@ public final class WorkSession {
 
     /** Provisional duration for open sessions; no deduction beyond the last pause start. */
     public Duration durationAt(Instant serverInstant) {
-        Instant instant = normalize(serverInstant);
+        Instant instant = UtcInstants.normalize(serverInstant);
         if (instant.isBefore(lastInstant())) {
             throw new IllegalArgumentException("Calculation instant precedes the last event");
         }
@@ -113,8 +96,4 @@ public final class WorkSession {
         if (state != expected) throw new IllegalStateException("Event is incompatible with session state");
     }
 
-    private static Instant normalize(Instant instant) {
-        Objects.requireNonNull(instant, "Server instant is required");
-        return instant.minusNanos(instant.getNano() % 100);
-    }
 }

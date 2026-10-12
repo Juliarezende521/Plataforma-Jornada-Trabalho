@@ -1,31 +1,34 @@
 package io.github.juliarezende521.workjourney.config;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import io.github.juliarezende521.workjourney.auth.LoginProtectionFilter;
+import io.github.juliarezende521.workjourney.auth.LoginAttemptLimiter;
+import io.github.juliarezende521.workjourney.http.ProblemResponseWriter;
 
 @Configuration
 public class SecurityConfiguration {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, LoginAttemptLimiter limiter,
+                                           ProblemResponseWriter problems) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/status", "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .anyRequest().authenticated())
-            .addFilterBefore(new LoginProtectionFilter(), UsernamePasswordAuthenticationFilter.class)
+            // Construct only inside the security chain, avoiding duplicate servlet registration.
+            .addFilterBefore(new LoginProtectionFilter(limiter, problems), UsernamePasswordAuthenticationFilter.class)
             .formLogin(form -> form.loginProcessingUrl("/api/auth/login")
                 .usernameParameter("email")
                 .successHandler((request, response, authentication) -> response.setStatus(204))
                 .failureHandler((request, response, exception) ->
-                    writeProblem(response, 401, "Invalid credentials")))
+                    problems.write(response, 401, "Invalid credentials")))
             .httpBasic(basic -> basic.disable())
             .requestCache(cache -> cache.disable())
             .logout(logout -> logout.logoutUrl("/api/auth/logout")
@@ -33,9 +36,9 @@ public class SecurityConfiguration {
                 .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)))
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint((request, response, exception) ->
-                    writeProblem(response, 401, "Authentication required"))
+                    problems.write(response, 401, "Authentication required"))
                 .accessDeniedHandler((request, response, exception) ->
-                    writeProblem(response, 403, "Access denied")));
+                    problems.write(response, 403, "Access denied")));
         // Default session CSRF repository and session-fixation protection stay enabled.
         return http.build();
     }
@@ -45,11 +48,8 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder(12);
     }
 
-    private static void writeProblem(HttpServletResponse response, int status, String title)
-            throws java.io.IOException {
-        response.setStatus(status);
-        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-        response.getWriter().write("{\"type\":\"about:blank\",\"title\":\"" + title
-                + "\",\"status\":" + status + "}");
+    @Bean
+    LoginAttemptLimiter loginAttemptLimiter() {
+        return new LoginAttemptLimiter(Clock.systemUTC());
     }
 }

@@ -13,6 +13,13 @@ class AccountModelTest {
         assertThrows(IllegalArgumentException.class, () -> new AppUser("a@example.invalid", "plaintext"));
     }
     @Test
+    void rejectsNullHashAndNullReferenceZoneWithValidationErrors() {
+        assertThrows(IllegalArgumentException.class, () -> new AppUser("a@example.invalid", null));
+        var user = new AppUser("a@example.invalid", new BCryptPasswordEncoder(4).encode("test-password-only"));
+        assertThrows(IllegalArgumentException.class, () -> new Employee(user, "Brasil", null));
+    }
+
+    @Test
     void rejectsOffsetInsteadOfIanaReferenceZone() {
         var user = new AppUser("brasil@example.invalid", new BCryptPasswordEncoder(4).encode("test-password-only"));
         assertThrows(IllegalArgumentException.class, () -> new Employee(user, "Brasil", "+03:00"));
