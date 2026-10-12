@@ -77,7 +77,13 @@ start_backend() {
   backend_pid=$!
   ready=false
   for attempt in $(seq 1 60); do
-    if curl -fsS http://127.0.0.1:8080/api/status >/dev/null 2>&1; then ready=true; break; fi
+    # HTTP availability precedes ApplicationRunner completion. Wait for the seed
+    # transaction to commit before killing/restarting the process or testing login.
+    if curl -fsS http://127.0.0.1:8080/api/status >/dev/null 2>&1 \
+      && sql -d work_journey_ci -Q "IF (SELECT COUNT(*) FROM dbo.app_user) <> 2 THROW 51000, 'Seed accounts not ready', 1; IF (SELECT COUNT(*) FROM dbo.employee) <> 2 THROW 51001, 'Seed employees not ready', 1;" >/dev/null 2>&1; then
+      ready=true
+      break
+    fi
     if ! kill -0 "$backend_pid" 2>/dev/null; then break; fi
     sleep 1
   done
