@@ -1,6 +1,6 @@
 # Modelo inicial de jornada — domínio online
 
-Data: 11/10/2026. Status: código de domínio e 12 testes JUnit escritos; compilação e execução desses testes ainda não comprovadas nesta etapa. Não há endpoints, mapeamento JPA ou migrations de jornada. O produto continua oferecendo somente autenticação integrada; journeyAvailable permanece false.
+Modelo iniciado em 11/10/2026 e validado em CI em 12/10/2026. Status: compilação/empacotamento backend e 24 testes aprovados (12 existentes + 12 novos de domínio); build frontend e seus 14 testes aprovados. Não há endpoints, mapeamento JPA ou migrations de jornada. O produto continua oferecendo somente autenticação integrada; journeyAvailable permanece false. Branch validate/journey-domain, PR #1 em rascunho, sem integração automática à main.
 
 ## Revisão antes da implementação
 
@@ -29,8 +29,10 @@ Regularização manual deverá usar pedido/revisão separada dos eventos origina
 
 ## Testes escritos e validação atual
 
-WorkSessionTest contém 12 métodos cobrindo múltiplas pausas, saída em pausa, madrugada/mês, instantes em mudanças de horário de verão, visualização em outro fuso, transições inválidas, relógio regressivo, sequência com instantes iguais, duração provisória, precisão, snapshots imutáveis e entradas inválidas. São testes unitários planejados para execução; não declarar T03–T34 integralmente aprovados por sua existência.
+WorkSessionTest contém 12 métodos aprovados cobrindo múltiplas pausas, saída em pausa, madrugada/mês, instantes em mudanças de horário de verão, visualização em outro fuso, transições inválidas, relógio regressivo, sequência com instantes iguais, duração provisória, precisão, snapshots imutáveis e entradas inválidas. Esses testes unitários não aprovam T03–T34 integralmente: não verificam banco, HTTP, autorização, regularização, recibos ou interface de jornada.
 
 Comando esperado no backend: ./mvnw --batch-mode verify. Em 11/10/2026, a tentativa offline falhou por ausência do parent Spring Boot 3.5.16 no cache; a tentativa online falhou por resolução DNS de repo.maven.apache.org. Nenhum teste foi executado nessas tentativas. A alternativa de compilação isolada também não ocorreu: o ambiente dispõe de java, mas javac/jshell não estão disponíveis. Os 12 testes de base e evidências SQL/browser anteriores não validam este novo código.
 
-Antes de aceitar esta etapa: executar compilação e os 24 testes backend esperados (12 existentes + 12 novos), corrigir falhas e registrar resultado real. Em 12/10/2026, a desenvolvedora autorizou usar GitHub Actions: código será registrado na branch de validação validate/journey-domain e proposto em PR rascunho, sem integração automática à main. Esta publicação de trabalho não comprova aprovação dos testes. Depois implementar/testar migrations, serviços com Clock/identidade, autorização por recurso, concorrência, recibos e regularização mínima; somente então expor API e interface e repetir validação com SQL Server real.
+Em 12/10/2026, a desenvolvedora autorizou usar GitHub Actions: código registrado na branch validate/journey-domain e [PR #1 em rascunho](https://github.com/Juliarezende521/work-journey-platform/pull/1). Commit de código 2f04d758803f565eca22f839a36878de1d95f8c1, testado pelo checkout de merge da PR. [Foundation checks 38199349907](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38199349907) aprovado: backend 24 testes, zero falhas/erros/ignorados e BUILD SUCCESS; frontend build aprovado e 14 testes aprovados. Resultados conferidos nos logs dos jobs backend 114649059513 e frontend 114649059663, não apenas no ícone da CI.
+
+O workflow de regressão SQL Server/autenticação 38199350023 foi também iniciado; seu resultado ainda não foi confirmado neste registro. Ele cobre schema/login existentes, não persistência de jornadas. Não integrar automaticamente à main. Próximo passo: revisão final do modelo e decisão de integração; depois implementar/testar migrations, serviços com Clock/identidade, autorização por recurso, concorrência, recibos e regularização mínima. Somente então expor API/interface de jornada e validar com SQL Server real.
