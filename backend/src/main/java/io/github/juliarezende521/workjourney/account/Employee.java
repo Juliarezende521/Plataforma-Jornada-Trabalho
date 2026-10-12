@@ -1,7 +1,7 @@
 package io.github.juliarezende521.workjourney.account;
 
 import jakarta.persistence.*;
-import java.time.ZoneId;
+import io.github.juliarezende521.workjourney.time.ReferenceTimeZones;
 import java.util.UUID;
 
 @Entity
@@ -18,14 +18,14 @@ public class Employee {
     protected Employee() { }
 
     public Employee(AppUser user, String name, String timeZoneId) {
-        if (user == null || name == null || name.isBlank() || name.length() > 150
-                || !ZoneId.getAvailableZoneIds().contains(timeZoneId)) {
+        if (user == null || name == null || name.isBlank() || name.length() > 150) {
             throw new IllegalArgumentException("Valid user, name and IANA zone are required");
         }
+        String validZoneId = ReferenceTimeZones.requireValid(timeZoneId).getId();
         this.id = UUID.randomUUID();
         this.user = user;
         this.name = name.strip();
-        this.referenceTimeZoneId = timeZoneId;
+        this.referenceTimeZoneId = validZoneId;
     }
     public UUID getId() { return id; }
     public String getName() { return name; }

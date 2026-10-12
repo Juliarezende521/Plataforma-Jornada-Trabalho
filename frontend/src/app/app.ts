@@ -1,9 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from './auth/auth.service';
+import { authErrorMessage } from './auth/auth-feedback';
 
 @Component({
   selector: 'app-root',
@@ -65,7 +65,7 @@ export class App {
         this.unavailable.set(false);
         if (!user) this.message.set('Não foi possível manter a sessão. Entre novamente.');
       },
-      error: (error: unknown) => this.message.set(this.errorMessage(error, 'login')),
+      error: (error: unknown) => this.message.set(authErrorMessage(error, 'login')),
     });
   }
 
@@ -76,18 +76,8 @@ export class App {
     this.auth.logout().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.busy.set(false)))
       .subscribe({
         next: () => this.message.set('Você saiu da plataforma.'),
-        error: (error: unknown) => this.message.set(this.errorMessage(error, 'logout')),
+        error: (error: unknown) => this.message.set(authErrorMessage(error, 'logout')),
       });
   }
 
-  private errorMessage(error: unknown, operation: 'login' | 'logout'): string {
-    if (error instanceof HttpErrorResponse) {
-      if (error.status === 429) return 'Muitas tentativas de acesso. Aguarde um minuto e tente novamente.';
-      if (error.status === 403) return 'Seu acesso precisa ser atualizado. Verifique a sessão e tente novamente.';
-      if (error.status === 401 && operation === 'login') return 'Não foi possível entrar. Confira seu email e senha.';
-    }
-    return operation === 'login'
-      ? 'Não foi possível confirmar o acesso. Verifique a sessão antes de tentar novamente.'
-      : 'Não foi possível confirmar a saída. Verifique a sessão e tente novamente.';
-  }
 }

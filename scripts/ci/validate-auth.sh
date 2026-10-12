@@ -71,6 +71,10 @@ rm "$test_tmp/provision.sql"
 sql -d work_journey_ci -Q 'GRANT SELECT, INSERT ON dbo.app_user TO journey_app; GRANT SELECT, INSERT ON dbo.employee TO journey_app;' >/dev/null
 (cd backend && ./mvnw --batch-mode verify)
 
+assert_evaluation_seed() {
+  sql -d work_journey_ci -Q "IF (SELECT COUNT(*) FROM dbo.app_user) <> 2 THROW 51000, 'Seed must create exactly two accounts across restarts', 1; IF (SELECT COUNT(*) FROM dbo.employee) <> 2 THROW 51001, 'Seed must create exactly two employees across restarts', 1;"
+}
+
 start_backend() {
   java -jar backend/target/work-journey-backend-0.1.0-SNAPSHOT.jar \
     --spring.profiles.active=evaluation > "$test_tmp/backend.log" 2>&1 &
@@ -80,7 +84,7 @@ start_backend() {
     # HTTP availability precedes ApplicationRunner completion. Wait for the seed
     # transaction to commit before killing/restarting the process or testing login.
     if curl -fsS http://127.0.0.1:8080/api/status >/dev/null 2>&1 \
-      && sql -d work_journey_ci -Q "IF (SELECT COUNT(*) FROM dbo.app_user) <> 2 THROW 51000, 'Seed accounts not ready', 1; IF (SELECT COUNT(*) FROM dbo.employee) <> 2 THROW 51001, 'Seed employees not ready', 1;" >/dev/null 2>&1; then
+      && assert_evaluation_seed >/dev/null 2>&1; then
       ready=true
       break
     fi
@@ -98,7 +102,8 @@ kill "$backend_pid"
 wait "$backend_pid" || true
 backend_pid=''
 start_backend
-sql -d work_journey_ci -Q "IF (SELECT COUNT(*) FROM dbo.app_user) <> 2 THROW 51000, 'Seed must create exactly two accounts across restarts', 1; IF (SELECT COUNT(*) FROM dbo.employee) <> 2 THROW 51001, 'Seed must create exactly two employees across restarts', 1; SELECT @@VERSION AS sql_server_version;"
+assert_evaluation_seed
+sql -d work_journey_ci -Q 'SELECT @@VERSION AS sql_server_version;'
 
 export CI_TLS_KEY="$test_tmp/localhost.key"
 export CI_TLS_CERT="$test_tmp/localhost.pem"
