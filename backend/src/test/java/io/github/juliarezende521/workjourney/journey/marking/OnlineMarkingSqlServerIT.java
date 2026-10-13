@@ -215,7 +215,7 @@ class OnlineMarkingSqlServerIT {
             }));
             assertTrue(service.lookup(key).isEmpty());
             assertTrue(sessions.findCurrentOwned(owner.employeeId()).isEmpty());
-            assertEquals(0, transaction().execute(status -> eventCount(owner)));
+            assertEquals(0, transaction().execute(status -> eventCount(owner)).intValue());
         } finally { cleanup(owner); }
     }
 
@@ -228,8 +228,8 @@ class OnlineMarkingSqlServerIT {
             var results = race(owner, key, key, new MarkingCommand(ENTRY, null));
             assertEquals(results[0], results[1]);
             assertEquals(201, results[0].httpStatus());
-            assertEquals(1, transaction().execute(status -> count("idempotency_request", owner)));
-            assertEquals(1, transaction().execute(status -> eventCount(owner)));
+            assertEquals(1, transaction().execute(status -> count("idempotency_request", owner)).intValue());
+            assertEquals(1, transaction().execute(status -> eventCount(owner)).intValue());
         } finally { cleanup(owner); }
     }
 
@@ -241,8 +241,8 @@ class OnlineMarkingSqlServerIT {
             var results = race(owner, UUID.randomUUID(), UUID.randomUUID(), new MarkingCommand(ENTRY, null));
             assertEquals(1, java.util.Arrays.stream(results).filter(result -> result.code() == RECORDED).count());
             assertEquals(1, java.util.Arrays.stream(results).filter(result -> result.code() == ALREADY_OPEN).count());
-            assertEquals(2, transaction().execute(status -> count("idempotency_request", owner)));
-            assertEquals(1, transaction().execute(status -> eventCount(owner)));
+            assertEquals(2, transaction().execute(status -> count("idempotency_request", owner)).intValue());
+            assertEquals(1, transaction().execute(status -> eventCount(owner)).intValue());
         } finally { cleanup(owner); }
     }
 
@@ -257,8 +257,8 @@ class OnlineMarkingSqlServerIT {
             assertEquals(1, java.util.Arrays.stream(results).filter(result -> result.code() == RECORDED).count());
             assertEquals(1, java.util.Arrays.stream(results).filter(result -> result.code() == INVALID_TRANSITION).count());
             assertEquals(1, sessions.findCurrentOwned(owner.employeeId()).orElseThrow().version());
-            assertEquals(3, transaction().execute(status -> count("idempotency_request", owner)));
-            assertEquals(2, transaction().execute(status -> eventCount(owner)));
+            assertEquals(3, transaction().execute(status -> count("idempotency_request", owner)).intValue());
+            assertEquals(2, transaction().execute(status -> eventCount(owner)).intValue());
         } finally { cleanup(owner); }
     }
 
