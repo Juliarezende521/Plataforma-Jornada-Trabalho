@@ -66,12 +66,13 @@ rm "$test_tmp/provision.sql"
 (
   export DB_USERNAME="$DB_MIGRATION_USERNAME" DB_PASSWORD="$DB_MIGRATION_PASSWORD"
   cd backend
-  # Exercise an existing V1 schema before Flyway upgrades it to V2.
-  ./mvnw --batch-mode -Dtest=SqlServerIT -Dspring.flyway.target=1 test
-  ./mvnw --batch-mode -Dtest=SqlServerIT,JourneySchemaSqlServerIT test
+  # V1 migration check is independent of JPA entities that require V2 tables.
+  ./mvnw --batch-mode -Dtest=MigrationUpgradeSqlServerIT test
+  ./mvnw --batch-mode -Dtest=SqlServerIT,JourneySchemaSqlServerIT,JourneyPersistenceSqlServerIT test
 )
 sql -d work_journey_ci -Q 'GRANT SELECT, INSERT ON dbo.app_user TO journey_app; GRANT SELECT, INSERT ON dbo.employee TO journey_app; GRANT SELECT, INSERT, UPDATE ON dbo.work_session TO journey_app; GRANT SELECT, INSERT ON dbo.work_event TO journey_app;' >/dev/null
 sql -d work_journey_ci -Q "EXECUTE AS USER = 'journey_app'; IF HAS_PERMS_BY_NAME('dbo.work_event', 'OBJECT', 'INSERT') <> 1 OR HAS_PERMS_BY_NAME('dbo.work_event', 'OBJECT', 'UPDATE') <> 0 OR HAS_PERMS_BY_NAME('dbo.work_event', 'OBJECT', 'DELETE') <> 0 OR HAS_PERMS_BY_NAME('dbo.work_session', 'OBJECT', 'UPDATE') <> 1 OR HAS_PERMS_BY_NAME('dbo.work_session', 'OBJECT', 'DELETE') <> 0 OR HAS_PERMS_BY_NAME('dbo.work_session', 'OBJECT', 'ALTER') <> 0 THROW 51002, 'Runtime journey permissions are invalid', 1; REVERT;" >/dev/null
+(cd backend && ./mvnw --batch-mode '-Dtest=JourneyPersistenceSqlServerIT#runtimePermissionsSupportAppendWithoutRewritingOriginals' test)
 (cd backend && ./mvnw --batch-mode verify)
 
 assert_evaluation_seed() {

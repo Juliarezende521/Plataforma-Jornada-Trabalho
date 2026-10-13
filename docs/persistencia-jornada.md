@@ -1,6 +1,8 @@
-# Persistência de jornada — schema SQL Server
+# Persistência de jornada — SQL Server e fronteira JPA
 
 Fatia iniciada em 13/10/2026, após a segunda análise de segurança/desempenho/legibilidade. Schema e testes aprovados em CI no commit 375f8d6, propostos na [PR #3](https://github.com/Juliarezende521/work-journey-platform/pull/3), sem integração à main. Esta etapa entrega o schema, não o mapeamento JPA, serviço transacional, API ou interface de jornada. `journeyAvailable` continua false.
+
+Atualização da próxima fatia em 13/10/2026: mapeamento JPA, reconstituição e operações transacionais de armazenamento escritos, com CI pendente. O parágrafo acima e a evidência do commit 375f8d6 descrevem a primeira fatia do schema. API, serviço de aplicação com identidade/Clock, recibos e regularização continuam pendentes.
 
 ## Aderência e decisões
 
@@ -58,6 +60,38 @@ Local: `git diff --check` e `bash -n scripts/ci/validate-auth.sh` aprovados. Mav
 
 XSS/manipulação de arquivos/APIs externas: sem novos caminhos nesta mudança. SQL usa parâmetros nos testes, sem entrada de usuário em DDL. Sem nova credencial real, resposta pública, DTO ou regra de sessão. Limites de segurança são registrados acima; falta de implementação não é prova de exploração atual.
 
-## Próxima fatia
+## Fronteira JPA e reconstituição — implementação atual
 
-Mapeamento/reconstituição do agregado, incremento efetivo de versão, serviço com identidade/Clock confiáveis e transações/recibos idempotentes; depois API e frontend. Regularização P0 continua separada e pendente. Responsividade/IHC não foram validadas por testes de banco. Não há aceite global do desafio nem aprovação do técnico da empresa nesta etapa.
+`WorkSession.restore` reconstrói o agregado pelos eventos originais, preservando IDs, autor, sequência e instantes. Verifica ENTRY inicial, identidade, sequência contígua, IDs distintos, data inicial no fuso e transições/ordem temporal. `record` e replay usam a mesma atualização de intervalos, sem copiar a regra de duração para o banco. Não gera novos IDs durante o replay.
+
+`WorkSessionRow`/`WorkEventRow`, no pacote journey.persistence, representam o armazenamento. OffsetDateTime UTC com TimeZoneStorage NATIVE e datetimeoffset(7) na fronteira; Instant/Duration continuam no domínio. Campos de referência/autoria são updatable=false; eventos são Immutable e não têm setters. O carregamento verifica que estado, entrada, último evento e encerramento correspondem ao replay; não repara dados inconsistentes silenciosamente. Fechamento manual precisará incorporar a revisão efetiva no modelo de leitura, ainda não implementada.
+
+`JpaWorkSessionStore.create` aceita somente ENTRY inicial. `append` aplica uma única transição, exige versão esperada e atualiza o pai com @Version antes de inserir o novo evento. As duas gravações usam uma transação REQUIRED: podem integrar a futura transação do recibo. Não há retry automático nem captura que continue em transação inválida. Um comando válido muda o estado mesmo com instante igual, gerando UPDATE real e incremento de versão.
+
+`findOwned`/`append` filtram por jornada e colaborador; isso impede acesso cruzado nesse componente, mas não comprova a derivação da identidade autenticada no HTTP. O componente ainda recebe identidade/Instant de chamadas internas. Não expor o agregado como JSON nem tratar esse armazenamento como serviço de marcação pronto.
+
+Sob READ COMMITTED, a leitura de eventos pode observar uma gravação posterior à leitura do pai. Uma consulta escalar da versão, após ler os eventos, identifica essa situação como conflito antes de comparar o checkpoint; o UPDATE com @Version cobre mudanças posteriores. Não há lock em memória ou promise de snapshot global. O retorno pode ficar obsoleto após a transação, por isso mutações exigem versão esperada.
+
+### Testes novos desta fatia
+
+- 3 testes unitários de replay: IDs/duração/continuação em pausa no horário de verão; entrada/identidade/data/sequência inválidas; IDs duplicados, transições inválidas e relógio regressivo.
+- 7 testes JourneyPersistenceSqlServerIT: roundtrip UTC/100 ns, incremento com instantes iguais e originais preservados; outro colaborador; versão antiga; checkpoint divergente; rejeição de create com transições sem versão; rollback após flush da operação JPA em transação externa; duas transições em threads/transações independentes com exatamente uma vencedora e um evento novo.
+- 1 teste MigrationUpgradeSqlServerIT: vazio → V1 → V2 → validate → nova migrate sem alterações. Substitui o boot com target=1: entidades atuais exigem V2, portanto o teste da etapa antiga não deve iniciar Hibernate. Nenhuma migration aplicada foi editada e ddl-auto=validate continua no ambiente normal.
+- Após grants, a CI repete somente o método runtimePermissionsSupportAppendWithoutRewritingOriginals com a conta real da aplicação; ele é revertido ao final e comprova que o armazenamento funciona sem UPDATE/DELETE nos eventos. O restante da suíte SQL usa a conta de migration para limpar a massa confirmada dos testes concorrentes. Repetições não aumentam a contagem de testes distintos.
+
+### Revisão e segunda análise da fatia JPA
+
+| ID / critério | Causa, evidência, impacto inicial/final e falso positivo | Verificação e ação |
+|---|---|---|
+| J01 — integridade/concorrência | Somente inserir filho não incrementaria a versão do pai. Médio → médio como risco tratado; checkpoint muda em toda transição e @Version participa do UPDATE. Anotação sozinha não comprova a proteção. | Testes de versão igual/antiga e concorrência em SQL Server; CI pendente nesta atualização. |
+| J02 — consistência de leitura | Duas consultas READ COMMITTED podem observar versões diferentes. Médio → médio, mitigado por consulta escalar da versão; não classificar como corrupção confirmada. | Teste concorrente cobre conflito; interleaving específico entre consultas ainda precisa de teste determinístico. Não anunciar isolamento de snapshot. |
+| J03 — autorização/fonte temporal | Filtro de colaborador implementado; chamadas internas ainda recebem IDs/Instant. Médio condicional → médio pendente na aplicação HTTP, sem desvio exposto demonstrado. | Derivar identidade da sessão e instante de Clock no futuro serviço; teste cruzado desta camada não aprova RNF03 completo. |
+| J04 — preservação/modelagem | Campos JPA congelados, eventos imutáveis e replay sem novos IDs. Médio como risco de integração → baixo residual condicionado a grants/conta privilegiada. Não afirmar auditoria completa por usar Immutable. | Testar roundtrip e runtime restrito; revisão manual permanece separada. |
+| J05 — desempenho | Replay é O(n) por jornada, com memória O(n); leitura própria usa três consultas de quantidade constante, sem lazy loop por evento. Baixo condicional → baixo; nenhum gargalo medido. | Consulta extra resolve a consistência J02. Medir com massa antes de otimizar; não adicionar checkpoint de duração nem remover verificações por preferência. |
+| J06 — coesão/legibilidade | Domínio preserva regras; rows fazem mapeamento; store coordena armazenamento. Compartilhar apply evita duplicar cálculo no replay. Baixo → baixo como manutenção potencial, sem defeito confirmado. | Nomes, comentários explicando flush/READ COMMITTED e testes por cenário; sem interface genérica ou dependência nova. |
+
+Segurança separada: novas consultas JPQL são parametrizadas; não há novo template HTML, upload, caminho de arquivo, API externa ou log de credencial. Sessão/CSRF não foram modificados. Validação do replay impede aceitar dados estruturais inválidos nesta fronteira; não substitui validação de DTO, autenticação ou autorização de requisições. RuntimeException de infraestrutura não é contrato HTTP: tradução pública ainda será definida antes de expor endpoints. Sem achado alto confirmado nesta revisão, com testes integrados desta fatia ainda pendentes.
+
+## Próxima fatia após validar JPA
+
+Serviço com identidade/Clock confiáveis e transações/recibos idempotentes; depois API e frontend. Regularização P0 continua separada e pendente. Responsividade/IHC não foram validadas por testes de banco. Não há aceite global do desafio nem aprovação do técnico da empresa nesta etapa.
