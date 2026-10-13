@@ -56,7 +56,7 @@ class JourneyPersistenceSqlServerIT {
     @Transactional
     void anotherEmployeeCannotLoadOrAppendSession() {
         var fixture = create();
-        UUID otherEmployee = UUID.randomUUID();
+        UUID otherEmployee = create().employeeId();
         assertTrue(store.findOwned(fixture.session().getId(), otherEmployee).isEmpty());
         assertThrows(InvalidDataAccessApiUsageException.class, () -> store.append(fixture.session().getId(), otherEmployee,
                 0, EXIT, ENTRY_TIME.plusSeconds(1)));
@@ -77,7 +77,7 @@ class JourneyPersistenceSqlServerIT {
     void inconsistentCheckpointIsRejectedInsteadOfSilentlyRepaired() {
         var fixture = create();
         entityManager.createNativeQuery("UPDATE dbo.work_session SET state = 'PAUSED' WHERE id = :id")
-                .setParameter("id", fixture.session().getId()).executeUpdate();
+                .setParameter("id", fixture.session().getId().toString()).executeUpdate();
         entityManager.clear();
         assertThrows(InvalidDataAccessApiUsageException.class, () -> store.findOwned(fixture.session().getId(), fixture.employeeId()));
     }
@@ -176,10 +176,10 @@ class JourneyPersistenceSqlServerIT {
 
     private void cleanup(Fixture fixture) {
         transaction().execute(status -> {
-            entityManager.createNativeQuery("DELETE FROM dbo.work_event WHERE work_session_id = :id").setParameter("id", fixture.session().getId()).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM dbo.work_session WHERE id = :id").setParameter("id", fixture.session().getId()).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM dbo.employee WHERE id = :id").setParameter("id", fixture.employeeId()).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM dbo.app_user WHERE id = :id").setParameter("id", fixture.userId()).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM dbo.work_event WHERE work_session_id = :id").setParameter("id", fixture.session().getId().toString()).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM dbo.work_session WHERE id = :id").setParameter("id", fixture.session().getId().toString()).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM dbo.employee WHERE id = :id").setParameter("id", fixture.employeeId().toString()).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM dbo.app_user WHERE id = :id").setParameter("id", fixture.userId().toString()).executeUpdate();
             return null;
         });
     }
