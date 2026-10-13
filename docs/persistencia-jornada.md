@@ -19,11 +19,11 @@ Referências canônicas: RF03–RF14, RNF02/RNF05/RNF06/RNF07/RNF10/RNF13 e ADR0
 | Índice por colaborador/data/id | Segue o filtro e a ordenação previstos para histórico paginado. Não há ganho de latência medido ou promessa de SLA. |
 | Runtime sem UPDATE/DELETE de eventos | Permissões verificadas no ambiente CI; originais são preservados por esse usuário. Uma conta privilegiada ainda pode alterá-los. Provisionamento real deverá reproduzir as permissões. |
 
-Campos `opened_at_utc` e `last_event_at_utc` permitem conferir limites temporais da linha de jornada; `closed_at_utc >= last_event_at_utc` admite a futura saída efetiva regularizada sem inserir evento online artificial. A revisão manual permanece pendente. Duração não é duplicada em uma coluna nesta fatia; cálculo/reconstituição continuam no domínio e exigirão integração própria.
+Campos `opened_at_utc` e `last_event_at_utc` permitem conferir limites temporais da linha de jornada; `closed_at_utc >= last_event_at_utc` admite a futura saída efetiva regularizada sem inserir evento online artificial. A revisão manual permanece pendente. Duração não é duplicada em uma coluna; cálculo/reconstituição usam o domínio, com a integração JPA descrita na segunda fatia abaixo.
 
-## Verificações
+## Verificações do schema — histórico da primeira fatia
 
-CI usa um SQL Server descartável: aplica primeiro V1 (`spring.flyway.target=1`), executa os testes existentes e depois migra para V2 e executa `SqlServerIT,JourneySchemaSqlServerIT`. Isso verifica evolução a partir de V1 e aplicação ordenada em banco inicialmente vazio. Não altera migrations aplicadas nem simula SQL Server com H2.
+Na primeira fatia, a CI usou um SQL Server descartável: aplicou primeiro V1 (`spring.flyway.target=1`), executou os testes existentes e depois migrou para V2 e executou `SqlServerIT,JourneySchemaSqlServerIT`. Isso verificou evolução a partir de V1 e aplicação ordenada em banco inicialmente vazio. Na segunda fatia, esse fluxo foi substituído pelo teste Flyway independente de JPA, descrito abaixo. Nenhuma migration aplicada foi alterada e SQL Server não foi simulado com H2.
 
 Sete testes novos:
 
