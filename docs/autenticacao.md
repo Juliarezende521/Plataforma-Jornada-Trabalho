@@ -29,7 +29,7 @@ Cliente deve obter token, preservar cookie, autenticar, obter **novo** token e e
 
 ## SQL Server e contas de avaliação
 
-Usar banco exclusivo e vazio para o projeto, com TLS válido. Disponibilizar DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD no processo (ver .env.example). A conta Flyway precisa criar objetos em dbo e gerenciar flyway_schema_history; a conta de execução precisa SELECT/INSERT nas tabelas de contas para seed, sem DDL. Privilégios de jornada serão definidos junto às próximas migrations. Não usar sa, nem banco de terceiros. Não há Docker/instância provisionada nesta etapa.
+Usar banco exclusivo e vazio para o projeto, com TLS válido. Disponibilizar DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD no processo (ver .env.example). A conta Flyway precisa criar objetos em dbo e gerenciar flyway_schema_history; a conta de execução precisa SELECT/INSERT nas tabelas de contas para seed, sem DDL. A fatia de jornada na PR #3 define SELECT/INSERT/UPDATE em work_session e somente SELECT/INSERT em work_event/idempotency_request; conferir [grants e evidências](marcacoes-idempotencia.md). Não usar sa, nem banco de terceiros. Provisionamento da CI é descartável e não configura automaticamente o computador da avaliadora/desenvolvedora.
 
 No diretório backend, com variáveis definidas:
 

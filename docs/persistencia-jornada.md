@@ -1,6 +1,6 @@
 # Persistência de jornada — SQL Server e fronteira JPA
 
-Status atual: schema, mapeamento JPA, reconstituição e operações transacionais de armazenamento aprovados em CI no commit 4553954, propostos na [PR #3](https://github.com/Juliarezende521/work-journey-platform/pull/3), sem integração à main. API, serviço de aplicação com identidade/Clock, recibos e regularização continuam pendentes; `journeyAvailable` continua false.
+Status desta camada: schema, mapeamento JPA, reconstituição e operações transacionais de armazenamento aprovados em CI no commit 4553954, propostos na [PR #3](https://github.com/Juliarezende521/work-journey-platform/pull/3), sem integração à main. A fatia posterior de serviço com identidade/Clock e recibos tem status em [marcacoes-idempotencia.md](marcacoes-idempotencia.md). API/Angular e regularização continuam pendentes; `journeyAvailable` continua false.
 
 Histórico: fatia iniciada em 13/10/2026, após a segunda análise de segurança/desempenho/legibilidade. A primeira fatia entregou somente o schema, aprovado inicialmente no commit 375f8d6; sua evidência abaixo não deve ser confundida com a validação posterior do JPA.
 
@@ -107,4 +107,4 @@ Referências técnicas: [Hibernate 6.6 — tipos temporais e locking](https://do
 
 ## Próxima fatia após validar JPA
 
-Serviço com identidade/Clock confiáveis e transações/recibos idempotentes; depois API e frontend. Regularização P0 continua separada e pendente. Responsividade/IHC não foram validadas por testes de banco. Não há aceite global do desafio nem aprovação do técnico da empresa nesta etapa.
+No checkpoint JPA, a próxima fatia era serviço com identidade/Clock e recibos; essa evolução agora tem status em [marcacoes-idempotencia.md](marcacoes-idempotencia.md). API e frontend continuam pendentes, assim como regularização P0. Responsividade/IHC não foram validadas por testes de banco. Não há aceite global do desafio nem aprovação do técnico da empresa nesta etapa.

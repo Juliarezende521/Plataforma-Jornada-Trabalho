@@ -2,7 +2,7 @@
 
 Plataforma web de registro e consulta de jornada para a empresa fictícia **Dungeons & Dragons Group**, com colaboradores no Brasil e Europa, trabalho remoto e viagens internacionais.
 
-**Status: autenticação integrada validada em CI.** Angular, Spring Boot e SQL Server real passaram juntos pelo fluxo de login, sessão, CSRF, logout e expiração em Chromium desktop e viewport de 360 px. Migration inicial, persistência de contas e seed após reinício também foram validados. Jornada e histórico ainda não estão implementados. Consulte [evidências da validação integrada](docs/validacao-integrada.md), [contrato de autenticação](docs/autenticacao.md) e [login Angular](docs/login-angular.md). Testes no celular físico/Safari e validação de produção continuam pendentes.
+**Status: interface de autenticação integrada validada em CI; backend interno de jornada na PR #3, ainda sem merge.** Angular, Spring Boot e SQL Server real passaram pelo fluxo de login, sessão, CSRF, logout e expiração em Chromium desktop e viewport de 360 px. Schema/JPA, serviço com identidade/Clock e recibos idempotentes têm validação própria em [persistência](docs/persistencia-jornada.md) e [marcações](docs/marcacoes-idempotencia.md). Endpoints/interface de jornada, histórico, regularização e recuperação Angular continuam pendentes; journeyAvailable permanece false. Consulte também [validação da autenticação](docs/validacao-integrada.md), [contrato](docs/autenticacao.md) e [login Angular](docs/login-angular.md). Celular físico/Safari e produção ainda não validados.
 
 ## Tecnologias escolhidas
 
@@ -90,7 +90,7 @@ Os testes backend padrão usam bootstrap ou testes unitários, sem banco. Exerci
 
 ### Configuração do SQL Server
 
-.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Flyway aplica V1__create_accounts_and_employees.sql e Hibernate valida o schema; esse fluxo foi aprovado em SQL Server 2022 CU20 na CI. Contas fictícias são provisionadas somente pelo perfil evaluation com EVALUATION_PASSWORD externa; veja [instruções](docs/autenticacao.md).
+.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Nesta branch, Flyway aplica V1–V3 e Hibernate valida o schema; o upgrade foi aprovado em SQL Server 2022 CU20 na CI. Usuários de migration/runtime são separados; conferir os [grants de execução](docs/marcacoes-idempotencia.md) após aplicar migrations. Contas fictícias são provisionadas somente pelo perfil evaluation com EVALUATION_PASSWORD externa; veja [instruções](docs/autenticacao.md).
 
 A conexão publicada deve validar TLS/certificado. Não usar sa como conta da aplicação. O usuário de migrations terá DDL, separado do usuário de execução. Secure=false existe somente no perfil bootstrap local, vinculado a 127.0.0.1 para permitir HTTP de desenvolvimento. Não publicar senhas reais.
 

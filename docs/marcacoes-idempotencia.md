@@ -1,6 +1,6 @@
 # Serviço de marcação online e recibos
 
-Etapa iniciada em 13/10/2026 na PR #3, após schema e JPA validados. Status inicial: código e testes escritos, CI pendente. Não há endpoint HTTP, diário Angular ou regularização nesta fatia; journeyAvailable continua false. Referências: RF03–RF06/RF14, RNF03/RNF05/RNF06/RNF07/RNF10/RNF11 e ADR03/ADR04.
+Etapa iniciada em 13/10/2026 na PR #3, após schema e JPA validados. Serviço e recibos aprovados em CI no código 7a941c8, sem merge. Não há endpoint HTTP, diário Angular ou regularização nesta fatia; journeyAvailable continua false. Referências: RF03–RF06/RF14, RNF03/RNF05/RNF06/RNF07/RNF10/RNF11 e ADR03/ADR04.
 
 ## Contrato interno e responsabilidade
 
@@ -41,28 +41,49 @@ V3 cria idempotency_request, chave única por colaborador/operação, hashes/có
 
 Runtime recebe somente SELECT/INSERT nos recibos, sem UPDATE/DELETE; eventos mantêm a mesma restrição. Não há senha, cookie, CSRF, email, nome ou motivo no recibo. Retenção de todos os recibos do MVP é uma decisão de confiabilidade; volume e futura política de retenção precisam ser dimensionados sem permitir reexecutar chave antiga.
 
+Após provisionar banco/usuários e aplicar V1–V3, o administrador do banco deve conceder as permissões de execução, usando o nome da conta configurada (exemplo de .env.example abaixo). Não usar conta de migration ou sa como runtime:
+
+```sql
+GRANT SELECT, INSERT ON dbo.app_user TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.employee TO work_journey_app;
+GRANT SELECT, INSERT, UPDATE ON dbo.work_session TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.work_event TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.idempotency_request TO work_journey_app;
+```
+
+Permissões de contas incluem o seed explícito de avaliação; não são cadastro público. Este bloco não cria usuários, não concede DDL nem representa implantação pronta. A CI usa nomes journey_app/journey_migration em banco descartável e verifica tanto permissões quanto execução real do serviço.
+
 ## Verificação escrita
 
 - 4 novos testes unitários: estrutura/hash canônico do comando e resolução da identidade com principal/autoridade reconhecidos.
 - 14 testes SQL do serviço: fonte temporal e fuso do banco; replay de sucesso após mudanças de estado; intenção velha contra jornada nova; rejeição persistida; chave com outro payload; contas/chaves separadas e alvos invisíveis; vínculo adulterado; conta desativada com snapshot ativo; transição e relógio inválidos; regressão antes do encerramento anterior; rollback de evento/estado/recibo; chave igual concorrente; ENTRY com chaves distintas; pausa incompatível concorrente; ausência de recibo durante processamento; FK de sucesso próprio e unicidade SQL independente do lock. Vários aspectos compõem um mesmo teste; conferir métodos/logs, não somar cenários como testes distintos.
 - Teste de runtime repete somente runtimePermissionsPreserveOriginalReceipts com a conta restrita. Massa transacional é revertida; concorrência usa contas fictícias confirmadas e cleanup privilegiado restrito ao banco descartável, na ordem recibo → eventos → jornadas → colaborador → usuário.
 - Upgrade Flyway passa de V1 a V3, valida checksums e confirma reaplicação sem mudanças. SQL Server real, sem H2.
-- Local: diff e sintaxe Bash aprovados. Testes Java dependem da CI; resultados JPA anteriores não validam esta nova etapa.
+- Local: diff e sintaxe Bash aprovados. Maven offline bloqueado antes de compilar pelo parent ausente; evidência Java desta etapa veio da CI, não de execuções JPA antigas.
 
 ## Revisão e segunda análise dos achados
 
 | ID | Evidência/causa e impacto inicial → final | Falso positivo, validação adicional e ação |
 |---|---|---|
-| M01 — idempotência/integridade | Lock, replay anterior ao estado e transação com recibo implementados. Alto potencial se houvesse gravação dupla → médio como risco em validação, não vulnerabilidade confirmada. | Anotação/índice isolados não comprovam atomicidade. Testes de chave igual/distinta, retorno original, rollback e runtime escritos; CI pendente. |
-| M02 — tempo/sobreposição | Só conferir relógio na jornada aberta deixaria a ENTRY posterior vulnerável a regressão antes do fechamento passado. Médio → médio mitigado por MAX(closedAtUtc) sob lock. | Não havia exploração exposta demonstrada; Clock regressivo é condição real possível. Teste de nova entrada anterior ao encerramento escrito. |
-| M03 — autorização | IDs vêm do SecurityContext e vínculo/ativo do banco; recibos filtrados por colaborador. Alto potencial de acesso cruzado → médio em validação, sem acesso indevido confirmado. | UUID/chave não são credenciais; testes sintéticos não aprovam HTTP/CSRF. Cruzamentos, claims incompatíveis e conta inativa escritos; HTTP pendente. |
-| M04 — recuperação | Ausência de recibo pode coexistir com comando em andamento. Médio → médio de protocolo, condição testada por barreira antes do INSERT. | Não tratar ausência como falha; frontend ainda não implementado. Testar diário/reload/rede e repetir explicitamente mesma chave na próxima camada. |
+| M01 — idempotência/integridade | Lock, replay anterior ao estado e transação com recibo implementados. Alto potencial se houvesse gravação dupla → baixo residual nesta camada após testes, sem vulnerabilidade confirmada. | Anotação/índice isolados não comprovam atomicidade. Chave igual/distinta, retorno original, rollback e runtime aprovados no código indicado; HTTP/Angular ainda precisam de prova própria. |
+| M02 — tempo/sobreposição | Só conferir relógio na jornada aberta deixaria a ENTRY posterior vulnerável a regressão antes do fechamento passado. Médio → baixo residual, mitigado por MAX(closedAtUtc) sob lock e teste aprovado. | Não havia exploração exposta demonstrada; Clock regressivo é condição real possível. Manter regressão para toda futura forma de encerramento. |
+| M03 — autorização | IDs vêm do SecurityContext e vínculo/ativo do banco; recibos filtrados por colaborador. Alto potencial de acesso cruzado → médio pendente na camada HTTP, sem acesso indevido confirmado. | UUID/chave não são credenciais; testes sintéticos não aprovam HTTP/CSRF. Cruzamentos, claims incompatíveis e conta inativa aprovados nesta camada; HTTP pendente. |
+| M04 — recuperação | Ausência de recibo pode coexistir com comando em andamento; condição confirmada em SQL por barreira antes do INSERT. Médio → médio para o protocolo de interface ainda pendente. | Não tratar ausência como falha; frontend não implementado. Testar diário/reload/rede e repetir explicitamente mesma chave na próxima camada. |
 | M05 — desempenho | Lock mantém consistência mas serializa conta; replay é O(n), MAX de encerramento e revalidação interna acrescentam consultas. Baixo condicional → baixo, sem gargalo medido. | Não propor remover lock/validação por estilo. Medir plano, espera e latência com massa; índice de histórico limita busca por colaborador, sem SLA ou custo constante prometido. |
 | M06 — responsabilidades/legibilidade | Resolver, comando, domínio, serviço e stores têm responsabilidades distintas; regras de transição não são copiadas, nextFor é reutilizado. Baixo → baixo de manutenção potencial. | Validação pura anterior à escrita é necessária para recibos de rejeição sem transação inválida. Não confundir checagem + gravação protegida com duplicação de código a eliminar cegamente. |
 
 Segurança exclusivamente: queries parametrizadas e UUID/tipo estruturados, sem SQL concatenado com entrada. Nenhum HTML, upload, caminho de arquivo ou API externa novo; XSS/manipulação de arquivos não ganharam superfície nesta fatia. Mensagens/DTOs não contêm credenciais ou stack traces; tratamento HTTP ainda precisa ser implementado e testado. Constraints não substituem identidade autenticada; grants de CI não comprovam implantação real. Ausência de achado alto confirmado não é certificação de segurança.
 
 A aderência internacional mantém UTC/IANA/data congelada e permite múltiplas jornadas sem sobreposição pelo fluxo online. Organização/modelagem, qualidade, decisões e comunicação têm rastreabilidade; UX/dispositivos e aceite global continuam pendentes. Não há conformidade trabalhista por país inferida.
+
+## Evidência integrada — 13/10/2026
+
+- Código 7a941c8ac593f7edc11374b53fea3e53fa7b6210; checkout de merge da PR 1fa2c2b47b0a4813bc3667faa8e446c0ff4ce867.
+- [Foundation checks 38415543743](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38415543743) aprovado; logs backend 115358879207 e frontend 115358878800 conferidos: compilação/empacotamento e 36 testes backend (32 anteriores + 4 novos), build e 18 testes frontend aprovados.
+- [SQL Server/browser 38415544195](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38415544195) aprovado; log 115358881550 conferido: migration vazio → V1 → V2/V3, validate e reaplicação; 30 testes SQL agrupados (14 serviço + 7 schema + 7 JPA + 2 contas), sem falhas/erros/ignorados; mais 1 teste separado de migration, total 31 SQL distintos. Os dois testes de runtime são repetições, não testes adicionais. Seed/reinício e 2 percursos Chromium HTTPS passaram.
+- A conta runtime executou o serviço com SELECT/INSERT em employee/app_user, sem UPDATE nessas tabelas; recibos/eventos sem UPDATE/DELETE, conforme grants e verificações. O lock não exigiu ampliar as permissões dessas contas nesta configuração testada.
+- As primeiras execuções 38415171591/38415171598 falharam na compilação de asserções numéricas dos testes, por inferência genérica ambígua entre sobrecargas JUnit. Explicitado intValue no retorno da transação; nenhum código de produção, regra, grant ou asserção foi removido/relaxado. Achado baixo de implementação de teste, resolvido, sem execução de testes Java nessas tentativas.
+- Esta atualização é documental. Conferir também os checks do head final antes de eventual integração; a PR permanece sem merge. Não há aprovação global de RF03–RF14/RNF nem do técnico avaliador nesta etapa.
 
 Referências: [Spring Data JPA — locking](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html), [Microsoft — table hints](https://learn.microsoft.com/en-us/sql/t-sql/queries/hints-transact-sql-table). Mecanismos precisam da evidência SQL desta versão, não apenas da documentação.
 
