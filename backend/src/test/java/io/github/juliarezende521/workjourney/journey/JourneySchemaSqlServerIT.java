@@ -69,8 +69,9 @@ class JourneySchemaSqlServerIT {
         try (var connection = transaction()) {
             var owner = owner(connection);
             var other = owner(connection);
-            UUID session = session(connection, owner);
+            // Isolate the ownership FK from the already-open-session unique index.
             assertSqlError(547, () -> session(connection, new Owner(owner.employeeId(), other.userId())));
+            UUID session = session(connection, owner);
             assertSqlError(547, () -> event(connection, session, other.userId(), 1, "ENTRY", NOW, NOW));
             assertSqlError(547, () -> event(connection, UUID.randomUUID(), owner.userId(), 1, "ENTRY", NOW, NOW));
             connection.rollback();
