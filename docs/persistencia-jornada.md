@@ -1,6 +1,6 @@
 # Persistência de jornada — schema SQL Server
 
-Fatia iniciada em 13/10/2026, após a segunda análise de segurança/desempenho/legibilidade. Status inicial: migration e testes escritos; execução integrada pendente. Esta etapa entrega o schema, não o mapeamento JPA, serviço transacional, API ou interface de jornada. `journeyAvailable` continua false.
+Fatia iniciada em 13/10/2026, após a segunda análise de segurança/desempenho/legibilidade. Schema e testes aprovados em CI no commit 375f8d6, propostos na [PR #3](https://github.com/Juliarezende521/work-journey-platform/pull/3), sem integração à main. Esta etapa entrega o schema, não o mapeamento JPA, serviço transacional, API ou interface de jornada. `journeyAvailable` continua false.
 
 ## Aderência e decisões
 
@@ -36,6 +36,14 @@ Sete testes novos:
 Os testes usam prepared statements, dados fictícios e rollback; a massa confirmada do teste concorrente é removida após terminar os workers. O perfil de avaliação continua criando exatamente duas contas/colaboradores. Verificação separada de permissões exige INSERT e impede UPDATE/DELETE de eventos, DELETE de jornadas e ALTER da tabela para o runtime.
 
 Local: `git diff --check` e `bash -n scripts/ci/validate-auth.sh` aprovados. Maven offline bloqueado por parent ausente; online bloqueado por DNS do Maven Central, antes de compilar/executar testes. Não declarar a suíte nova aprovada com base em execuções anteriores.
+
+### Evidência integrada — 13/10/2026
+
+- Código 375f8d6fd8d8ae291b8efefb3f5be166b2d550b6; checkout de merge da PR 7602f726505859e1cad4c35679c3b84989efc8e9.
+- [Foundation checks 38401824218](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38401824218) aprovado; logs dos jobs 115311100051/115311100392 conferidos: backend 29 testes sem falhas/erros/ignorados e BUILD SUCCESS; frontend build e 18 testes aprovados.
+- [SQL Server/browser 38401824440](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38401824440) aprovado; log do job 115311101060 confirma schema inicialmente vazio → V1 → V2, 7 testes JourneySchemaSqlServerIT + 2 SqlServerIT sem falhas/erros/ignorados, verificação de grants, seed/reinício e 2 percursos Chromium HTTPS aprovados. Os testes de contas são repetidos antes/depois da migration e os 29 testes backend reaparecem; não somar repetições como testes distintos.
+- A primeira execução 38401651598 falhou no teste de autoria: o fixture violava também o índice de jornada aberta, que foi verificado antes da FK (2601 em vez de 547). O teste passou a verificar a FK antes de inserir a jornada válida, isolando a condição; migration e proteções não foram alteradas. Achado baixo de desenho de teste, resolvido; não era evidência de FK ausente ou autoria indevida aceita.
+- Esta atualização registra a evidência do código acima. Conferir também os checks do head final antes de eventual integração; documento não concede autorização de merge.
 
 ## Revisão e segunda análise
 
