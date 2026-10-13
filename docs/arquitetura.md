@@ -48,7 +48,7 @@ erDiagram
 
 V1 implementa app_user e employee com UUID/uniqueidentifier, comprimentos, nullability, unicidade e FK. DDL/mapeamento foram aprovados em SQL Server 2022 CU20, na CI 38090975052; manager_id e demais tabelas continuam propostas. Contrato de autenticação: [autenticacao.md](autenticacao.md). Evidências: [validacao-integrada.md](validacao-integrada.md).
 
-Atualização de 13/10/2026: V2 para work_session/work_event está na PR #3, com decisões, testes e status em [persistencia-jornada.md](persistencia-jornada.md). Mapeamento JPA de jornada, idempotência, auditoria de regularizações e manager_id continuam pendentes; a tabela acima descreve o modelo geral proposto.
+Atualização de 13/10/2026: V2, mapeamento JPA/reconstituição e armazenamento com versão otimista estão na PR #3, com decisões, testes e status em [persistencia-jornada.md](persistencia-jornada.md). Serviço de aplicação, idempotência, auditoria de regularizações e manager_id continuam pendentes; a tabela acima descreve o modelo geral proposto. PR #3 ainda sem integração à main.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 

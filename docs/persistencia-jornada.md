@@ -1,8 +1,8 @@
 # Persistência de jornada — SQL Server e fronteira JPA
 
-Fatia iniciada em 13/10/2026, após a segunda análise de segurança/desempenho/legibilidade. Schema e testes aprovados em CI no commit 375f8d6, propostos na [PR #3](https://github.com/Juliarezende521/work-journey-platform/pull/3), sem integração à main. Esta etapa entrega o schema, não o mapeamento JPA, serviço transacional, API ou interface de jornada. `journeyAvailable` continua false.
+Status atual: schema, mapeamento JPA, reconstituição e operações transacionais de armazenamento aprovados em CI no commit 4553954, propostos na [PR #3](https://github.com/Juliarezende521/work-journey-platform/pull/3), sem integração à main. API, serviço de aplicação com identidade/Clock, recibos e regularização continuam pendentes; `journeyAvailable` continua false.
 
-Atualização da próxima fatia em 13/10/2026: mapeamento JPA, reconstituição e operações transacionais de armazenamento escritos, com CI pendente. O parágrafo acima e a evidência do commit 375f8d6 descrevem a primeira fatia do schema. API, serviço de aplicação com identidade/Clock, recibos e regularização continuam pendentes.
+Histórico: fatia iniciada em 13/10/2026, após a segunda análise de segurança/desempenho/legibilidade. A primeira fatia entregou somente o schema, aprovado inicialmente no commit 375f8d6; sua evidência abaixo não deve ser confundida com a validação posterior do JPA.
 
 ## Aderência e decisões
 
@@ -83,14 +83,27 @@ Sob READ COMMITTED, a leitura de eventos pode observar uma gravação posterior 
 
 | ID / critério | Causa, evidência, impacto inicial/final e falso positivo | Verificação e ação |
 |---|---|---|
-| J01 — integridade/concorrência | Somente inserir filho não incrementaria a versão do pai. Médio → médio como risco tratado; checkpoint muda em toda transição e @Version participa do UPDATE. Anotação sozinha não comprova a proteção. | Testes de versão igual/antiga e concorrência em SQL Server; CI pendente nesta atualização. |
+| J01 — integridade/concorrência | Somente inserir filho não incrementaria a versão do pai. Médio → baixo residual após validação; checkpoint muda em toda transição e @Version participa do UPDATE. Anotação sozinha não comprova a proteção. | Testes de versão igual/antiga e concorrência aprovados em SQL Server no commit indicado abaixo; manter a regressão. |
 | J02 — consistência de leitura | Duas consultas READ COMMITTED podem observar versões diferentes. Médio → médio, mitigado por consulta escalar da versão; não classificar como corrupção confirmada. | Teste concorrente cobre conflito; interleaving específico entre consultas ainda precisa de teste determinístico. Não anunciar isolamento de snapshot. |
 | J03 — autorização/fonte temporal | Filtro de colaborador implementado; chamadas internas ainda recebem IDs/Instant. Médio condicional → médio pendente na aplicação HTTP, sem desvio exposto demonstrado. | Derivar identidade da sessão e instante de Clock no futuro serviço; teste cruzado desta camada não aprova RNF03 completo. |
 | J04 — preservação/modelagem | Campos JPA congelados, eventos imutáveis e replay sem novos IDs. Médio como risco de integração → baixo residual condicionado a grants/conta privilegiada. Não afirmar auditoria completa por usar Immutable. | Testar roundtrip e runtime restrito; revisão manual permanece separada. |
 | J05 — desempenho | Replay é O(n) por jornada, com memória O(n); leitura própria usa três consultas de quantidade constante, sem lazy loop por evento. Baixo condicional → baixo; nenhum gargalo medido. | Consulta extra resolve a consistência J02. Medir com massa antes de otimizar; não adicionar checkpoint de duração nem remover verificações por preferência. |
 | J06 — coesão/legibilidade | Domínio preserva regras; rows fazem mapeamento; store coordena armazenamento. Compartilhar apply evita duplicar cálculo no replay. Baixo → baixo como manutenção potencial, sem defeito confirmado. | Nomes, comentários explicando flush/READ COMMITTED e testes por cenário; sem interface genérica ou dependência nova. |
+| J07 — comunicação de falhas | Repository traduz IllegalArgumentException/IllegalStateException para InvalidDataAccessApiUsageException; testes confirmam o contrato interno. Baixo → baixo no armazenamento, sem endpoint exposto. Usar essa exceção como contrato público indistinto seria uma conclusão indevida. | Definir erros de aplicação/HTTP distintos para recurso invisível, transição e corrupção antes de expor API; não devolver causas SQL ao cliente. |
 
-Segurança separada: novas consultas JPQL são parametrizadas; não há novo template HTML, upload, caminho de arquivo, API externa ou log de credencial. Sessão/CSRF não foram modificados. Validação do replay impede aceitar dados estruturais inválidos nesta fronteira; não substitui validação de DTO, autenticação ou autorização de requisições. RuntimeException de infraestrutura não é contrato HTTP: tradução pública ainda será definida antes de expor endpoints. Sem achado alto confirmado nesta revisão, com testes integrados desta fatia ainda pendentes.
+Segurança separada: novas consultas JPQL são parametrizadas; não há novo template HTML, upload, caminho de arquivo, API externa ou log de credencial. Sessão/CSRF não foram modificados. Validação do replay impede aceitar dados estruturais inválidos nesta fronteira; não substitui validação de DTO, autenticação ou autorização de requisições. RuntimeException de infraestrutura não é contrato HTTP: tradução pública ainda será definida antes de expor endpoints. Sem achado alto confirmado nesta revisão; evidência integrada desta fatia abaixo, com limites J02/J03/J07 mantidos.
+
+### Evidência integrada JPA — 13/10/2026
+
+- Código 4553954200bc1ee377001f306e989d44ccf0ef9c; checkout de merge 9ffda019e392514f6c08c9bbb827ebd25f4ab08a. Ajuste de teste nesta versão usa um segundo colaborador provisionado e UUID textual nas consultas nativas do fixture.
+- [Foundation checks 38408107860](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38408107860) aprovado: backend compilado/empacotado com 32 testes (29 anteriores + 3 replay), frontend build e 18 testes aprovados. Jobs 115332957947/115332957339.
+- [SQL Server/browser 38408107981](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38408107981) aprovado; log 115332957455 conferido: 1 teste de upgrade/reaplicação Flyway, 16 testes SQL (7 schema + 7 JPA + 2 contas) sem falhas/erros/ignorados; repetição do roundtrip com usuário runtime restrito aprovada; regressão de seed/reinício e 2 percursos Chromium HTTPS aprovados. São 17 testes SQL distintos, não 18 por repetir o runtime.
+- O primeiro código JPA 22315b3 também passou em 38407745185/38407745606; a evidência final acima inclui o reforço do acesso cruzado. Não foram relaxados grants, schema, versão ou asserções para obter aprovação.
+- Local: diff e Bash aprovados; tentativa Maven offline bloqueada antes de compilar por parent ausente, sem execução de testes local. Não confundir resultado local com CI.
+- Testes de banco confirmam modelagem, organização, qualidade, decisões e práticas da fatia. Comunicação inclui limitações rastreáveis; interpretação internacional tem evidência temporal parcial. UX/dispositivos e autorização HTTP permanecem pendentes, sem aceite global ou aprovação do técnico da empresa.
+- Esta atualização é documental; o código acima foi validado. Conferir também os checks do head final antes de eventual integração, que ainda depende da autorização aplicável.
+
+Referências técnicas: [Hibernate 6.6 — tipos temporais e locking](https://docs.hibernate.org/orm/6.6/userguide/html_single/), [SQLServerDialect 6.6](https://github.com/hibernate/hibernate-orm/blob/6.6/hibernate-core/src/main/java/org/hibernate/dialect/SQLServerDialect.java). As referências explicam os mecanismos; a aprovação do mapeamento/precisão depende dos testes SQL indicados.
 
 ## Próxima fatia após validar JPA
 

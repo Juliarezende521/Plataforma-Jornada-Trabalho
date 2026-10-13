@@ -1,6 +1,6 @@
 # Modelo inicial de jornada — domínio online
 
-Modelo iniciado em 11/10/2026 e validado em CI em 12/10/2026. Validação inicial: compilação/empacotamento backend e 24 testes aprovados (12 existentes + 12 novos de domínio); build frontend e seus 14 testes aprovados. PR #1, inicialmente em rascunho na branch validate/journey-domain, integrada à main em 12/10/2026 após autorização e CI do head final 23363f5 aprovada; merge f88ffe6. A refatoração posterior e suas contagens atualizadas estão em [revisao-qualidade.md](revisao-qualidade.md). Essa fatia entregou somente o domínio; a migration iniciada em 13/10/2026 tem status próprio em [persistencia-jornada.md](persistencia-jornada.md). Endpoints e mapeamento JPA continuam pendentes; journeyAvailable permanece false.
+Modelo iniciado em 11/10/2026 e validado em CI em 12/10/2026. Validação inicial: compilação/empacotamento backend e 24 testes aprovados (12 existentes + 12 novos de domínio); build frontend e seus 14 testes aprovados. PR #1, inicialmente em rascunho na branch validate/journey-domain, integrada à main em 12/10/2026 após autorização e CI do head final 23363f5 aprovada; merge f88ffe6. A refatoração posterior e suas contagens atualizadas estão em [revisao-qualidade.md](revisao-qualidade.md). Essa fatia entregou somente o domínio; migrations e mapeamento/reconstituição iniciados em 13/10/2026 têm status próprio em [persistencia-jornada.md](persistencia-jornada.md), na PR #3 ainda sem merge. Endpoints continuam pendentes; journeyAvailable permanece false.
 
 ## Revisão antes da implementação
 
