@@ -42,6 +42,7 @@ Regularização mínima de saída esquecida, com solicitação própria e decis�
 | [Experiência do usuário/IHC](docs/experiencia-usuario.md) | Fluxos, acessibilidade, inspeção e plano de teste de usabilidade |
 | [Arquitetura e decisões](docs/arquitetura.md) | Modelo, segurança, contratos e trade-offs |
 | [Modelo inicial de jornada](docs/modelo-jornada.md) | Domínio online, evidências dos testes e limites da etapa; sem persistência/API de jornada |
+| [Schema de jornada](docs/persistencia-jornada.md) | Migration SQL Server, integridade e concorrência; evidências e limites separados de JPA/API |
 | [EAP](docs/eap.md) | Pacotes de entrega e dependências |
 | [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |
 | [Checklist de revisão por etapa](docs/checklist-revisoes.md) | Qualidade, segurança, desempenho, legibilidade e segunda análise dos achados em todas as próximas etapas |
