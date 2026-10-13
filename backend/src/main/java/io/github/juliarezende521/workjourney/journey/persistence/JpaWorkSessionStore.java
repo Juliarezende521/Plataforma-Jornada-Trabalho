@@ -41,6 +41,22 @@ public class JpaWorkSessionStore {
         return ownedRow(id, employeeId).map(row -> new StoredSession(restoreConsistent(row, id), row.version()));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<StoredSession> findCurrentOwned(UUID employeeId) {
+        Objects.requireNonNull(employeeId, "Employee ID is required");
+        return entityManager.createQuery("SELECT s FROM WorkSessionRow s WHERE s.employeeId = :employee AND s.closedAtUtc IS NULL", WorkSessionRow.class)
+                .setParameter("employee", employeeId).getResultList().stream().findFirst()
+                .map(row -> new StoredSession(restoreConsistent(row, row.id()), row.version()));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Instant> latestClosedAt(UUID employeeId) {
+        Objects.requireNonNull(employeeId, "Employee ID is required");
+        var closed = entityManager.createQuery("SELECT MAX(s.closedAtUtc) FROM WorkSessionRow s WHERE s.employeeId = :employee", java.time.OffsetDateTime.class)
+                .setParameter("employee", employeeId).getSingleResult();
+        return Optional.ofNullable(closed).map(java.time.OffsetDateTime::toInstant);
+    }
+
     @Transactional
     public StoredSession append(UUID id, UUID employeeId, long expectedVersion,
                                 WorkEventType type, Instant serverInstant) {

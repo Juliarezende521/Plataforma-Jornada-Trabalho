@@ -43,6 +43,7 @@ Regularização mínima de saída esquecida, com solicitação própria e decis�
 | [Arquitetura e decisões](docs/arquitetura.md) | Modelo, segurança, contratos e trade-offs |
 | [Modelo inicial de jornada](docs/modelo-jornada.md) | Domínio online, evidências dos testes e limites da etapa; sem persistência/API de jornada |
 | [Persistência de jornada](docs/persistencia-jornada.md) | SQL Server, mapeamento JPA, reconstituição e versão; evidências e limites separados de API |
+| [Marcações e idempotência](docs/marcacoes-idempotencia.md) | Identidade/Clock do servidor, recibos e conflitos; validação separada de HTTP/Angular |
 | [EAP](docs/eap.md) | Pacotes de entrega e dependências |
 | [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |
 | [Checklist de revisão por etapa](docs/checklist-revisoes.md) | Qualidade, segurança, desempenho, legibilidade e segunda análise dos achados em todas as próximas etapas |

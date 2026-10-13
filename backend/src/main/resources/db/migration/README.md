@@ -5,3 +5,5 @@ V1 cria dbo.app_user e dbo.employee, com unicidade de email, vínculo único de 
 Usar arquivos V1__descricao.sql, V2__descricao.sql etc. Não editar scripts já aplicados. Validar criação desde SQL Server vazio antes de considerar a persistência pronta.
 
 V2 adiciona jornadas/eventos online, UTC datetimeoffset(7), autoria composta, sequência única e índice de uma jornada aberta por colaborador. Migration/testes inicialmente escritos em 13/10/2026; status e evidências em docs/persistencia-jornada.md. Não inclui JPA de jornada, idempotência ou regularização.
+
+V3 adiciona recibos de marcação online com unicidade colaborador/operação/chave, snapshots de sucesso/conflito e FKs de resultado próprio. Código/testes da etapa iniciados em 13/10/2026; status em docs/marcacoes-idempotencia.md. V1/V2 permanecem intactas; recibos não completam recuperação no frontend nem regularização manual.

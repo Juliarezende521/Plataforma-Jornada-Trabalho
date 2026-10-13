@@ -63,4 +63,5 @@ public class WorkSessionRow {
     }
 
     long version() { return version; }
+    UUID id() { return id; }
 }

@@ -4,16 +4,16 @@ import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Run first on the disposable empty CI database, without booting entities that require V2. */
+/** Run first on the disposable empty CI database, without booting current JPA entities. */
 class MigrationUpgradeSqlServerIT {
     @Test
-    void migratesEmptyDatabaseToV1ThenUpgradesToV2WithoutEditingHistory() {
+    void migratesEmptyDatabaseToV1ThenUpgradesToLatestWithoutEditingHistory() {
         var v1 = configuration().target("1").load();
         assertEquals(1, v1.migrate().migrationsExecuted);
         assertEquals("1", v1.info().current().getVersion().getVersion());
         var latest = configuration().load();
-        assertEquals(1, latest.migrate().migrationsExecuted);
-        assertEquals("2", latest.info().current().getVersion().getVersion());
+        assertEquals(2, latest.migrate().migrationsExecuted);
+        assertEquals("3", latest.info().current().getVersion().getVersion());
         latest.validate();
         assertEquals(0, latest.migrate().migrationsExecuted);
     }
