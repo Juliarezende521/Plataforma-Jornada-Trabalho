@@ -26,7 +26,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(JourneyController.class)
+@WebMvcTest({JourneyController.class, JourneyQueryController.class})
 @Import({SecurityConfiguration.class, ProblemResponseWriter.class, MarkingRequestReader.class})
 class JourneyHttpTest {
     private static final String MARK = "/api/me/work-events";
@@ -35,10 +35,21 @@ class JourneyHttpTest {
     @MockitoBean OnlineMarkingService markings;
     @MockitoBean CurrentWorkSessionService current;
     @MockitoBean UserDetailsService accounts;
+    @MockitoBean io.github.juliarezende521.workjourney.journey.query.JourneyQueries queries;
 
     private AccountPrincipal principal() {
         return new AccountPrincipal(new AccountPrincipal.Identity(UUID.randomUUID(), UUID.randomUUID(),
                 "test@example.invalid", "Teste", "Europe/Amsterdam"), "unused-test-hash", true);
+    }
+
+    @Test void invalidFilterIs400ButInternalQueryFailureIs500() throws Exception {
+        mvc.perform(get("/api/me/work-sessions?from=invalid&to=2026-10-14").with(user(principal())))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(queries);
+        when(queries.history(any(),any(),anyInt(),anyInt())).thenThrow(new NullPointerException("secret internal failure"));
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-14&to=2026-10-14").with(user(principal())))
+                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.correlationId").exists())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("secret"))));
     }
 
     @Test void authenticationAndCsrfBlockBeforeServices() throws Exception {

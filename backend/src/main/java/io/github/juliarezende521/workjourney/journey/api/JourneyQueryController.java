@@ -19,11 +19,15 @@ public class JourneyQueryController {
         var parameters=request.getParameterMap();
         if (!Set.of("from","to","page","size").containsAll(parameters.keySet())
                 || parameters.values().stream().anyMatch(values -> values.length!=1)) throw new JourneyQueries.InvalidFilter();
+        LocalDate from, to;
+        int page, size;
         try {
-            return queries.history(LocalDate.parse(request.getParameter("from")), LocalDate.parse(request.getParameter("to")),
-                    Integer.parseInt(parameters.containsKey("page") ? request.getParameter("page") : "0"),
-                    Integer.parseInt(parameters.containsKey("size") ? request.getParameter("size") : "20"));
+            from=LocalDate.parse(request.getParameter("from"));
+            to=LocalDate.parse(request.getParameter("to"));
+            page=Integer.parseInt(parameters.containsKey("page") ? request.getParameter("page") : "0");
+            size=Integer.parseInt(parameters.containsKey("size") ? request.getParameter("size") : "20");
         } catch (java.time.DateTimeException | NumberFormatException | NullPointerException error) { throw new JourneyQueries.InvalidFilter(); }
+        return queries.history(from, to, page, size);
     }
     @GetMapping("/{id}")
     public JourneyQueries.Detail detail(@PathVariable String id) { return queries.detail(reader.uuid(id)); }
