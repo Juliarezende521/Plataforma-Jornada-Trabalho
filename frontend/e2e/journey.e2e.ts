@@ -112,7 +112,9 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.getByText('Encerrar jornada: confirmado.')).toBeVisible();
   await page.getByRole('button', { name: 'Consultar período', exact: true }).click();
   await expect(page.getByTestId('history-feedback')).toContainText('Consulta concluída');
-  const history = await (await page.request.get('/api/me/work-sessions?from=2026-10-01&to=2026-10-31')).json();
+  const from = await page.getByLabel('Data inicial', { exact: true }).inputValue();
+  const to = await page.getByLabel('Data final', { exact: true }).inputValue();
+  const history = await (await page.request.get('/api/me/work-sessions?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to))).json();
   expect(history.summary.pendingCount).toBe(0);
   const latest = history.items[0];
   await page.getByRole('button', { name: /^Ver detalhes da jornada de/ }).first().click();
@@ -124,7 +126,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.getByRole('heading', { name: /^Detalhes da jornada de/ })).toBeFocused();
   const dateBefore = detail.session.workDate;
   await page.getByLabel('Fuso de visualização', { exact: true }).selectOption('Europe/Amsterdam');
-  await expect(page.locator('.events li').first()).toContainText('GMT+2');
+  await expect(page.locator('.events li').first()).toContainText(/GMT\+[12]/);
   expect((await (await page.request.get('/api/me/work-sessions/' + latest.id)).json()).session.workDate).toBe(dateBefore);
   for (const width of [320, 1280]) {
     await page.setViewportSize({ width, height: 900 });

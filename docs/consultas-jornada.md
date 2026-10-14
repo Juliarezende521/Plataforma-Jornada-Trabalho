@@ -76,3 +76,7 @@ H01/H05: controle de acesso e identidade com evidência HTTP/SQL e Angular. H03/
 Capturas finais de detalhe 320/1280 e texto 200%/320 inspecionadas e preservadas em [evidências](evidencias/consultas/README.md). Native date format depende do locale do navegador; datas de resultado usam pt-BR e instantes carregam offset. Seletor nativo mantém opções acessíveis, mas seu texto visível pode abreviar em texto ampliado. Pesquisa com participantes permanece pendente.
 
 Este registro corresponde ao código 48096ab. O commit documental posterior apenas preserva status/capturas; conferir seus checks na PR antes de integrar. PR #4 continua em rascunho, sem merge. Próximo recorte: regularização mínima de saída esquecida, com solicitação/decisão auditada e autorização; aceite global e matriz restante de dispositivos ainda pendentes.
+
+### Reprodutibilidade do roteiro
+
+H08 — testes temporais: o roteiro real usava outubro de 2026 e GMT+2 fixos apesar de marcar com Clock real. Baixo de evidência/manutenção, mecanismo confirmado; não demonstra defeito funcional da consulta. Corrigido para usar datas dos filtros e reconhecer GMT+1/GMT+2 da estação de Amsterdã. Os testes unitários continuam determinísticos, exigindo os dois offsets de horários repetidos e preservação de duração. Retestar o percurso atual; execução em outro mês/estação ainda não foi realizada. Essa correção não modifica produção ou schema. O commit documental 8f24b59 teve Foundation aprovado (59/45); sua execução integrada é histórica após este ajuste de roteiro.
