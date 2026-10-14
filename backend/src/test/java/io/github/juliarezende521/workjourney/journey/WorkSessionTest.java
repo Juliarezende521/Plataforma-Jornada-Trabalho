@@ -151,4 +151,15 @@ class WorkSessionTest {
         assertThrows(IllegalArgumentException.class, () -> new WorkEvent(id, id, ACTOR, 1, ENTRY, instant, instant.minusSeconds(1)));
         assertThrows(IllegalArgumentException.class, () -> new WorkEvent(id, id, ACTOR, 1, ENTRY, instant.plusNanos(1), instant.plusNanos(1)));
     }
+    @Test
+    void recordingZoneDoesNotChangeReferenceDateAtMidnight() {
+        var instant = Instant.parse("2026-10-15T01:30:00Z");
+        var session = WorkSession.open(UUID.randomUUID(), UUID.randomUUID(), "America/Sao_Paulo",
+                instant, "Europe/Lisbon");
+        assertEquals(LocalDate.of(2026, 10, 14), session.getWorkDate());
+        assertEquals(LocalDate.of(2026, 10, 15), instant.atZone(java.time.ZoneId.of("Europe/Lisbon")).toLocalDate());
+        assertEquals("America/Sao_Paulo", session.getReferenceTimeZoneId());
+        assertEquals("Europe/Lisbon", session.getEvents().get(0).recordedTimeZoneId());
+        assertEquals(instant, session.getEvents().get(0).occurredAtUtc());
+    }
 }

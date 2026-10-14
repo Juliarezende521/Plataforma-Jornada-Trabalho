@@ -42,7 +42,7 @@ public final class MarkingRequestReader {
             var input = strictMapper.readValue(body, Input.class);
             if (input == null || input.type() == null) throw new InvalidJourneyRequest(400);
             return new MarkingCommand(WorkEventType.valueOf(input.type()),
-                    input.expectedWorkSessionId() == null ? null : uuid(input.expectedWorkSessionId()));
+                    input.expectedWorkSessionId() == null ? null : uuid(input.expectedWorkSessionId()), input.timeZoneId());
         } catch (JsonProcessingException | IllegalArgumentException invalid) {
             throw new InvalidJourneyRequest(400);
         }
@@ -53,5 +53,5 @@ public final class MarkingRequestReader {
         return UUID.fromString(value);
     }
 
-    private record Input(String type, String expectedWorkSessionId) { }
+    private record Input(String type, String expectedWorkSessionId, String timeZoneId) { }
 }
