@@ -1,6 +1,6 @@
 # Tela de jornada, IHC e recuperação
 
-Etapa da PR #3. Escopo: RF03–RF07 e recuperação de RF14/HU14, mantendo o backend como autoridade. Implementação Angular integrada à API; histórico/detalhe/resumo e regularização P0 ainda pendentes. O prazo inicialmente informado para 14/10 foi flexibilizado pela desenvolvedora: qualidade e validação antes de uma entrega apressada.
+Etapa iniciada na PR #3 e consolidada na PR #4. Escopo: RF03–RF07 e recuperação de RF14/HU14, mantendo o backend como autoridade. Implementação Angular integrada à API; histórico/detalhe/resumo e regularização P0 ainda pendentes. O prazo inicialmente informado para 14/10 foi flexibilizado pela desenvolvedora: qualidade e validação antes de uma entrega apressada.
 
 ## Decisões de IHC e conteúdo estudado
 
@@ -37,6 +37,8 @@ A camada HTTP Angular envia URLs relativas e CSRF somente em memória. DTO não 
 | U04 — storage e rede, recuperação | Escrita/consulta podem falhar e resposta pode ser perdida antes/depois do commit. Alto potencial → controlado: persistência mínima antes do envio, GET próprio, sem POST automático, retry explícito | Não é vulnerabilidade confirmada da API nem suporte offline. Testes locais controlam storage/falhas; navegador/SQL real devem comprovar perda pós-commit, recibo original e novo envio com a mesma chave. Apagamento externo continua limitação |
 | U05 — erros de teste, legibilidade/evidência | Asserção ampla encontrava “horário confirmado pelo servidor” nas instruções, sem ser confirmação da tentativa. Baixo → resolvido: asserção específica na região de feedback | Falso positivo do teste, não sucesso falso da interface. Teste atualizado preserva exigência de não confirmar antes da resposta. Teste antigo de login foi ampliado para aguardar consultas de jornada, mantendo logout/limpeza de senha |
 
+| U06 — cartão da conta/hierarquia, IHC | Capturas reais mostravam cartão de conta alto com espaço de feedback vazio, deslocando a tarefa principal. Baixo → resolvido: conta compacta e ações junto do estado/fuso | Não bloqueava operação nem comprovava dificuldade de participantes. Inspeção visual confirma excesso de espaço; reflow/teclado são retestados após o refinamento. Pesquisa de usabilidade continua necessária |
+
 Responsabilidades: AttemptDiary valida/persiste dados mínimos; JourneyApi cuida de HTTP/CSRF/timeout/recibo; JourneyState coordena preflight, reconciliação e ações; JourneyComponent apresenta estado/foco/formatos. Não duplica regras de transição/duração do domínio. Consultas extras de identidade/estado antes de POST são deliberadas para segurança e stale state; não remover por estilo. Reconciliar percorre O(n) intenções dessa identidade, sequencialmente e sem marcações automáticas; gargalo não medido. Sem otimizar hash de senha, locks, CSRF ou receipts. Nenhum problema alto atual confirmado nesta revisão; riscos/limitações não são omitidos.
 
 ## Evidência e pendências
@@ -46,3 +48,11 @@ Local: build Angular e 38 testes aprovados (18 anteriores + 20 adicionais), diff
 Roteiro real: entrada com resposta perdida depois de commit → reload/recibo sem POST → pausa/retorno → saída direta em pausa → tentativa abortada antes de commit/404 → reload sem replay → repetição explícita da mesma chave → encerramento/logout. Testa foco/Enter, larguras 320/768/1280, viewport 360 e texto raiz a 200%; ampliação de fonte não é teste completo de zoom real do navegador. Capturas não substituem teste de usabilidade com participantes, contraste medido de todos os estados ou leitura assistiva.
 
 Para fechar entrega: histórico/detalhe/resumo, regularização mínima, IHC/dispositivos restantes (Safari/celular físico/tecnologia assistiva quando possível), execução reproduzível e README/roteiro de avaliação. Não modificar escopo P0 silenciosamente; se alguma parte não for entregue, registrar claramente. Aprovação do técnico da empresa ainda não ocorreu.
+
+### Validação progressiva
+
+Primeiro código `e8d2a80`: Foundation 38586278468 e SQL/browser 38586279321 aprovados; logs 115929022191/115929021499/115929024405 conferidos: 55 backend, 38 Angular, 34 SQL distintos (1 migration + 33 agrupados), 4 percursos Chromium HTTPS. Repetições com runtime restrito não contam como novos testes. Capturas desse primeiro layout foram inspecionadas e motivaram U06.
+
+Refinamento de hierarquia `29cc25a`: build e 38 testes locais aprovados; Foundation 38587696350 aprovado, logs backend 115933977719/frontend 115933978194 (55/38), checkout aba1ca9. SQL/browser 38587695553 aprovado, log 115933976793 conferido (34 SQL distintos + 4 percursos Chromium). Capturas refinadas em evidencias/jornada, inspecionadas em 320/1280 px. O roteiro de navegador recebe também cenário com duas abas reais, foco passivo preservado, logout com intenção pendente, conta europeia sem consulta/replay de tentativa brasileira e recuperação na conta original. Registrar resultado dessa ampliação antes de considerá-la validada.
+
+Contrastes calculados por luminância relativa sRGB dos pares opacos declarados: #172033/branco 16,27:1; #475569/branco 7,58:1; #30458a/branco 8,96:1; #30458a/#eef2ff 8,01:1; #172033/#fff7ed 15,32:1; #9a3412/#fff7ed 6,88:1; foco #b45309/branco 5,02:1. Não cobre todos os estados/transparências nem certifica WCAG. Capturas somente com dados fictícios e sem credenciais.

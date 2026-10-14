@@ -1,14 +1,15 @@
 import { test, expect, Page } from '@playwright/test';
 
 const prefix = 'work-journey.online.v1.';
-async function login(page: Page) {
+async function login(page: Page, email = 'brasil@example.invalid', waitForEntry = true) {
   const password = process.env['EVALUATION_PASSWORD'];
   if (!password) throw new Error('Evaluation password is required outside Git');
   await page.goto('/');
-  await page.getByLabel('Email', { exact: true }).fill('brasil@example.invalid');
+  await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Senha', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+  if (waitForEntry) await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+  else await expect(page.getByRole('heading', { name: 'Olá, Colaborador Brasil' })).toBeVisible();
 }
 async function diary(page: Page) {
   return page.evaluate(prefix => Object.keys(localStorage).filter(key => key.startsWith(prefix))
@@ -47,9 +48,20 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   const snapshot = await current(page);
   expect(snapshot.session.lastEvent.id).toBe(accepted!.eventId);
   expect(snapshot.session.lastEvent.occurredAtUtc).toBe(accepted!.occurredAtUtc);
+  const peer = await page.context().newPage();
+  let peerPosts = 0;
+  peer.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/me/work-events')) peerPosts++; });
+  await peer.goto('/');
+  await expect(peer.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
+  await expect(peer.locator('#access-heading')).toBeFocused();
   await page.getByRole('button', { name: 'Iniciar pausa', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Retomar trabalho', exact: true })).toBeEnabled();
   await expect(page.getByText('Em pausa', { exact: true })).toBeVisible();
+  await expect(peer.getByRole('button', { name: 'Retomar trabalho', exact: true })).toBeEnabled();
+  await expect(peer.locator('#access-heading')).toBeFocused();
+  expect(await diary(peer)).toHaveLength(0);
+  expect(peerPosts).toBe(0);
+  await peer.close();
   await page.getByRole('button', { name: 'Retomar trabalho', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Iniciar pausa', exact: true }).click();
@@ -77,6 +89,17 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   const pending = (await diary(page))[0];
   expect((await page.request.get('/api/me/work-event-requests/' + pending.requestKey)).status()).toBe(404);
   const postCount = posts;
+  let pendingLookups = 0;
+  page.on('request', request => { if (request.url().endsWith('/api/me/work-event-requests/' + pending.requestKey)) pendingLookups++; });
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await login(page, 'europa@example.invalid');
+  expect(await diary(page)).toHaveLength(1);
+  expect(pendingLookups).toBe(0);
+  await expect(page.getByRole('heading', { name: 'Marcação aguardando confirmação' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await login(page, 'brasil@example.invalid', false);
+  await expect(page.getByRole('heading', { name: 'Marcação aguardando confirmação' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Consultar resultados', exact: true })).toBeEnabled();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Marcação aguardando confirmação' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Consultar resultados', exact: true })).toBeEnabled();

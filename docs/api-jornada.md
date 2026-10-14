@@ -1,6 +1,6 @@
 # API de jornada online
 
-Etapa da PR #3, sem merge. Java/Spring MVC sobre o serviço transacional e SQL Server já existentes. Abrange a fronteira HTTP de RF03–RF07/RF14 e RNF03–RNF10; a interface de jornada, diário de recuperação, histórico e regularização continuam pendentes. Não representa aprovação integral desses requisitos. `journeyAvailable=false` continua indicando que o produto ainda não oferece o fluxo completo.
+Etapa da PR #3, sem merge. Java/Spring MVC sobre o serviço transacional e SQL Server já existentes. Abrange a fronteira HTTP de RF03–RF07/RF14 e RNF03–RNF10; a etapa posterior de [tela de jornada](tela-jornada.md) implementa interface e diário/reconciliação; histórico e regularização continuam pendentes. Não representa aprovação integral desses requisitos. Na etapa original de API, journeyAvailable era false. Desde a tela online, o status anuncia JOURNEY_ONLINE/true fora de bootstrap e FOUNDATION/false em bootstrap; isso não representa aceite completo nem saúde do banco.
 
 ## Contrato implementado
 

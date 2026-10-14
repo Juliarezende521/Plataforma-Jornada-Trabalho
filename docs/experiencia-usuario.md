@@ -133,4 +133,4 @@ Interpretação do cenário: contextos internacionais e hipóteses explícitas. 
 
 ## Etapa de tela de jornada — 14/10/2026
 
-Implementação, relação com os conteúdos de IHC, revisão e evidências em [tela-jornada.md](tela-jornada.md). Estados, ações, foco e diário de recuperação possuem testes locais; fluxo de navegador/SQL e reflow dependem da CI desta etapa. Os registros anteriores de UX05/HU03–HU07/HU14 são históricos e recebem evidência progressiva nesse documento. UX06/regularização e pesquisa com usuários seguem pendentes.
+Implementação, relação com os conteúdos de IHC, revisão e evidências em [tela-jornada.md](tela-jornada.md). Estados, ações, foco, diário de recuperação, fluxo de navegador/SQL e reflow possuem evidência na CI, com alcance e limitações descritos em tela-jornada.md. A ampliação de cenários com abas/troca de conta só é validada quando os logs correspondentes forem conferidos. Os registros anteriores de UX05/HU03–HU07/HU14 são históricos e recebem evidência progressiva nesse documento. UX06/regularização e pesquisa com usuários seguem pendentes.
