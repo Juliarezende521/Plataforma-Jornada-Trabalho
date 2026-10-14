@@ -66,3 +66,13 @@ H07 — IHC/reflow: overflow horizontal após ampliação do texto, impacto méd
 Essa relação demonstra decisões e evidências; não garante nota ou aceite do avaliador. Regularização mínima ainda é parte P0 pendente.
 
 Reteste f4cff75: Foundation 38594935660 aprovado (59 backend/45 Angular); SQL/browser 38594935564 com SQL e permissões aprovados, 3/4 percursos aprovados. Mobile concluiu histórico/detalhe/fuso e recuperação; desktop confirmou overflow apenas nos DIVs/labels/inputs history-from/history-to (right=340 em viewport=320). H07 permanece médio, confirmado; hipótese de espaço insuficiente refinada para tamanho transversal intrínseco dos campos de data em flex coluna. Restringir explicitamente width/max-width dos contêineres e max-width dos inputs; fonte ampliada e exigência sem overflow preservadas. Nova execução exigida.
+
+## Fechamento do código validado
+
+Head **48096ab**: Foundation **38596015082** e SQL/browser **38596014919**, ambos aprovados. Logs 115962815811/115962815835/115962815694: **59 backend, 45 Angular, 37 SQL distintos (1 migration + 36 agrupados), 4 percursos Chromium HTTPS**. Repetições com runtime restrito (incluindo histórico/consulta própria) não aumentam a contagem. Sem falhas/erros/skips nas suítes aprovadas. Testes de seed/reinício e permissões preservados sem novas concessões.
+
+H01/H05: controle de acesso e identidade com evidência HTTP/SQL e Angular. H03/H04/H06: resolvidos e regressão aprovada. H02: risco condicionado ao volume, sem gargalo medido. **H07: médio → resolvido no contexto testado**, mantendo fonte ampliada e sem ocultar overflow; datas/contêineres agora têm limites explícitos. Bounding boxes e scrollWidth aprovados em desktop e mobile no roteiro. Não extrapolar para navegadores/dispositivos não testados.
+
+Capturas finais de detalhe 320/1280 e texto 200%/320 inspecionadas e preservadas em [evidências](evidencias/consultas/README.md). Native date format depende do locale do navegador; datas de resultado usam pt-BR e instantes carregam offset. Seletor nativo mantém opções acessíveis, mas seu texto visível pode abreviar em texto ampliado. Pesquisa com participantes permanece pendente.
+
+Este registro corresponde ao código 48096ab. O commit documental posterior apenas preserva status/capturas; conferir seus checks na PR antes de integrar. PR #4 continua em rascunho, sem merge. Próximo recorte: regularização mínima de saída esquecida, com solicitação/decisão auditada e autorização; aceite global e matriz restante de dispositivos ainda pendentes.
