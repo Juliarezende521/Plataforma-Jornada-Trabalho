@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Internal storage API. The future service supplies session identity, Clock and receipt transaction. */
+/** Internal storage API. The marking service supplies authenticated identity, Clock and receipt transaction. */
 @Repository
 @Profile("!bootstrap")
 public class JpaWorkSessionStore {

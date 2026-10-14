@@ -106,3 +106,7 @@ Erros com Problem Details e identificador de correlação, sem stack traces: 400
 - [Spring Boot — inicialização do banco](https://docs.spring.io/spring-boot/how-to/data-initialization.html)
 
 As regras de negócio e prioridades são decisões propostas para o desafio, não prescrições dessas fontes.
+
+### Fronteira HTTP de jornada — etapa da PR #3
+
+POST de marcação, GET de recibo e GET de jornada atual implementados conforme [contrato e revisão](api-jornada.md), com validação em andamento. Consulta vazia retorna session=null; ações e duração são provisórias. JSON estrito até 1.024 bytes; DTOs explícitos. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas 500, sem implicar resultado terminal. Histórico/detalhe/resumo e interface ainda pendentes. Correlação cobre erros tratados do controller; filtros e resolução MVC não têm correlação garantida ainda.
