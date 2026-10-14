@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 
 const prefix = 'work-journey.online.v1.';
 async function login(page: Page, email = 'brasil@example.invalid', waitForEntry = true) {
@@ -23,6 +24,19 @@ async function diary(page: Page) {
     .map(key => JSON.parse(localStorage.getItem(key)!)), prefix);
 }
 async function current(page: Page) { return (await page.request.get('/api/me/work-sessions/current')).json(); }
+
+// Each project must start independently even if a prior layout assertion failed.
+// Cleanup uses the real API on fictitious CI accounts; originals are never deleted.
+test.afterEach(async ({ page }) => {
+  const response=await page.request.get('/api/me/work-sessions/current');
+  if (response.status()!==200) return;
+  const snapshot=await response.json();
+  if (!snapshot.session) return;
+  const csrf=await (await page.request.get('/api/auth/csrf')).json();
+  const exit=await page.request.post('/api/me/work-events', { headers: { [csrf.headerName]: csrf.token, 'Idempotency-Key': randomUUID() },
+    data: { type: 'EXIT', expectedWorkSessionId: snapshot.session.id } });
+  expect(exit.status()).toBe(201);
+});
 
 // The transport loses the response after route.fetch runs the real Spring/SQL transaction.
 test('real journey, lost responses, explicit retry, keyboard and responsive reflow', async ({ page }, testInfo) => {
@@ -83,6 +97,12 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   }
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
   await page.setViewportSize({ width: 320, height: 900 });
+  await page.screenshot({ path: testInfo.outputPath('journey-and-history-text-200.png'), fullPage: true });
+  const overflow = await page.evaluate(() => [...document.querySelectorAll('body *')].map(element => {
+    const rect=element.getBoundingClientRect();
+    return { tag: element.tagName, id: element.id, className: element.className, left: rect.left, right: rect.right };
+  }).filter(rect => rect.right > innerWidth + 1 || rect.left < -1).slice(0,15));
+  expect(overflow, 'Elements extending beyond the 320px viewport at 200% text').toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
   await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).focus();
