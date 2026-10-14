@@ -1,6 +1,6 @@
 # Levantamento de requisitos — Plataforma de Jornada de Trabalho
 
-Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server real/HTTPS/Chromium, conforme [validacao-integrada.md](validacao-integrada.md). A jornada online e recuperação têm evidência progressiva em [tela-jornada.md](tela-jornada.md); consultas/regularização e aceite global permanecem pendentes; RNFs têm evidências parciais, não aprovação integral.
+Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server real/HTTPS/Chromium, conforme [validacao-integrada.md](validacao-integrada.md). A jornada online e recuperação têm evidência progressiva em [tela-jornada.md](tela-jornada.md); histórico/detalhe/resumo possuem implementação e evidência específica em [consultas-jornada.md](consultas-jornada.md); regularização e aceite global permanecem pendentes; RNFs têm evidências parciais, não aprovação integral.
 
 ## Objetivo e fontes
 
@@ -120,4 +120,4 @@ RN01–RN12 são definidas em proposta.md e constituem a referência para estado
 
 ## Definição de pronto do núcleo
 
-RF01–RF14, recorte P0 de RF17/RF18 e RNF aplicáveis implementados; migrations executadas em SQL Server vazio; testes críticos aprovados com evidências; checklist de dispositivos/contextos verificado no fluxo completo; interface utilizável; README reproduzido; limitações declaradas; repositório sem segredos. O núcleo não está concluído: autenticação, schema/API/jornada online e recuperação possuem evidência integrada; histórico/detalhe/resumo, restante das consultas, regularização mínima e avaliação completa de IHC/dispositivos continuam pendentes.
+RF01–RF14, recorte P0 de RF17/RF18 e RNF aplicáveis implementados; migrations executadas em SQL Server vazio; testes críticos aprovados com evidências; checklist de dispositivos/contextos verificado no fluxo completo; interface utilizável; README reproduzido; limitações declaradas; repositório sem segredos. O núcleo não está concluído: autenticação, schema/API/jornada online e recuperação possuem evidência integrada; histórico/detalhe/resumo possuem implementação e evidência delimitada em [consultas-jornada.md](consultas-jornada.md); regularização mínima e avaliação completa de IHC/dispositivos continuam pendentes.

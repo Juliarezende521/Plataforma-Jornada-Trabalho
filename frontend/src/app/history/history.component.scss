@@ -16,3 +16,8 @@ dt { line-height:1.5; } dd { margin:.4rem 0 0; font-size:1.3rem; font-weight:650
   .history { padding: .5rem; }
   input { padding-inline: .25rem; }
 }
+/* Native date controls must not set the cross-axis size of a stacked flex item. */
+@media (max-width: 520px) {
+  .filters > div { width: 100%; max-width: 100%; }
+  .filters input { max-width: 100%; }
+}

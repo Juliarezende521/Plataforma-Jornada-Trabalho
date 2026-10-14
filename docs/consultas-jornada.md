@@ -48,4 +48,21 @@ Java local bloqueado antes de compilar por parent Maven indisponível. Build Ang
 
 2ec2d3b: Foundation 38593652440 aprovado (58 backend/44 Angular). SQL/browser 38593652448: SQL aprovado (36 distintos), runtime restrito aprovado, 2 testes de autenticação aprovados; jornada desktop falhou no reflow de texto 200%/320 px antes de chegar ao novo histórico. O percurso mobile encontrou a jornada ainda aberta deixada pelo primeiro; não demonstra falha independente de marcação. Logs 115954688725 e captura conferidos.
 
-H07 — IHC/reflow: falta de espaço no formulário nativo de datas após ampliação do texto, impacto médio, confirmado pelo overflow real. Reduzir padding responsivo da shell/cartão de histórico e inputs, mantendo fonte ampliada e testes; a correção ainda exige nova execução. Screenshot ampliado e diagnóstico dos bounding boxes adicionados, sem ocultar overflow nem relaxar o critério. Falso positivo de marcação mobile: teste anterior deixou estado aberto; cleanup agora encerra a jornada via API real nas contas fictícias, sem apagar originais, para projetos independentes. Revalidar todo o percurso.
+H07 — IHC/reflow: overflow horizontal após ampliação do texto, impacto médio, confirmado pelo teste real. A origem no espaço dos controles nativos de datas é hipótese inicial; diagnóstico dos elementos foi acrescentado para confirmar o mecanismo. Reduzir padding responsivo da shell/cartão de histórico e inputs, mantendo fonte ampliada e testes; a correção ainda exige nova execução. Screenshot ampliado e diagnóstico dos bounding boxes adicionados, sem ocultar overflow nem relaxar o critério. Falso positivo de marcação mobile: teste anterior deixou estado aberto; cleanup agora encerra a jornada via API real nas contas fictícias, sem apagar originais, para projetos independentes. Revalidar todo o percurso.
+
+## Correspondência com os oito critérios do desafio
+
+| Critério | Evidência concreta desta etapa |
+|---|---|
+| Interpretação | Datas de referência congeladas, viagens/fusos, madrugada, virada de mês e pendências sem horas inventadas |
+| Organização | Consulta separada de marcações, controller/serviço/store/DTO e componente/API/formatos |
+| Qualidade | Testes de propriedade, filtros, precisão e erros; cálculo canônico sem cópia no Angular |
+| Modelagem | Jornadas e eventos existentes preservados; não altera schema nem representa regularização ainda ausente |
+| Decisões técnicas | Lock para consistência, lotes sem N+1, precisão original e limites com custo/risco explicitados |
+| Comunicação | Contrato HTTP, revisão com autocrítica e rastreabilidade, status implementado versus validado |
+| Experiência | Filtros claros, loading/vazio/erro, pendências separadas, retorno com filtros/foco e fusos explícitos |
+| Boas práticas | Sessão/escopo no servidor, runtime restrito, DTOs, SQL parametrizado, CI e nenhum segredo em cache local |
+
+Essa relação demonstra decisões e evidências; não garante nota ou aceite do avaliador. Regularização mínima ainda é parte P0 pendente.
+
+Reteste f4cff75: Foundation 38594935660 aprovado (59 backend/45 Angular); SQL/browser 38594935564 com SQL e permissões aprovados, 3/4 percursos aprovados. Mobile concluiu histórico/detalhe/fuso e recuperação; desktop confirmou overflow apenas nos DIVs/labels/inputs history-from/history-to (right=340 em viewport=320). H07 permanece médio, confirmado; hipótese de espaço insuficiente refinada para tamanho transversal intrínseco dos campos de data em flex coluna. Restringir explicitamente width/max-width dos contêineres e max-width dos inputs; fonte ampliada e exigência sem overflow preservadas. Nova execução exigida.
