@@ -22,6 +22,15 @@ describe('Minimal attempt diary', () => {
     expect(diary.list(other)).toHaveLength(1);
   });
 
+  it('round-trips the captured zone and keeps legacy attempts without a zone', () => {
+    const legacy = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null });
+    const captured = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null, timeZoneId: 'Europe/Lisbon' });
+    expect(diary.list(identity)).toContainEqual(legacy);
+    expect(diary.list(identity)).toContainEqual(captured);
+    expect(captured.timeZoneId).toBe('Europe/Lisbon');
+    expect(Object.hasOwn(legacy, 'timeZoneId')).toBe(false);
+  });
+
   it('does not overwrite another attempt and keeps keys distinct', () => {
     const first = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null });
     const second = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null });

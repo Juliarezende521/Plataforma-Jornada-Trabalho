@@ -13,7 +13,7 @@ const sessionId = 'dddddddd-dddd-4ddd-dddd-dddddddddddd';
 const empty: CurrentJourney = { session: null, observedAtUtc: NOW, allowedActions: ['ENTRY'] };
 const working: CurrentJourney = { observedAtUtc: NOW, allowedActions: ['PAUSE_START', 'EXIT'], session: {
   id: sessionId, state: 'WORKING', workDate: '2026-10-14', referenceTimeZoneId: 'Europe/Amsterdam', openedAtUtc: NOW,
-  lastEvent: { id: sessionId, type: 'ENTRY', occurredAtUtc: NOW }, provisionalWorkDuration: 'PT1H30M' } };
+  lastEvent: { id: sessionId, type: 'ENTRY', occurredAtUtc: NOW, recordedTimeZoneId: 'Europe/Amsterdam' }, provisionalWorkDuration: 'PT1H30M' } };
 
 function receipt(attempt: Attempt): Receipt {
   return { requestKey: attempt.requestKey, type: attempt.type, httpStatus: 201, code: 'RECORDED',
@@ -69,6 +69,13 @@ describe('Journey screen and recovery protocol', () => {
     expect([...view.querySelectorAll('button')].map(button => button.textContent?.trim())).toEqual(['Iniciar pausa', 'Encerrar jornada', 'Atualizar jornada']);
   });
 
+  it('shows a different recording zone on the latest marking', async () => {
+    await initial({ ...working, session: { ...working.session!,
+      lastEvent: { ...working.session!.lastEvent, recordedTimeZoneId: 'Europe/Lisbon' } } });
+    expect(view.textContent).toContain('Fuso no registro: Europe/Lisbon');
+    expect(view.textContent).toContain('Europe/Amsterdam');
+  });
+
   it('shows the closed journey of today after loading and permits a new entry', async () => {
     await initial({ ...working, allowedActions: ['ENTRY'], session: { ...working.session!, state: 'CLOSED', lastEvent: { ...working.session!.lastEvent, type: 'EXIT' } } });
     expect(view.textContent).toContain('Encerrada');expect(view.textContent).toContain('Última marcação confirmada');
@@ -85,9 +92,10 @@ describe('Journey screen and recovery protocol', () => {
   it('preserves an attempt before POST, prevents double-click and waits for server confirmation', async () => {
     await initial();
     const { action, attempt, post } = await prepareEntry();
+    expect(attempt.timeZoneId).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
     expect(post.request.headers.get('Idempotency-Key')).toBe(attempt.requestKey);
     expect(post.request.headers.get('X-CSRF-TOKEN')).toBe('csrf-only-in-memory');
-    expect(post.request.body).toEqual({ type: 'ENTRY', expectedWorkSessionId: null });
+    expect(post.request.body).toEqual({ type: 'ENTRY', expectedWorkSessionId: null, timeZoneId: attempt.timeZoneId });
     expect(JSON.stringify(diary.list(user))).not.toContain('csrf');
     void fixture.componentInstance.state.mark('ENTRY');
     http.expectNone('/api/me');
@@ -117,8 +125,9 @@ describe('Journey screen and recovery protocol', () => {
     expect(view.textContent).toContain('Trabalhando');
   });
 
-  it('keeps a missing receipt uncertain and retries explicitly with exactly the original key and command', async () => {
-    const attempt = diary.save(user, { type: 'ENTRY', expectedWorkSessionId: null });
+  it.each([undefined, 'Europe/Lisbon'])('keeps a missing receipt uncertain and retries with the original key and zone %s', async timeZoneId => {
+    const attempt = diary.save(user, { type: 'ENTRY', expectedWorkSessionId: null, timeZoneId });
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({ timeZone: 'Asia/Tokyo' } as Intl.ResolvedDateTimeFormatOptions);
     mount();
     http.expectOne('/api/me').flush(user); await turn();
     http.expectOne('/api/me/work-event-requests/' + attempt.requestKey).flush({}, { status: 404, statusText: 'Not Found' }); await turn();
@@ -131,7 +140,8 @@ describe('Journey screen and recovery protocol', () => {
     http.expectOne('/api/auth/csrf').flush({ headerName: 'X-CSRF-TOKEN', token: 'new-csrf' }); await turn();
     const post = http.expectOne('/api/me/work-events');
     expect(post.request.headers.get('Idempotency-Key')).toBe(attempt.requestKey);
-    expect(post.request.body).toEqual({ type: 'ENTRY', expectedWorkSessionId: null });
+    expect(post.request.body).toEqual(timeZoneId === undefined ?
+      { type: 'ENTRY', expectedWorkSessionId: null } : { type: 'ENTRY', expectedWorkSessionId: null, timeZoneId });
     post.flush(receipt(attempt)); await turn();
     http.expectOne('/api/me/work-sessions/current').flush(working);
     await action; await turn();

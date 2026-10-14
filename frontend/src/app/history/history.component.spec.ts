@@ -31,8 +31,19 @@ describe('History and detail',()=>{
   });
   it('shows event detail and preserves the result when returning',()=>{
     consult();component().open(item.id);http.expectOne('/api/me/work-sessions/session1').flush(detail);fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Marcações originais');expect(fixture.nativeElement.textContent).toContain('Fuso no registro: America/Sao_Paulo');
+    expect(fixture.nativeElement.textContent).toContain('Marcações originais');expect(fixture.nativeElement.textContent).not.toContain('Fuso no registro:');
     component().back();expect(component().result()?.totalElements).toBe(21);expect(component().applied()?.from).toBe('2026-10-01');
+  });
+  it('shows the recording zone of each differing event without changing reference date',()=>{
+    consult();component().open(item.id);
+    http.expectOne('/api/me/work-sessions/session1').flush({...detail,events:[
+      {...detail.events[0],recordedTimeZoneId:'Europe/Lisbon'},
+      {...detail.events[0],id:'event2',sequence:2,type:'EXIT'}
+    ]});fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Fuso no registro: Europe/Lisbon');
+    expect(fixture.nativeElement.textContent).not.toContain('Fuso no registro: America/Sao_Paulo');
+    expect(component().detail()?.session.workDate).toBe('2026-10-14');
+    expect(component().detail()?.session.referenceTimeZoneId).toBe('America/Sao_Paulo');
   });
   it('clears stale results on failed new consultation and offers a retry',()=>{
     consult();component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush({}, {status:503,statusText:'Unavailable'});

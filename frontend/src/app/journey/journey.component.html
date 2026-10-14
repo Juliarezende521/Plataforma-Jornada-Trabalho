@@ -36,7 +36,10 @@
     @if (current.session; as session) {
       <dl class="summary">
         <div><dt>Data de referência</dt><dd>{{ formatWorkDate(session.workDate) }}</dd></div>
-        <div class="last-event"><dt>Última marcação confirmada</dt><dd>{{ lastType() }}<br /><time [attr.datetime]="session.lastEvent.occurredAtUtc">{{ formatInstant(session.lastEvent.occurredAtUtc) }}</time></dd></div>
+        <div class="last-event"><dt>Última marcação confirmada</dt><dd>{{ lastType() }}<br /><time [attr.datetime]="session.lastEvent.occurredAtUtc">{{ formatInstant(session.lastEvent.occurredAtUtc) }}</time>
+          @if (session.lastEvent.recordedTimeZoneId !== session.referenceTimeZoneId) {
+            <br /><small>Fuso no registro: {{ session.lastEvent.recordedTimeZoneId }}</small>
+          }</dd></div>
       </dl>
       <p class="explanation">{{ session.state === 'CLOSED' ? 'Jornada de hoje encerrada. Uma nova entrada inicia outra jornada.' : session.state === 'PAUSED' ? 'Você pode retomar o trabalho ou encerrar a jornada.' : 'Inicie uma pausa ao interromper o trabalho.' }}</p>
     } @else {
