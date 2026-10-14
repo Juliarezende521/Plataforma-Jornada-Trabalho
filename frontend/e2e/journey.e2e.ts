@@ -11,6 +11,13 @@ async function login(page: Page, email = 'brasil@example.invalid', waitForEntry 
   if (waitForEntry) await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
   else await expect(page.getByRole('heading', { name: 'Olá, Colaborador Brasil' })).toBeVisible();
 }
+async function logout(page: Page) {
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  // Do not navigate away while CSRF/logout is still in flight.
+  await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
+  expect((await page.request.get('/api/me')).status()).toBe(401);
+}
+
 async function diary(page: Page) {
   return page.evaluate(prefix => Object.keys(localStorage).filter(key => key.startsWith(prefix))
     .map(key => JSON.parse(localStorage.getItem(key)!)), prefix);
@@ -91,12 +98,12 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   const postCount = posts;
   let pendingLookups = 0;
   page.on('request', request => { if (request.url().endsWith('/api/me/work-event-requests/' + pending.requestKey)) pendingLookups++; });
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await logout(page);
   await login(page, 'europa@example.invalid');
   expect(await diary(page)).toHaveLength(1);
   expect(pendingLookups).toBe(0);
   await expect(page.getByRole('heading', { name: 'Marcação aguardando confirmação' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await logout(page);
   await login(page, 'brasil@example.invalid', false);
   await expect(page.getByRole('heading', { name: 'Marcação aguardando confirmação' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Consultar resultados', exact: true })).toBeEnabled();
@@ -112,7 +119,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   expect(await diary(page)).toHaveLength(0);
   await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await logout(page);
   await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
   await expect(page.locator('#access-heading')).toBeFocused();
 });
