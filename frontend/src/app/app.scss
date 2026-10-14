@@ -31,3 +31,7 @@ h2[tabindex="-1"]:focus { outline: 2px solid #30458a; outline-offset: 5px; }
 .account-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 .session-card { padding: 1rem 1.5rem; margin-top: 1.5rem; }
 .session-card .feedback { min-height: 0; margin: .5rem 0 0; }
+
+nav[aria-label="Navegação das jornadas"] { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:1rem; align-items:center; }
+nav a { color:#30458a; min-height:44px; display:inline-flex; align-items:center; padding:0 .4rem; }
+nav a:focus-visible { outline:3px solid #b45309; outline-offset:3px; }

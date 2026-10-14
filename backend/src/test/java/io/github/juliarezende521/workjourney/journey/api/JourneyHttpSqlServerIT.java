@@ -104,6 +104,49 @@ class JourneyHttpSqlServerIT {
         mark(actor, UUID.randomUUID(), "ENTRY", null, 403);
     }
 
+    @Test void historyPagesSummarizeWholePeriodAndDetailIsOwned() throws Exception {
+        var actor=login(); var other=login();
+        String closed=mark(actor,UUID.randomUUID(),"ENTRY",null,201).get("workSessionId").asText();
+        when(clock.instant()).thenReturn(NOW.plusSeconds(60));
+        mark(actor,UUID.randomUUID(),"PAUSE_START",closed,201);
+        when(clock.instant()).thenReturn(NOW.plusSeconds(600));
+        mark(actor,UUID.randomUUID(),"EXIT",closed,201);
+        mark(actor,UUID.randomUUID(),"ENTRY",null,201);
+        when(clock.instant()).thenReturn(NOW.plusSeconds(660));
+        String filter="/api/me/work-sessions?from=2026-10-14&to=2026-10-14&size=1";
+        mvc.perform(get(filter).session(actor.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2)).andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].provisional").value(true))
+                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT1M"))
+                .andExpect(jsonPath("$.summary.closedCount").value(1)).andExpect(jsonPath("$.summary.pendingCount").value(1));
+        mvc.perform(get(filter+"&page=1").session(actor.session())).andExpect(jsonPath("$.items[0].id").value(closed))
+                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT1M"));
+        mvc.perform(get("/api/me/work-sessions/"+closed).session(actor.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.events.length()").value(3)).andExpect(jsonPath("$.intervals[1].kind").value("PAUSE"))
+                .andExpect(jsonPath("$.session.employeeId").doesNotExist());
+        mvc.perform(get("/api/me/work-sessions/"+closed).session(other.session())).andExpect(status().isNotFound());
+        mvc.perform(get("/api/me/work-sessions/"+UUID.randomUUID()).session(other.session())).andExpect(status().isNotFound());
+        mvc.perform(get(filter).session(other.session())).andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT0S"));
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-15&to=2026-10-15").session(actor.session()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test void queryFiltersAndSessionAreEnforced() throws Exception {
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-14&to=2026-10-14")).andExpect(status().isUnauthorized());
+        var actor=login();
+        for (String query : new String[]{"", "?from=invalid&to=2026-10-14", "?from=2026-10-15&to=2026-10-14",
+                "?from=2025-01-01&to=2026-10-14", "?from=2026-10-14&to=2026-10-14&size=101",
+                "?from=2026-10-14&to=2026-10-14&page=-1", "?from=2026-10-14&from=2026-10-13&to=2026-10-14",
+                "?from=2026-10-14&to=2026-10-14&employeeId=foreign"}) {
+            mvc.perform(get("/api/me/work-sessions"+query).session(actor.session())).andExpect(status().isBadRequest());
+        }
+        mvc.perform(get("/api/me/work-sessions/invalid").session(actor.session())).andExpect(status().isBadRequest());
+        entityManager.createNativeQuery("UPDATE dbo.app_user SET active=0 WHERE id=:id").setParameter("id",actor.userId().toString()).executeUpdate();
+        entityManager.clear();
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-14&to=2026-10-14").session(actor.session())).andExpect(status().isForbidden());
+    }
+
     private Login login() throws Exception {
         var account = users.save(new AppUser(UUID.randomUUID() + "@example.invalid", encoder.encode(PASSWORD)));
         employees.save(new Employee(account, "Colaborador fictício", "Europe/Amsterdam"));

@@ -90,6 +90,30 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
   expect((await current(page)).session).toBeNull();
   await expect(page.getByText('Encerrar jornada: confirmado.')).toBeVisible();
+  await page.getByRole('button', { name: 'Consultar período', exact: true }).click();
+  await expect(page.getByTestId('history-feedback')).toContainText('Consulta concluída');
+  const history = await (await page.request.get('/api/me/work-sessions?from=2026-10-01&to=2026-10-31')).json();
+  expect(history.summary.pendingCount).toBe(0);
+  const latest = history.items[0];
+  await page.getByRole('button', { name: /^Ver detalhes da jornada de/ }).first().click();
+  await expect(page.getByRole('heading', { name: 'Marcações originais' })).toBeVisible();
+  await expect(page.locator('.events li')).toHaveCount(5);
+  const detail = await (await page.request.get('/api/me/work-sessions/' + latest.id)).json();
+  expect(detail.session.workDuration).toBe(latest.workDuration);
+  expect(detail.intervals.at(-1).kind).toBe('PAUSE');
+  await expect(page.getByRole('heading', { name: /^Detalhes da jornada de/ })).toBeFocused();
+  const dateBefore = detail.session.workDate;
+  await page.getByLabel('Fuso de visualização', { exact: true }).selectOption('Europe/Amsterdam');
+  await expect(page.locator('.events li').first()).toContainText('GMT+2');
+  expect((await (await page.request.get('/api/me/work-sessions/' + latest.id)).json()).session.workDate).toBe(dateBefore);
+  for (const width of [320, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`history-detail-${width}.png`), fullPage: true });
+  }
+  await page.getByRole('button', { name: 'Voltar ao histórico', exact: true }).click();
+  await expect(page.locator('#history-heading')).toBeFocused();
+
   await page.route('**/api/me/work-events', route => route.abort('failed'), { times: 1 });
   await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
   await expect(page.getByTestId('journey-feedback')).toContainText('tentativa foi preservada');

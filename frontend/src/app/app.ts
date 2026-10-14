@@ -4,11 +4,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from './auth/auth.service';
 import { authErrorMessage } from './auth/auth-feedback';
+import { HistoryComponent } from './history/history.component';
 import { JourneyComponent } from './journey/journey.component';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule, JourneyComponent],
+  imports: [ReactiveFormsModule, JourneyComponent, HistoryComponent],
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })

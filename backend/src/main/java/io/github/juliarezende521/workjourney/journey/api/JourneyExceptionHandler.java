@@ -11,9 +11,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(assignableTypes = JourneyController.class)
+@RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.journey.query.JourneyQueries.InvalidFilter.class)
+    ResponseEntity<Problem> filter() { return problem(400, "Invalid history filter"); }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible.class)
+    ResponseEntity<Problem> hidden() { return problem(404, "Journey not visible"); }
 
     @ExceptionHandler(InvalidJourneyRequest.class)
     ResponseEntity<Problem> invalid(InvalidJourneyRequest error) {

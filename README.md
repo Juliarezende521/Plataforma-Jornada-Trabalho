@@ -104,3 +104,7 @@ O SQL Server deverá executar em ambiente suportado. A conexão será configurá
 4. Revisar documentação e repetir instruções locais com SQL Server.
 
 O repositório é público, conforme solicitado no desafio. Todas as informações demonstrativas serão fictícias; senhas, tokens e configurações privadas devem permanecer fora do Git.
+
+### Consultas próprias nesta branch
+
+Histórico paginado, detalhe explicável e resumo do período implementados nesta etapa; contrato, IHC, revisão e status de validação em [consultas de jornada](docs/consultas-jornada.md). Soma somente jornadas encerradas, pendências separadas, troca de fuso apenas visual. Regularização mínima e aceite completo continuam pendentes.

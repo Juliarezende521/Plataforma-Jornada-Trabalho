@@ -76,6 +76,30 @@ public class JpaWorkSessionStore {
         return new StoredSession(session, row.version());
     }
 
+    /** Bounded parent page + one event query, avoiding one query per journey. */
+    public List<WorkSession> history(UUID employee, java.time.LocalDate from, java.time.LocalDate to,
+                                     int offset, int size) {
+        var rows = entityManager.createQuery("SELECT s FROM WorkSessionRow s WHERE s.employeeId=:employee AND s.workDate BETWEEN :from AND :to ORDER BY s.workDate DESC, s.openedAtUtc DESC, s.id DESC", WorkSessionRow.class)
+                .setParameter("employee", employee).setParameter("from", from).setParameter("to", to)
+                .setFirstResult(offset).setMaxResults(size).getResultList();
+        if (rows.isEmpty()) return List.of();
+        var ids = rows.stream().map(WorkSessionRow::id).toList();
+        var eventRows = entityManager.createQuery("SELECT e FROM WorkEventRow e WHERE e.workSessionId IN :ids ORDER BY e.sequence", WorkEventRow.class)
+                .setParameter("ids", ids).getResultList();
+        var grouped = eventRows.stream().map(WorkEventRow::toDomain)
+                .collect(java.util.stream.Collectors.groupingBy(WorkEvent::workSessionId));
+        var restored = rows.stream().map(row -> row.restore(grouped.getOrDefault(row.id(), List.of()))).toList();
+        // Avoid accumulating managed entities while scanning summary batches. DB locks survive detach.
+        eventRows.forEach(entityManager::detach);
+        rows.forEach(entityManager::detach);
+        return restored;
+    }
+
+    public long historyCount(UUID employee, java.time.LocalDate from, java.time.LocalDate to) {
+        return entityManager.createQuery("SELECT COUNT(s) FROM WorkSessionRow s WHERE s.employeeId=:employee AND s.workDate BETWEEN :from AND :to", Long.class)
+                .setParameter("employee", employee).setParameter("from", from).setParameter("to", to).getSingleResult();
+    }
+
     private Optional<WorkSessionRow> ownedRow(UUID id, UUID employeeId) {
         Objects.requireNonNull(id, "Session ID is required");
         Objects.requireNonNull(employeeId, "Employee ID is required");

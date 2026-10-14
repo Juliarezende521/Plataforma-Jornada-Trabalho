@@ -26,7 +26,7 @@
     } @else {
       <h2 id="access-heading" #accessHeading tabindex="-1">Entrar</h2>
       <p class="hint">Use a conta fornecida pela empresa.</p>
-      <form [formGroup]="form" (ngSubmit)="login()">
+      <form id="login-form" [formGroup]="form" (ngSubmit)="login()">
         <fieldset [disabled]="busy()">
           <label for="email">Email</label>
           <input id="email" type="email" formControlName="email" autocomplete="username"
@@ -53,7 +53,9 @@
     }
   </section>
   @if (!checking() && auth.user(); as user) {
-    <app-journey [user]="user" (busyChange)="journeyBusy.set($event)" />
+    <nav aria-label="Navegação das jornadas"><a href="#current-journey">Jornada atual</a> · <a href="#history">Histórico e resumo</a></nav>
+    <app-journey id="current-journey" [user]="user" (busyChange)="journeyBusy.set($event)" />
+    <app-history [user]="user" />
   }
   <footer>Acesso restrito a colaboradores. Contas são provisionadas pela empresa.</footer>
 </main>
