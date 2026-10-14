@@ -139,7 +139,7 @@ class JourneyHttpTest {
                 new AuthenticationCredentialsNotFoundException("secret session")};
         int[] statuses = {503, 500, 403, 401};
         for (int i = 0; i < failures.length; i++) {
-            when(markings.execute(any(), any())).thenThrow(failures[i]);
+            doThrow(failures[i]).when(markings).execute(any(), any());
             mvc.perform(post(MARK).with(user(principal())).with(csrf()).header("Idempotency-Key", UUID.randomUUID())
                     .contentType(MediaType.APPLICATION_JSON).content("{\"type\":\"ENTRY\"}"))
                     .andExpect(status().is(statuses[i]))
