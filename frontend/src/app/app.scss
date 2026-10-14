@@ -24,3 +24,10 @@ dd { margin: .3rem 0 1rem; overflow-wrap: anywhere; }
 dt { font-weight: 600; }
 
 h2[tabindex="-1"]:focus { outline: 2px solid #30458a; outline-offset: 5px; }
+
+.account-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+.account-row h2 { margin: .5rem 0 .25rem; font-size: 1.25rem; }
+.account-email { margin: 0; color: #475569; overflow-wrap: anywhere; }
+.account-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.session-card { padding: 1rem 1.5rem; margin-top: 1.5rem; }
+.session-card .feedback { min-height: 0; margin: .5rem 0 0; }

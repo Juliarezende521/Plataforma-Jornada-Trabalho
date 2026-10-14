@@ -4,19 +4,22 @@
     <h1>Jornada de trabalho</h1>
     <p>Registre seu trabalho e acompanhe suas marcações.</p>
   </header>
-  <section aria-labelledby="access-heading" [attr.aria-busy]="busy()">
+  <section [class.session-card]="!!auth.user() && !checking()" aria-labelledby="access-heading" [attr.aria-busy]="busy()">
     @if (checking()) {
       <h2 id="access-heading" #accessHeading tabindex="-1">Verificando seu acesso</h2>
       <p role="status">Aguarde enquanto consultamos sua sessão.</p>
     } @else if (auth.user(); as user) {
-      <span class="badge">Conta conectada</span>
-      <h2 id="access-heading" #accessHeading tabindex="-1">Olá, {{ user.name }}</h2>
-      <dl>
-        <dt>Email</dt><dd>{{ user.email }}</dd>
-        <dt>Fuso de referência</dt><dd>{{ user.referenceTimeZoneId }}</dd>
-      </dl>
-      <p class="hint">Seu acesso está conectado. A jornada aparece abaixo.</p>
-      <button type="button" (click)="logout()" [disabled]="busy() || journeyBusy()">{{ busy() ? 'Aguarde…' : 'Sair' }}</button>
+      <div class="account-row">
+        <div>
+          <span class="badge">Conta conectada</span>
+          <h2 id="access-heading" #accessHeading tabindex="-1">Olá, {{ user.name }}</h2>
+          <p class="account-email">{{ user.email }}</p>
+        </div>
+        <div class="account-actions">
+          <button type="button" (click)="logout()" [disabled]="busy() || journeyBusy()">{{ busy() ? 'Aguarde…' : 'Sair' }}</button>
+          <button class="secondary" type="button" (click)="checkSession()" [disabled]="busy() || journeyBusy()">Verificar acesso</button>
+        </div>
+      </div>
     } @else if (unavailable()) {
       <h2 id="access-heading" #accessHeading tabindex="-1">Acesso indisponível</h2>
       <p>Não conseguimos consultar a plataforma agora.</p>
@@ -45,7 +48,7 @@
       </form>
     }
     <p class="feedback" data-testid="auth-feedback" role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
-    @if (!checking()) {
+    @if (!checking() && !auth.user()) {
       <button class="secondary" type="button" (click)="checkSession()" [disabled]="busy() || journeyBusy()">Verificar acesso</button>
     }
   </section>
