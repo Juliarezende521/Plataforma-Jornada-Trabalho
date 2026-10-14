@@ -19,7 +19,7 @@ test('real SQL Server accounts, session, CSRF, logout and expiration over HTTPS'
   expect((await page.request.post('/api/auth/login', { form: { email: 'brasil@example.invalid', password: password! } })).status()).toBe(403);
 
   await login(page, 'brasil@example.invalid', 'deliberately-wrong-password');
-  await expect(page.getByRole('status')).toContainText('Confira seu email e senha');
+  await expect(page.getByTestId('auth-feedback')).toContainText('Confira seu email e senha');
   await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('');
   await login(page, 'brasil@example.invalid', password!);
   await expect(page.getByRole('heading', { name: 'Olá, Colaborador Brasil' })).toBeVisible();
@@ -58,14 +58,14 @@ test('real SQL Server accounts, session, CSRF, logout and expiration over HTTPS'
   } finally { await europeContext.close(); }
 
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Você saiu');
+  await expect(page.getByTestId('auth-feedback')).toContainText('Você saiu');
   expect((await page.request.get('/api/me', { headers: { Cookie: `JSESSIONID=${cookie!.value}` } })).status()).toBe(401);
   await login(page, 'brasil@example.invalid', password!);
   await expect(page.getByRole('heading', { name: 'Olá, Colaborador Brasil' })).toBeVisible();
   // Backend test process uses a real one-minute idle timeout; do not touch its session.
   await new Promise(resolve => setTimeout(resolve, 35_000));
   await new Promise(resolve => setTimeout(resolve, 30_000));
-  await page.getByRole('button', { name: 'Verificar sessão' }).click();
+  await page.getByRole('button', { name: 'Verificar acesso' }).click();
   await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
   expect((await page.request.get('/api/me')).status()).toBe(401);
   await page.screenshot({ path: testInfo.outputPath('login.png'), fullPage: true });

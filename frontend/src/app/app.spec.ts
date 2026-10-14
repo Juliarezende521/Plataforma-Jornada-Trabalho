@@ -65,7 +65,7 @@ describe('Access screen', () => {
     expect(view.querySelector('fieldset')?.disabled).toBe(false);
   });
 
-  it('shows the authenticated identity and logs out', () => {
+  it('shows the authenticated identity and logs out', async () => {
     anonymous(); fill(); submit();
     http.expectOne('/api/auth/csrf').flush({ headerName: 'X-CSRF-TOKEN', token: 'before' });
     http.expectOne('/api/auth/login').flush(null, { status: 204, statusText: 'No Content' });
@@ -73,8 +73,13 @@ describe('Access screen', () => {
     http.expectOne('/api/me').flush({ userId: 'u', employeeId: 'e', name: 'Colaborador Brasil', email: 'brasil@example.invalid', referenceTimeZoneId: 'America/Sao_Paulo' });
     fixture.detectChanges();
     expect(view.textContent).toContain('Olá, Colaborador Brasil');
-    expect(view.textContent).toContain('ainda não estão disponíveis');
+    expect(view.textContent).toContain('Jornada atual');
     expect(view.querySelector('form')).toBeNull();
+    http.expectOne('/api/me').flush({ userId: 'u', employeeId: 'e', name: 'Colaborador Brasil', email: 'brasil@example.invalid', referenceTimeZoneId: 'America/Sao_Paulo' });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    http.expectOne('/api/me/work-sessions/current').flush({ session: null, observedAtUtc: '2026-10-14T14:00:00Z', allowedActions: ['ENTRY'] });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    fixture.detectChanges();
     view.querySelector('button')!.click();
     http.expectOne('/api/auth/csrf').flush({ headerName: 'X-CSRF-TOKEN', token: 'logout' });
     http.expectOne('/api/auth/logout').flush(null, { status: 204, statusText: 'No Content' });

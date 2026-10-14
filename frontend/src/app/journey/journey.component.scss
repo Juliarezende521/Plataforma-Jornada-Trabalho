@@ -1,0 +1,28 @@
+:host { display: block; min-width: 0; }
+.journey { overflow-wrap: anywhere; background: white; border: 1px solid #dbe3ef; border-radius: 1rem; padding: clamp(1rem, 4vw, 2rem); margin-top: 1.5rem; }
+h2, h3, p { margin-top: 0; } h2 { font-size: 1.65rem; margin-bottom: .5rem; } h3 { font-size: 1.1rem; }
+p { line-height: 1.6; }
+.heading-row { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; }
+.eyebrow { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin-bottom: .4rem; }
+.state-badge { max-width: 100%; overflow-wrap: anywhere; background: #eef2ff; color: #30458a; border-radius: 2rem; padding: .5rem .8rem; font-weight: 650; }
+.intro, .explanation, .zone, .online-note, .update-row p { color: #475569; }
+.summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; padding: 1.25rem; background: #f4f6fb; border-radius: .75rem; }
+dt { font-size: .9rem; color: #475569; } dd { margin: .35rem 0 0; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+.duration { font-size: 1.65rem; } .last-event { grid-column: 1 / -1; }
+.empty-state { background: #f4f6fb; border-radius: .75rem; padding: 1.25rem; margin: 1.25rem 0; } .empty-state p { margin-bottom: 0; }
+.zone { font-size: .9rem; overflow-wrap: anywhere; }
+.actions, .update-row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+button { min-height: 44px; max-width: 100%; padding: .85rem 1.15rem; border: 1px solid #30458a; border-radius: .5rem; background: #30458a; color: white; font: inherit; font-weight: 600; cursor: pointer; text-align: center; }
+button.secondary { color: #30458a; background: white; }
+button:disabled { opacity: .65; cursor: not-allowed; }
+button:focus-visible { outline: 3px solid #b45309; outline-offset: 3px; }
+.feedback { margin: 1rem 0; min-height: 3rem; color: #172033; }
+.update-row { border-top: 1px solid #dbe3ef; padding-top: 1rem; } .update-row p { font-size: .85rem; margin: 0; }
+.online-note { font-size: .85rem; margin: 1rem 0 0; }
+.recovery { padding: 1.25rem; background: #fff7ed; border: 1px solid #9a3412; border-radius: .75rem; }
+.recovery ul { padding-left: 1.2rem; } .recovery li + li { margin-top: 1.25rem; } .recovery li p { margin: .5rem 0; }
+@media (max-width: 420px) { .summary { grid-template-columns: 1fr; } .actions button { width: 100%; } }
+
+.confirmation { border-left: 4px solid #30458a; padding: .5rem .75rem; margin-top: 1rem; line-height: 1.6; }
+
+h2[tabindex="-1"]:focus { outline: 2px solid #30458a; outline-offset: 4px; }

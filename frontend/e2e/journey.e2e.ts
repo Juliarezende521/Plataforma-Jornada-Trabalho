@@ -1,0 +1,95 @@
+import { test, expect, Page } from '@playwright/test';
+
+const prefix = 'work-journey.online.v1.';
+async function login(page: Page) {
+  const password = process.env['EVALUATION_PASSWORD'];
+  if (!password) throw new Error('Evaluation password is required outside Git');
+  await page.goto('/');
+  await page.getByLabel('Email', { exact: true }).fill('brasil@example.invalid');
+  await page.getByLabel('Senha', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+}
+async function diary(page: Page) {
+  return page.evaluate(prefix => Object.keys(localStorage).filter(key => key.startsWith(prefix))
+    .map(key => JSON.parse(localStorage.getItem(key)!)), prefix);
+}
+async function current(page: Page) { return (await page.request.get('/api/me/work-sessions/current')).json(); }
+
+// The transport loses the response after route.fetch runs the real Spring/SQL transaction.
+test('real journey, lost responses, explicit retry, keyboard and responsive reflow', async ({ page }, testInfo) => {
+  await login(page);
+  await expect(page.locator('#access-heading')).toBeFocused();
+  let accepted: { requestKey: string; eventId: string; occurredAtUtc: string } | undefined;
+  let posts = 0;
+  page.on('request', request => { if (request.url().endsWith('/api/me/work-events') && request.method() === 'POST') posts++; });
+  await page.route('**/api/me/work-events', async route => {
+    const response = await route.fetch();
+    expect(response.status()).toBe(201);
+    accepted = await response.json();
+    await route.abort('failed');
+  }, { times: 1 });
+  await page.getByRole('button', { name: 'Registrar entrada', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('journey-feedback')).toContainText('tentativa foi preservada');
+  await expect(page.locator('#journey-heading')).toBeFocused();
+  const saved = await diary(page);
+  expect(saved).toHaveLength(1);
+  expect(Object.keys(saved[0]).sort()).toEqual(['employeeId', 'expectedWorkSessionId', 'requestKey', 'type', 'userId', 'version']);
+  expect(saved[0].requestKey).toBe(accepted!.requestKey);
+  const lookup = await page.request.get('/api/me/work-event-requests/' + saved[0].requestKey);
+  expect(lookup.status()).toBe(200);
+  expect((await lookup.json()).eventId).toBe(accepted!.eventId);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
+  expect(await diary(page)).toHaveLength(0);
+  expect(posts).toBe(1);
+  const snapshot = await current(page);
+  expect(snapshot.session.lastEvent.id).toBe(accepted!.eventId);
+  expect(snapshot.session.lastEvent.occurredAtUtc).toBe(accepted!.occurredAtUtc);
+  await page.getByRole('button', { name: 'Iniciar pausa', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Retomar trabalho', exact: true })).toBeEnabled();
+  await expect(page.getByText('Em pausa', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Retomar trabalho', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Iniciar pausa', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Retomar trabalho', exact: true })).toBeEnabled();
+  expect((await current(page)).session.referenceTimeZoneId).toBe('America/Sao_Paulo');
+  for (const width of [320, 768, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const box = await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+    await page.screenshot({ path: testInfo.outputPath(`journey-paused-${width}.png`), fullPage: true });
+  }
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  await page.setViewportSize({ width: 320, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
+  await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+  expect((await current(page)).session).toBeNull();
+  await expect(page.getByText('Encerrar jornada: confirmado.')).toBeVisible();
+  await page.route('**/api/me/work-events', route => route.abort('failed'), { times: 1 });
+  await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
+  await expect(page.getByTestId('journey-feedback')).toContainText('tentativa foi preservada');
+  const pending = (await diary(page))[0];
+  expect((await page.request.get('/api/me/work-event-requests/' + pending.requestKey)).status()).toBe(404);
+  const postCount = posts;
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Marcação aguardando confirmação' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Consultar resultados', exact: true })).toBeEnabled();
+  expect(posts).toBe(postCount);
+  await page.getByRole('button', { name: 'Consultar e repetir esta tentativa', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
+  const repeated = await (await page.request.get('/api/me/work-event-requests/' + pending.requestKey)).json();
+  expect(repeated.requestKey).toBe(pending.requestKey);
+  expect(repeated.httpStatus).toBe(201);
+  expect(await diary(page)).toHaveLength(0);
+  await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
+  await expect(page.locator('#access-heading')).toBeFocused();
+});

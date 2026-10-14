@@ -40,6 +40,9 @@ class JourneyHttpSqlServerIT {
     @BeforeEach void time() { when(clock.instant()).thenReturn(NOW); }
 
     @Test void runtimeHttpFlowUsesRealLoginAndKeepsOtherAccountsIsolated() throws Exception {
+        mvc.perform(get("/api/status")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.stage").value("JOURNEY_ONLINE"))
+                .andExpect(jsonPath("$.journeyAvailable").value(true));
         var first = login();
         var second = login();
         UUID key = UUID.randomUUID();
