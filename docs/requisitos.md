@@ -4,7 +4,7 @@ Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server
 
 ## Objetivo e fontes
 
-Documentos derivados: [stakeholders](stakeholders.md), [histórias de usuário](historias-usuario.md) e [experiência/IHC](experiencia-usuario.md). Eles não ampliam o escopo nem substituem esta baseline. UX05 (RN05), UX06 (regularização mínima) e recuperação HU14 receberam decisões documentadas em 11/10/2026; todas ainda precisam de implementação e testes.
+Documentos derivados: [stakeholders](stakeholders.md), [histórias de usuário](historias-usuario.md) e [experiência/IHC](experiencia-usuario.md). Eles não ampliam o escopo nem substituem esta baseline. UX05 (RN05), UX06 (regularização mínima) e recuperação HU14 receberam decisões documentadas em 11/10/2026; RN05 tem cobertura de domínio/serviço; sua experiência na interface, a regularização mínima e a recuperação Angular ainda precisam de implementação e testes. A fronteira HTTP atual está documentada em [API de jornada](api-jornada.md); não encerra o aceite global dos requisitos de jornada.
 
 Centralizar as marcações e consultas de jornada da Dungeons & Dragons Group, com colaboradores no Brasil e Europa, inclusive remotos e em viagem. Fonte principal: enunciado fornecido na entrevista. Fonte complementar: escolha de Java pela desenvolvedora e informação recebida de que a empresa utiliza SQL Server; não houve entrevista adicional com RH ou usuários.
 

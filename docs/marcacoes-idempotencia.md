@@ -72,7 +72,7 @@ Permissões de contas incluem o seed explícito de avaliação; não são cadast
 | M05 — desempenho | Lock mantém consistência mas serializa conta; replay é O(n), MAX de encerramento e revalidação interna acrescentam consultas. Baixo condicional → baixo, sem gargalo medido. | Não propor remover lock/validação por estilo. Medir plano, espera e latência com massa; índice de histórico limita busca por colaborador, sem SLA ou custo constante prometido. |
 | M06 — responsabilidades/legibilidade | Resolver, comando, domínio, serviço e stores têm responsabilidades distintas; regras de transição não são copiadas, nextFor é reutilizado. Baixo → baixo de manutenção potencial. | Validação pura anterior à escrita é necessária para recibos de rejeição sem transação inválida. Não confundir checagem + gravação protegida com duplicação de código a eliminar cegamente. |
 
-Segurança exclusivamente: queries parametrizadas e UUID/tipo estruturados, sem SQL concatenado com entrada. Nenhum HTML, upload, caminho de arquivo ou API externa novo; XSS/manipulação de arquivos não ganharam superfície nesta fatia. Mensagens/DTOs não contêm credenciais ou stack traces; tratamento HTTP ainda precisa ser implementado e testado. Constraints não substituem identidade autenticada; grants de CI não comprovam implantação real. Ausência de achado alto confirmado não é certificação de segurança.
+Segurança exclusivamente: queries parametrizadas e UUID/tipo estruturados, sem SQL concatenado com entrada. Nenhum HTML, upload, caminho de arquivo ou API externa novo; XSS/manipulação de arquivos não ganharam superfície nesta fatia. Mensagens/DTOs não contêm credenciais ou stack traces; a etapa posterior de HTTP tem implementação e evidência próprias em [API de jornada](api-jornada.md). Constraints não substituem identidade autenticada; grants de CI não comprovam implantação real. Ausência de achado alto confirmado não é certificação de segurança.
 
 A aderência internacional mantém UTC/IANA/data congelada e permite múltiplas jornadas sem sobreposição pelo fluxo online. Organização/modelagem, qualidade, decisões e comunicação têm rastreabilidade; UX/dispositivos e aceite global continuam pendentes. Não há conformidade trabalhista por país inferida.
 
@@ -89,4 +89,4 @@ Referências: [Spring Data JPA — locking](https://docs.spring.io/spring-data/j
 
 ## Próximo passo
 
-Após validar o serviço, expor DTOs/controllers e erros públicos, conferir sessão/CSRF e consultas próprias; depois diário mínimo, reconciliação e interface Angular. Regularização P0, histórico/resumo e validação completa de IHC/dispositivos continuam no backlog.
+DTOs/controllers e erros públicos, sessão/CSRF e consultas próprias foram implementados e validados na etapa posterior de [API de jornada](api-jornada.md). Próximo passo: diário mínimo, reconciliação e interface Angular. Regularização P0, histórico/resumo e validação completa de IHC/dispositivos continuam no backlog.
