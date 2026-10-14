@@ -132,6 +132,23 @@ class JourneyHttpSqlServerIT {
                 .andExpect(jsonPath("$.totalElements").value(0));
     }
 
+    @Test void summaryKeepsCrossMonthJourneyInReferenceDateAndExactPrecision() throws Exception {
+        var actor=login();
+        Instant start=Instant.parse("2026-10-31T22:30:00.0000001Z");
+        when(clock.instant()).thenReturn(start);
+        String id=mark(actor,UUID.randomUUID(),"ENTRY",null,201).get("workSessionId").asText();
+        when(clock.instant()).thenReturn(start.plusSeconds(10800).plusNanos(100));
+        mark(actor,UUID.randomUUID(),"EXIT",id,201);
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-31&to=2026-10-31").session(actor.session()))
+                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT3H0.0000001S"))
+                .andExpect(jsonPath("$.items[0].workDate").value("2026-10-31"));
+        mvc.perform(get("/api/me/work-sessions?from=2026-11-01&to=2026-11-01").session(actor.session()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/me/work-sessions/"+id).session(actor.session()))
+                .andExpect(jsonPath("$.events[0].occurredAtUtc").value(start.toString()))
+                .andExpect(jsonPath("$.intervals[0].duration").value("PT3H0.0000001S"));
+    }
+
     @Test void queryFiltersAndSessionAreEnforced() throws Exception {
         mvc.perform(get("/api/me/work-sessions?from=2026-10-14&to=2026-10-14")).andExpect(status().isUnauthorized());
         var actor=login();
