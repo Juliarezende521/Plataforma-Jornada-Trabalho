@@ -74,7 +74,7 @@ sql -d work_journey_ci -Q 'GRANT SELECT, INSERT ON dbo.app_user TO journey_app; 
 sql -d work_journey_ci -Q "EXECUTE AS USER = 'journey_app'; IF HAS_PERMS_BY_NAME('dbo.work_event', 'OBJECT', 'INSERT') <> 1 OR HAS_PERMS_BY_NAME('dbo.work_event', 'OBJECT', 'UPDATE') <> 0 OR HAS_PERMS_BY_NAME('dbo.work_event', 'OBJECT', 'DELETE') <> 0 OR HAS_PERMS_BY_NAME('dbo.work_session', 'OBJECT', 'UPDATE') <> 1 OR HAS_PERMS_BY_NAME('dbo.work_session', 'OBJECT', 'DELETE') <> 0 OR HAS_PERMS_BY_NAME('dbo.work_session', 'OBJECT', 'ALTER') <> 0 THROW 51002, 'Runtime journey permissions are invalid', 1; REVERT;" >/dev/null
 (cd backend && ./mvnw --batch-mode '-Dtest=JourneyPersistenceSqlServerIT#runtimePermissionsSupportAppendWithoutRewritingOriginals' test)
 (cd backend && ./mvnw --batch-mode '-Dtest=OnlineMarkingSqlServerIT#runtimePermissionsPreserveOriginalReceipts' test)
-(cd backend && ./mvnw --batch-mode '-Dtest=JourneyHttpSqlServerIT#runtimeHttpFlowUsesRealLoginAndKeepsOtherAccountsIsolated+historyPagesSummarizeWholePeriodAndDetailIsOwned' test)
+(cd backend && ./mvnw --batch-mode '-Dtest=JourneyHttpSqlServerIT#runtimeHttpFlowUsesRealLoginAndKeepsOtherAccountsIsolated+historyPagesAndDetailAreOwned' test)
 sql -d work_journey_ci -Q "EXECUTE AS USER = 'journey_app'; IF HAS_PERMS_BY_NAME('dbo.idempotency_request', 'OBJECT', 'INSERT') <> 1 OR HAS_PERMS_BY_NAME('dbo.idempotency_request', 'OBJECT', 'UPDATE') <> 0 OR HAS_PERMS_BY_NAME('dbo.idempotency_request', 'OBJECT', 'DELETE') <> 0 THROW 51003, 'Runtime receipt permissions are invalid', 1; REVERT;" >/dev/null
 (cd backend && ./mvnw --batch-mode verify)
 

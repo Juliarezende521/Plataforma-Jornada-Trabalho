@@ -5,32 +5,29 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 class JourneyQueriesTest {
-    @Test void closedDetailExplainsDstPauseAndPreservesPrecision() {
+    @Test void closedDetailPreservesEventOrderTimeZoneAndUtcPrecision() {
         var start=Instant.parse("2026-10-25T00:30:00.0000001Z");
         var s=WorkSession.open(UUID.randomUUID(),UUID.randomUUID(),"Europe/Amsterdam",start);
         s.record(WorkEventType.PAUSE_START,start.plusSeconds(1800));
         s.record(WorkEventType.PAUSE_END,start.plusSeconds(2700));
         s.record(WorkEventType.EXIT,start.plusSeconds(5400).plusNanos(100));
         var d=JourneyQueries.describe(s,start.plusSeconds(6000));
-        assertEquals("PT1H15M0.0000001S",d.session().workDuration());
-        assertEquals(3,d.intervals().size());
-        assertEquals("PAUSE",d.intervals().get(1).kind());
-        assertEquals("PT15M",d.intervals().get(1).duration());
-        assertFalse(d.session().provisional());
+        assertEquals(4,d.events().size());
+        assertEquals(start,d.events().get(0).occurredAtUtc());
+        assertEquals("Europe/Amsterdam",d.events().get(0).recordedTimeZoneId());
+        assertEquals(WorkState.CLOSED,d.session().state());
         assertEquals(s.getEvents().get(0).id(),d.events().get(0).id());
         assertEquals(LocalDate.of(2026,10,25),d.session().workDate());
     }
-    @Test void openAndPausedDetailsRemainProvisionalAndExitInPauseDoesNotCountPause() {
+    @Test void detailPreservesPausedAndClosedStates() {
         var now=Instant.parse("2026-10-14T23:30:00Z");
         var s=WorkSession.open(UUID.randomUUID(),UUID.randomUUID(),"UTC",now);
         s.record(WorkEventType.PAUSE_START,now.plusSeconds(3600));
         var d=JourneyQueries.describe(s,now.plusSeconds(5400));
-        assertTrue(d.session().provisional());
-        assertEquals("PT1H",d.session().workDuration());
-        assertTrue(d.intervals().get(1).provisional());
-        assertThrows(IllegalStateException.class, () -> JourneyQueries.describe(s,now));
+        assertEquals(WorkState.PAUSED,d.session().state());
+        assertEquals(2,d.events().size());
         s.record(WorkEventType.EXIT,now.plusSeconds(7200));
-        assertEquals("PT1H",JourneyQueries.describe(s,now.plusSeconds(8000)).session().workDuration());
+        assertEquals(WorkState.CLOSED,JourneyQueries.describe(s,now.plusSeconds(8000)).session().state());
     }
     @Test void filtersBoundInclusiveDatesPageAndSize() {
         var from=LocalDate.of(2024,1,1);

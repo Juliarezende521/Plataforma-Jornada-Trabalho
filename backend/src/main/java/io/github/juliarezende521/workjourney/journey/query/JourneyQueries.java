@@ -22,7 +22,7 @@ public class JourneyQueries {
     public JourneyQueries(CurrentEmployeeIdentity identity, EmployeeRepository employees, JpaWorkSessionStore store, Clock clock) {
         this.identity=identity; this.employees=employees; this.store=store; this.clock=clock;
     }
-    // Same employee lock as markings: page, summary and Clock describe a consistent snapshot.
+    // Same employee lock as markings: page, events and Clock describe a consistent snapshot.
     @Transactional
     public History history(LocalDate from, LocalDate to, int page, int size) {
         validate(from, to, page, size);
@@ -31,16 +31,7 @@ public class JourneyQueries {
         long total=store.historyCount(employee, from, to);
         var items=store.history(employee, from, to, Math.multiplyExact(page, size), size).stream()
                 .map(session -> Item.from(session, observed)).toList();
-        Duration closed=Duration.ZERO;
-        long closedCount=0, pendingCount=0;
-        // Bounded batches; never retain the full period's events in memory.
-        for (int offset=0; offset < total; offset=Math.addExact(offset, 100)) {
-            for (var session : store.history(employee, from, to, offset, 100)) {
-                if (session.getState()==WorkState.CLOSED) { closed=closed.plus(session.closedDuration()); closedCount++; }
-                else pendingCount++;
-            }
-        }
-        return new History(items, page, size, total, observed, new Summary(closed.toString(), closedCount, pendingCount));
+        return new History(items, page, size, total, observed);
     }
     @Transactional
     public Detail detail(UUID id) {
@@ -58,31 +49,19 @@ public class JourneyQueries {
     }
     public static Detail describe(WorkSession session, Instant observed) {
         var events=session.getEvents();
-        var intervals=new ArrayList<Interval>();
-        for (int i=0;i<events.size();i++) {
-            var event=events.get(i);
-            if (event.type()==WorkEventType.EXIT) continue;
-            boolean provisional=i+1==events.size();
-            Instant end=provisional ? observed : events.get(i+1).occurredAtUtc();
-            if (end.isBefore(event.occurredAtUtc())) throw new IllegalStateException("Server clock precedes stored events");
-            intervals.add(new Interval(event.type()==WorkEventType.PAUSE_START ? "PAUSE" : "WORK",
-                    event.occurredAtUtc(), end, Duration.between(event.occurredAtUtc(),end).toString(), provisional));
-        }
         return new Detail(Item.from(session, observed), observed,
-                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc())).toList(), List.copyOf(intervals));
+                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId())).toList());
     }
+
     public record Item(UUID id, WorkState state, LocalDate workDate, String referenceTimeZoneId,
-                       Instant openedAtUtc, Instant closedAtUtc, String workDuration, boolean provisional) {
+                       Instant openedAtUtc, Instant closedAtUtc) {
         static Item from(WorkSession s, Instant observed) {
-            return new Item(s.getId(),s.getState(),s.getWorkDate(),s.getReferenceTimeZoneId(),s.getOpenedAtUtc(),s.getClosedAtUtc(),
-                    (s.getState()==WorkState.CLOSED ? s.closedDuration() : s.durationAt(observed)).toString(),s.getState()!=WorkState.CLOSED);
+            return new Item(s.getId(),s.getState(),s.getWorkDate(),s.getReferenceTimeZoneId(),s.getOpenedAtUtc(),s.getClosedAtUtc());
         }
     }
-    public record Summary(String closedWorkDuration, long closedCount, long pendingCount) { }
-    public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc, Summary summary) { }
-    public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc) { }
-    public record Interval(String kind, Instant startAtUtc, Instant endAtUtc, String duration, boolean provisional) { }
-    public record Detail(Item session, Instant observedAtUtc, List<Event> events, List<Interval> intervals) { }
+    public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc) { }
+    public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId) { }
+    public record Detail(Item session, Instant observedAtUtc, List<Event> events) { }
     public static final class InvalidFilter extends RuntimeException { }
     public static final class NotVisible extends RuntimeException { }
 }

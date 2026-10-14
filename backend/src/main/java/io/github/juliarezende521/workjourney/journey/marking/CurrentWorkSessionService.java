@@ -27,10 +27,11 @@ public class CurrentWorkSessionService {
     @Transactional(readOnly = true)
     public Snapshot current() {
         var actor = identity.require();
-        employees.findOwnedActive(actor.employeeId(), actor.userId())
+        var employee = employees.findOwnedActive(actor.employeeId(), actor.userId())
                 .orElseThrow(() -> new AccessDeniedException("Employee access denied"));
         var current = sessions.findCurrentOwned(actor.employeeId());
         Instant observed = UtcInstants.normalize(clock.instant());
+        if (current.isEmpty()) current = sessions.findLatestOwnedOnDate(actor.employeeId(), observed.atZone(java.time.ZoneId.of(employee.getReferenceTimeZoneId())).toLocalDate());
         var session = current.map(JpaWorkSessionStore.StoredSession::session).orElse(null);
         if (session != null && observed.isBefore(session.getLastEventAtUtc())) {
             throw new IllegalStateException("Server clock precedes stored events");

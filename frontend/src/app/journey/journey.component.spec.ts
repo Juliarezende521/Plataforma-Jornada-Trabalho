@@ -63,10 +63,16 @@ describe('Journey screen and recovery protocol', () => {
   it('shows confirmed state and provisional duration with explicit reference zone', async () => {
     await initial(working);
     expect(view.textContent).toContain('Trabalhando');
-    expect(view.textContent).toContain('1 h 30 min');
+    expect(view.textContent).toContain('Data de referência');
     expect(view.textContent).toContain('Europe/Amsterdam');
     expect(view.textContent).toContain('Última marcação confirmada');
     expect([...view.querySelectorAll('button')].map(button => button.textContent?.trim())).toEqual(['Iniciar pausa', 'Encerrar jornada', 'Atualizar jornada']);
+  });
+
+  it('shows the closed journey of today after loading and permits a new entry', async () => {
+    await initial({ ...working, allowedActions: ['ENTRY'], session: { ...working.session!, state: 'CLOSED', lastEvent: { ...working.session!.lastEvent, type: 'EXIT' } } });
+    expect(view.textContent).toContain('Encerrada');expect(view.textContent).toContain('Última marcação confirmada');
+    expect([...view.querySelectorAll('button')].map(button => button.textContent?.trim())).toEqual(['Registrar entrada', 'Atualizar jornada']);
   });
 
   it('does not poll again when the same identity is refreshed as a new object', async () => {

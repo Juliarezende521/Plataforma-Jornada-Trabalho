@@ -69,7 +69,7 @@ class JourneyHttpSqlServerIT {
         when(clock.instant()).thenReturn(NOW.plusSeconds(660));
         mark(first, UUID.randomUUID(), "EXIT", sessionId, 201);
         mvc.perform(get("/api/me/work-sessions/current").session(first.session()))
-                .andExpect(jsonPath("$.session").isEmpty()).andExpect(jsonPath("$.allowedActions[0]").value("ENTRY"));
+                .andExpect(jsonPath("$.session.state").value("CLOSED")).andExpect(jsonPath("$.session.id").value(sessionId)).andExpect(jsonPath("$.allowedActions[0]").value("ENTRY"));
         assertEquals(entry, mark(first, key, "ENTRY", null, 201));
         assertEquals("KEY_REUSED", mark(first, key, "EXIT", sessionId, 409).get("code").asText());
         assertEquals(entry, json(mvc.perform(get("/api/me/work-event-requests/" + key).session(first.session())).andReturn()));
@@ -104,7 +104,7 @@ class JourneyHttpSqlServerIT {
         mark(actor, UUID.randomUUID(), "ENTRY", null, 403);
     }
 
-    @Test void historyPagesSummarizeWholePeriodAndDetailIsOwned() throws Exception {
+    @Test void historyPagesAndDetailAreOwned() throws Exception {
         var actor=login(); var other=login();
         String closed=mark(actor,UUID.randomUUID(),"ENTRY",null,201).get("workSessionId").asText();
         when(clock.instant()).thenReturn(NOW.plusSeconds(60));
@@ -116,23 +116,19 @@ class JourneyHttpSqlServerIT {
         String filter="/api/me/work-sessions?from=2026-10-14&to=2026-10-14&size=1";
         mvc.perform(get(filter).session(actor.session())).andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2)).andExpect(jsonPath("$.items.length()").value(1))
-                .andExpect(jsonPath("$.items[0].provisional").value(true))
-                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT1M"))
-                .andExpect(jsonPath("$.summary.closedCount").value(1)).andExpect(jsonPath("$.summary.pendingCount").value(1));
-        mvc.perform(get(filter+"&page=1").session(actor.session())).andExpect(jsonPath("$.items[0].id").value(closed))
-                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT1M"));
+                .andExpect(jsonPath("$.items[0].state").value("WORKING"));
+        mvc.perform(get(filter+"&page=1").session(actor.session())).andExpect(jsonPath("$.items[0].id").value(closed));
         mvc.perform(get("/api/me/work-sessions/"+closed).session(actor.session())).andExpect(status().isOk())
-                .andExpect(jsonPath("$.events.length()").value(3)).andExpect(jsonPath("$.intervals[1].kind").value("PAUSE"))
+                .andExpect(jsonPath("$.events.length()").value(3)).andExpect(jsonPath("$.events[1].type").value("PAUSE_START"))
                 .andExpect(jsonPath("$.session.employeeId").doesNotExist());
         mvc.perform(get("/api/me/work-sessions/"+closed).session(other.session())).andExpect(status().isNotFound());
         mvc.perform(get("/api/me/work-sessions/"+UUID.randomUUID()).session(other.session())).andExpect(status().isNotFound());
-        mvc.perform(get(filter).session(other.session())).andExpect(jsonPath("$.totalElements").value(0))
-                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT0S"));
+        mvc.perform(get(filter).session(other.session())).andExpect(jsonPath("$.totalElements").value(0));
         mvc.perform(get("/api/me/work-sessions?from=2026-10-15&to=2026-10-15").session(actor.session()))
                 .andExpect(jsonPath("$.totalElements").value(0));
     }
 
-    @Test void summaryKeepsCrossMonthJourneyInReferenceDateAndExactPrecision() throws Exception {
+    @Test void historyKeepsCrossMonthJourneyInReferenceDateAndExactPrecision() throws Exception {
         var actor=login();
         Instant start=Instant.parse("2026-10-31T22:30:00.0000001Z");
         when(clock.instant()).thenReturn(start);
@@ -140,13 +136,26 @@ class JourneyHttpSqlServerIT {
         when(clock.instant()).thenReturn(start.plusSeconds(10800).plusNanos(100));
         mark(actor,UUID.randomUUID(),"EXIT",id,201);
         mvc.perform(get("/api/me/work-sessions?from=2026-10-31&to=2026-10-31").session(actor.session()))
-                .andExpect(jsonPath("$.summary.closedWorkDuration").value("PT3H0.0000001S"))
                 .andExpect(jsonPath("$.items[0].workDate").value("2026-10-31"));
         mvc.perform(get("/api/me/work-sessions?from=2026-11-01&to=2026-11-01").session(actor.session()))
                 .andExpect(jsonPath("$.totalElements").value(0));
         mvc.perform(get("/api/me/work-sessions/"+id).session(actor.session()))
-                .andExpect(jsonPath("$.events[0].occurredAtUtc").value(start.toString()))
-                .andExpect(jsonPath("$.intervals[0].duration").value("PT3H0.0000001S"));
+                .andExpect(jsonPath("$.events[0].occurredAtUtc").value(start.toString()));
+    }
+
+    @Test void samePersistedEventIsViewedInSaoPauloAndLisbonWithoutChangingIt() throws Exception {
+        var actor=login();
+        var entry=mark(actor,UUID.randomUUID(),"ENTRY",null,201);String id=entry.get("workSessionId").asText();
+        var before=json(mvc.perform(get("/api/me/work-sessions/"+id).session(actor.session())).andExpect(status().isOk()).andReturn());
+        var event=before.get("events").get(0);Instant instant=Instant.parse(event.get("occurredAtUtc").asText());
+        var format=java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm XXX");
+        assertEquals("2026-10-14 11:00 -03:00",instant.atZone(java.time.ZoneId.of("America/Sao_Paulo")).format(format));
+        assertEquals("2026-10-14 15:00 +01:00",instant.atZone(java.time.ZoneId.of("Europe/Lisbon")).format(format));
+        assertEquals("Europe/Amsterdam",event.get("recordedTimeZoneId").asText());
+        entityManager.createNativeQuery("UPDATE dbo.employee SET reference_time_zone_id='Europe/Lisbon' WHERE user_id=:id").setParameter("id",actor.userId().toString()).executeUpdate();entityManager.clear();
+        when(clock.instant()).thenReturn(NOW.plusSeconds(60));mark(actor,UUID.randomUUID(),"PAUSE_START",id,201);
+        var after=json(mvc.perform(get("/api/me/work-sessions/"+id).session(actor.session())).andReturn());
+        assertEquals(event,after.get("events").get(0));assertEquals("Europe/Lisbon",after.get("events").get(1).get("recordedTimeZoneId").asText());
     }
 
     @Test void queryFiltersAndSessionAreEnforced() throws Exception {

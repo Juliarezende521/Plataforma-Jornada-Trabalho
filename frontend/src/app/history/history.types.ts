@@ -1,15 +1,13 @@
 import { EventType } from '../journey/journey.types';
 export interface HistoryItem {
   id: string; state: 'WORKING' | 'PAUSED' | 'CLOSED'; workDate: string; referenceTimeZoneId: string;
-  openedAtUtc: string; closedAtUtc: string | null; workDuration: string; provisional: boolean;
+  openedAtUtc: string; closedAtUtc: string | null;
 }
 export interface HistoryPage {
   items: HistoryItem[]; page: number; size: number; totalElements: number; observedAtUtc: string;
-  summary: { closedWorkDuration: string; closedCount: number; pendingCount: number };
 }
 export interface JourneyDetail {
   session: HistoryItem; observedAtUtc: string;
-  events: { id: string; sequence: number; type: EventType; occurredAtUtc: string; recordedAtUtc: string }[];
-  intervals: { kind: 'WORK' | 'PAUSE'; startAtUtc: string; endAtUtc: string; duration: string; provisional: boolean }[];
+  events: { id: string; sequence: number; type: EventType; occurredAtUtc: string; recordedAtUtc: string; recordedTimeZoneId: string }[];
 }
 export interface HistoryFilter { from: string; to: string; }

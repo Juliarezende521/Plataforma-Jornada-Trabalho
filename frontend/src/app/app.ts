@@ -18,6 +18,9 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly busy = signal(false);
   protected readonly journeyBusy = signal(false);
+  protected readonly view = signal<'current' | 'history'>('current');
+  private readonly journeyView = viewChild(JourneyComponent);
+  private readonly historyView = viewChild(HistoryComponent);
   private readonly accessHeading = viewChild<ElementRef<HTMLElement>>('accessHeading');
   protected readonly checking = signal(true);
   protected readonly unavailable = signal(false);
@@ -33,7 +36,17 @@ export class App {
       const heading = this.accessHeading();
       if (heading && !this.checking()) heading.nativeElement.focus();
     });
-    effect(() => { if (!this.auth.user()) this.journeyBusy.set(false); });
+    effect(() => { if (!this.auth.user()) { this.journeyBusy.set(false); this.view.set('current'); } });
+  }
+
+  protected show(view: 'current' | 'history'): void {
+    if (this.busy() || this.journeyBusy()) return;
+    this.view.set(view);
+    setTimeout(() => {
+      if (this.destroyRef.destroyed) return;
+      if (view === 'current') this.journeyView()?.focusHeading();
+      else this.historyView()?.focusHeading();
+    });
   }
 
   protected checkSession(): void {

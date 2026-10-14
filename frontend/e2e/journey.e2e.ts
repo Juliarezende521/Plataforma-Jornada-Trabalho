@@ -31,7 +31,7 @@ test.afterEach(async ({ page }) => {
   const response=await page.request.get('/api/me/work-sessions/current');
   if (response.status()!==200) return;
   const snapshot=await response.json();
-  if (!snapshot.session) return;
+  if (!snapshot.session || snapshot.session.state === 'CLOSED') return;
   const csrf=await (await page.request.get('/api/auth/csrf')).json();
   const exit=await page.request.post('/api/me/work-events', { headers: { [csrf.headerName]: csrf.token, 'Idempotency-Key': randomUUID() },
     data: { type: 'EXIT', expectedWorkSessionId: snapshot.session.id } });
@@ -108,25 +108,32 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
-  expect((await current(page)).session).toBeNull();
+  expect((await current(page)).session.state).toBe('CLOSED');
   await expect(page.getByText('Encerrar jornada: confirmado.')).toBeVisible();
+  await page.getByRole('button', { name: 'Histórico', exact: true }).click();
   await page.getByRole('button', { name: 'Consultar período', exact: true }).click();
   await expect(page.getByTestId('history-feedback')).toContainText('Consulta concluída');
   const from = await page.getByLabel('Data inicial', { exact: true }).inputValue();
   const to = await page.getByLabel('Data final', { exact: true }).inputValue();
   const history = await (await page.request.get('/api/me/work-sessions?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to))).json();
-  expect(history.summary.pendingCount).toBe(0);
+  expect(history.items[0].state).toBe('CLOSED');
   const latest = history.items[0];
   await page.getByRole('button', { name: /^Ver detalhes da jornada de/ }).first().click();
   await expect(page.getByRole('heading', { name: 'Marcações originais' })).toBeVisible();
   await expect(page.locator('.events li')).toHaveCount(5);
   const detail = await (await page.request.get('/api/me/work-sessions/' + latest.id)).json();
-  expect(detail.session.workDuration).toBe(latest.workDuration);
-  expect(detail.intervals.at(-1).kind).toBe('PAUSE');
+  expect(detail.events.at(-1).type).toBe('EXIT');
   await expect(page.getByRole('heading', { name: /^Detalhes da jornada de/ })).toBeFocused();
   const dateBefore = detail.session.workDate;
-  await page.getByLabel('Fuso de visualização', { exact: true }).selectOption('Europe/Amsterdam');
-  await expect(page.locator('.events li').first()).toContainText(/GMT\+[12]/);
+  await page.getByLabel('Fuso de visualização', { exact: true }).selectOption('America/Sao_Paulo');
+  const firstTime=page.locator('.events time').first();
+  const originalUtc=await firstTime.getAttribute('datetime');
+  const brazilText=await firstTime.textContent();
+  await expect(firstTime).toContainText('GMT-3');
+  await page.getByLabel('Fuso de visualização', { exact: true }).selectOption('Europe/Lisbon');
+  expect(await firstTime.getAttribute('datetime')).toBe(originalUtc);
+  expect(await firstTime.textContent()).not.toBe(brazilText);
+  await expect(firstTime).toContainText(/GMT(?:\+1)?/);
   expect((await (await page.request.get('/api/me/work-sessions/' + latest.id)).json()).session.workDate).toBe(dateBefore);
   for (const width of [320, 1280]) {
     await page.setViewportSize({ width, height: 900 });
@@ -136,6 +143,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await page.getByRole('button', { name: 'Voltar ao histórico', exact: true }).click();
   await expect(page.locator('#history-heading')).toBeFocused();
 
+  await page.getByRole('button', { name: 'Jornada atual', exact: true }).click();
   await page.route('**/api/me/work-events', route => route.abort('failed'), { times: 1 });
   await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
   await expect(page.getByTestId('journey-feedback')).toContainText('tentativa foi preservada');

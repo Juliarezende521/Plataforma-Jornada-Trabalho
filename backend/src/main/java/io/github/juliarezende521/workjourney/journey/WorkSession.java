@@ -75,6 +75,12 @@ public final class WorkSession {
         apply(event(type, instant));
     }
 
+    public void record(WorkEventType type, Instant serverInstant, String recordedZone) {
+        Objects.requireNonNull(type, "Event type is required");
+        Instant instant = UtcInstants.normalize(serverInstant);
+        apply(new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L, type, instant, instant, recordedZone));
+    }
+
     private void apply(WorkEvent event) {
         Instant instant = event.occurredAtUtc();
         if (instant.isBefore(lastInstant())) {
@@ -119,7 +125,7 @@ public final class WorkSession {
 
     private WorkEvent event(WorkEventType type, Instant instant) {
         return new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L,
-                type, instant, instant);
+                type, instant, instant, referenceTimeZoneId);
     }
 
     private Instant lastInstant() { return events.get(events.size() - 1).occurredAtUtc(); }

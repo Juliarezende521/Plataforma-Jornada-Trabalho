@@ -215,7 +215,7 @@ class JourneySchemaSqlServerIT {
                        String type, String occurred, String recorded) throws SQLException {
         execute(connection, """
                 INSERT INTO dbo.work_event (id, work_session_id, author_user_id, sequence,
-                    event_type, occurred_at_utc, recorded_at_utc) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    event_type, occurred_at_utc, recorded_at_utc, recorded_time_zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'America/Sao_Paulo')
                 """, UUID.randomUUID(), session, author, sequence, type, occurred, recorded);
     }
 

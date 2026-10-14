@@ -3,7 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
-import { formatDuration, formatInstant, formatWorkDate } from '../journey/journey-format';
+import { formatInstant, formatWorkDate } from '../journey/journey-format';
 import { HistoryApi } from './history-api.service';
 import { HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
 @Component({ selector: 'app-history', imports: [ReactiveFormsModule], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
@@ -25,7 +25,6 @@ export class HistoryComponent {
   readonly heading = viewChild<ElementRef<HTMLElement>>('historyHeading');
   readonly detailHeading = viewChild<ElementRef<HTMLElement>>('detailHeading');
   readonly formatWorkDate = formatWorkDate;
-  readonly formatDuration = formatDuration;
   readonly eventLabels = { ENTRY: 'Entrada', PAUSE_START: 'Início de pausa', PAUSE_END: 'Retorno', EXIT: 'Saída' };
   constructor() {
     this.destroyRef.onDestroy(() => this.request?.unsubscribe());
@@ -38,7 +37,9 @@ export class HistoryComponent {
       this.form.setValue({ from: today.slice(0,8) + '01', to: today });
     }); });
   }
-  formatInstant(instant: string, reference: string): string { return formatInstant(instant, this.zone.value==='reference' ? reference : this.zone.value); }
+  focusHeading(): void { this.heading()?.nativeElement.focus(); }
+
+  formatInstant(instant: string, reference: string): string { return formatInstant(instant, this.zone.value==='reference' ? this.user().referenceTimeZoneId : this.zone.value); }
   stateLabel(state: string): string { return state==='CLOSED' ? 'Encerrada' : state==='PAUSED' ? 'Em pausa · pendente' : 'Trabalhando · pendente'; }
   consult(): void {
     if (this.busy()) return;
@@ -52,9 +53,9 @@ export class HistoryComponent {
   }
   load(page: number): void {
     const filter=this.applied(); if (!filter || this.busy() || page<0) return;
-    this.busy.set(true); this.result.set(null); this.detail.set(null); this.message.set('Consultando jornadas e resumo do período…');
+    this.busy.set(true); this.result.set(null); this.detail.set(null); this.message.set('Consultando jornadas do período…');
     this.request=this.api.history(filter,page).subscribe({ next: result => { this.result.set(result); this.busy.set(false);
-      this.message.set(result.totalElements ? 'Consulta concluída. O resumo considera todo o período selecionado.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
+      this.message.set(result.totalElements ? 'Consulta concluída. Seus registros estão disponíveis.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
       error: error => this.fail(error) });
   }
   open(id: string): void {

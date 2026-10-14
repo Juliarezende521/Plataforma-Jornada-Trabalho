@@ -20,6 +20,7 @@ public class WorkEventRow {
     @Column(nullable = false, updatable = false) private long sequence;
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 16, updatable = false) private WorkEventType eventType;
+    @Column(name = "recorded_time_zone_id", nullable = false, updatable = false, length = 100) private String recordedTimeZoneId;
     @TimeZoneStorage(TimeZoneStorageType.NATIVE)
     @Column(name = "occurred_at_utc", nullable = false, updatable = false, columnDefinition = "datetimeoffset(7)", precision = 7)
     private OffsetDateTime occurredAtUtc;
@@ -35,12 +36,13 @@ public class WorkEventRow {
         authorUserId = event.actorUserId();
         sequence = event.sequence();
         eventType = event.type();
+        recordedTimeZoneId = event.recordedTimeZoneId();
         occurredAtUtc = event.occurredAtUtc().atOffset(ZoneOffset.UTC);
         recordedAtUtc = event.recordedAtUtc().atOffset(ZoneOffset.UTC);
     }
 
     WorkEvent toDomain() {
         return new WorkEvent(id, workSessionId, authorUserId, sequence, eventType,
-                occurredAtUtc.toInstant(), recordedAtUtc.toInstant());
+                occurredAtUtc.toInstant(), recordedAtUtc.toInstant(), recordedTimeZoneId);
     }
 }

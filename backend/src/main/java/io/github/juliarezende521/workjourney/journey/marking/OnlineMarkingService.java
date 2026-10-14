@@ -87,7 +87,7 @@ public class OnlineMarkingService {
             catch (IllegalStateException invalidTransition) {
                 return MarkingResult.conflict(key, command, INVALID_TRANSITION, instant);
             }
-            stored = sessions.append(open.session().getId(), employee.getId(), open.version(), command.type(), instant);
+            stored = sessions.append(open.session().getId(), employee.getId(), open.version(), command.type(), instant, employee.getReferenceTimeZoneId());
         }
         var events = stored.session().getEvents();
         var event = events.get(events.size() - 1);

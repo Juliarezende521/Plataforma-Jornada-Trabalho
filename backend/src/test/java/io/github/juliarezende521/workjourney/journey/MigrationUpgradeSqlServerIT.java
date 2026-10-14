@@ -12,8 +12,8 @@ class MigrationUpgradeSqlServerIT {
         assertEquals(1, v1.migrate().migrationsExecuted);
         assertEquals("1", v1.info().current().getVersion().getVersion());
         var latest = configuration().load();
-        assertEquals(2, latest.migrate().migrationsExecuted);
-        assertEquals("3", latest.info().current().getVersion().getVersion());
+        assertEquals(3, latest.migrate().migrationsExecuted);
+        assertEquals("4", latest.info().current().getVersion().getVersion());
         latest.validate();
         assertEquals(0, latest.migrate().migrationsExecuted);
     }

@@ -50,6 +50,13 @@ public class JpaWorkSessionStore {
     }
 
     @Transactional(readOnly = true)
+    public Optional<StoredSession> findLatestOwnedOnDate(UUID employeeId, java.time.LocalDate date) {
+        return entityManager.createQuery("SELECT s FROM WorkSessionRow s WHERE s.employeeId=:employee AND s.workDate=:date ORDER BY s.openedAtUtc DESC, s.id DESC", WorkSessionRow.class)
+                .setParameter("employee",employeeId).setParameter("date",date).setMaxResults(1).getResultList().stream().findFirst()
+                .map(row -> new StoredSession(restoreConsistent(row,row.id()),row.version()));
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Instant> latestClosedAt(UUID employeeId) {
         Objects.requireNonNull(employeeId, "Employee ID is required");
         var closed = entityManager.createQuery("SELECT MAX(s.closedAtUtc) FROM WorkSessionRow s WHERE s.employeeId = :employee", java.time.OffsetDateTime.class)
@@ -60,12 +67,17 @@ public class JpaWorkSessionStore {
     @Transactional
     public StoredSession append(UUID id, UUID employeeId, long expectedVersion,
                                 WorkEventType type, Instant serverInstant) {
+        return append(id, employeeId, expectedVersion, type, serverInstant, null);
+    }
+
+    @Transactional
+    public StoredSession append(UUID id, UUID employeeId, long expectedVersion, WorkEventType type, Instant serverInstant, String recordedZone) {
         var row = ownedRow(id, employeeId).orElseThrow(() -> new IllegalArgumentException("Session is not visible"));
         if (expectedVersion < 0 || row.version() != expectedVersion) {
             throw new OptimisticLockException("Session version changed");
         }
         var session = restoreConsistent(row, id);
-        session.record(type, serverInstant);
+        session.record(type, serverInstant, recordedZone == null ? session.getReferenceTimeZoneId() : recordedZone);
         row.updateCheckpoint(session);
         // A valid transition always changes state, including when timestamps are equal.
         // Flush the @Version UPDATE before inserting the new event; failures roll back both.

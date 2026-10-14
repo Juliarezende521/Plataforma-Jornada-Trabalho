@@ -14,11 +14,11 @@ export class JourneyComponent {
   readonly state = inject(JourneyState);
   readonly labels = ACTION_LABELS;
   private readonly heading = viewChild<ElementRef<HTMLElement>>('journeyHeading');
-  readonly referenceZone = computed(() => this.state.current()?.session?.referenceTimeZoneId ?? this.user().referenceTimeZoneId);
+  readonly referenceZone = computed(() => this.user().referenceTimeZoneId);
   readonly statusLabel = computed(() => {
     const current = this.state.current();
     if (!current) return 'Jornada ainda não consultada';
-    return current.session === null ? 'Sem jornada aberta' : current.session.state === 'PAUSED' ? 'Em pausa' : 'Trabalhando';
+    return current.session === null ? 'Sem jornada aberta' : current.session.state === 'CLOSED' ? 'Encerrada' : current.session.state === 'PAUSED' ? 'Em pausa' : 'Trabalhando';
   });
   readonly lastType = computed(() => {
     const event = this.state.current()?.session?.lastEvent;
@@ -34,6 +34,8 @@ export class JourneyComponent {
   formatInstant(instant: string): string { return formatInstant(instant, this.referenceZone()); }
   readonly formatWorkDate = formatWorkDate;
   readonly formatDuration = formatDuration;
+
+  focusHeading(): void { this.heading()?.nativeElement.focus(); }
 
   mark(type: EventType): void { void this.state.mark(type); }
 }

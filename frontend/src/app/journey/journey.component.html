@@ -4,7 +4,7 @@
     <span class="state-badge">{{ statusLabel() }}</span>
   </div>
   <p class="intro">Registre o início, as pausas e o encerramento do seu trabalho.</p>
-  <p class="zone"><strong>Fuso de referência:</strong> {{ referenceZone() }}</p>
+  <p class="zone"><strong>Fuso dos horários:</strong> {{ referenceZone() }}</p>
   @if (state.pending().length) {
     <div class="recovery" aria-labelledby="recovery-heading">
       <h3 id="recovery-heading">Marcação aguardando confirmação</h3>
@@ -36,15 +36,13 @@
     @if (current.session; as session) {
       <dl class="summary">
         <div><dt>Data de referência</dt><dd>{{ formatWorkDate(session.workDate) }}</dd></div>
-        <div><dt>Tempo trabalhado · provisório</dt><dd class="duration">{{ formatDuration(session.provisionalWorkDuration) }}</dd></div>
         <div class="last-event"><dt>Última marcação confirmada</dt><dd>{{ lastType() }}<br /><time [attr.datetime]="session.lastEvent.occurredAtUtc">{{ formatInstant(session.lastEvent.occurredAtUtc) }}</time></dd></div>
       </dl>
-      <p class="explanation">{{ session.state === 'PAUSED' ? 'O tempo em pausa não entra no tempo trabalhado. Você pode retomar o trabalho ou encerrar a jornada.' : 'O tempo é calculado até a última atualização. Inicie uma pausa ao interromper o trabalho.' }}</p>
-      <p class="explanation">Esta jornada está aberta e ainda não compõe um total fechado.</p>
+      <p class="explanation">{{ session.state === 'CLOSED' ? 'Jornada de hoje encerrada. Uma nova entrada inicia outra jornada.' : session.state === 'PAUSED' ? 'Você pode retomar o trabalho ou encerrar a jornada.' : 'Inicie uma pausa ao interromper o trabalho.' }}</p>
     } @else {
       <div class="empty-state"><h3>Pronto para começar?</h3><p>Registre sua entrada quando iniciar o trabalho. Cada marcação recebe o horário confirmado pelo servidor.</p></div>
     }
-    <p class="zone">Ao viajar, os horários desta jornada continuam vinculados ao fuso de referência.</p>
+    <p class="zone">As marcações são guardadas em UTC e exibidas no seu fuso. A data de referência permanece a do início da jornada.</p>
   }
   <div class="update-row"><button class="secondary" type="button" (click)="state.refresh()" [disabled]="state.busy()">{{ state.busy() ? 'Aguarde…' : 'Atualizar jornada' }}</button>
     @if (state.current(); as current) { <p>Consultada em <time [attr.datetime]="current.observedAtUtc">{{ formatInstant(current.observedAtUtc) }}</time></p> }

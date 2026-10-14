@@ -10,7 +10,7 @@ export interface Receipt {
 }
 export interface CurrentJourney {
   session: {
-    id: string; state: 'WORKING' | 'PAUSED'; workDate: string; referenceTimeZoneId: string;
+    id: string; state: 'WORKING' | 'PAUSED' | 'CLOSED'; workDate: string; referenceTimeZoneId: string;
     openedAtUtc: string; lastEvent: { id: string; type: EventType; occurredAtUtc: string };
     provisionalWorkDuration: string;
   } | null;
