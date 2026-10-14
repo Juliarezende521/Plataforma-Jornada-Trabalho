@@ -48,6 +48,8 @@ erDiagram
 
 V1 implementa app_user e employee com UUID/uniqueidentifier, comprimentos, nullability, unicidade e FK. DDL/mapeamento foram aprovados em SQL Server 2022 CU20, na CI 38090975052; manager_id e demais tabelas continuam propostas. Contrato de autenticação: [autenticacao.md](autenticacao.md). Evidências: [validacao-integrada.md](validacao-integrada.md).
 
+Atualização de 13/10/2026: V2/JPA/reconstituição/versão estão na PR #3 ([persistencia-jornada.md](persistencia-jornada.md)); V3 e serviço interno com identidade/Clock, lock de colaborador e recibos estão em [marcacoes-idempotencia.md](marcacoes-idempotencia.md). HTTP/Angular, auditoria de regularizações e manager_id continuam pendentes; a tabela acima descreve o modelo geral proposto. PR #3 ainda sem integração à main.
+
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
 O banco assegura unicidade e integridade referencial; sequência temporal e transições são aplicadas pelo serviço e comprovadas por testes. Não prometer que todo o estado da máquina de jornada é garantido só por constraints.
@@ -57,6 +59,8 @@ O banco assegura unicidade e integridade referencial; sequência temporal e tran
 Um comando válido grava, na mesma transação, resultado idempotente, evento e estado/versão da jornada. @Version deve efetivamente incrementar em toda transição; inserir apenas um evento filho não pode contornar a proteção do agregado. Forçar alteração do estado/versão conforme o mapeamento e testar duas transições concorrentes.
 
 Para abertura simultânea, índice único filtrado protege o colaborador mesmo sem jornada anterior. Para chaves repetidas, índice único da idempotência protege o resultado. Mesmo colaborador + chave + payload retorna o resultado confirmado; chave reutilizada com payload diferente retorna 409. Verificar o resultado idempotente antes de rejeitar pela nova situação da jornada. Uma colisão simultânea pode exigir rollback e nova consulta em outra transação; não continuar dentro de transação inválida.
+
+Decisão implementada na fatia online: PESSIMISTIC_WRITE no colaborador ativo/vinculado serializa comandos antes de verificar recibo/estado, junto ao @Version e às constraints. Conflitos de negócio validados sem erro SQL geram recibo terminal na mesma transação; falha de banco propaga para rollback, sem retry automático. Fluxos futuros de regularização devem seguir a mesma ordem de lock. Fonte temporal verifica também o último encerramento antes de nova ENTRY, evitando sobreposição quando Clock regride. Limites/evidências em marcacoes-idempotencia.md; não há idempotência de interface comprovada ainda.
 
 Se houver timeout de resposta, a gravação pode ter ocorrido. O cliente deve consultar o recibo autenticado e, se necessário, repetir explicitamente com a mesma chave/payload. Gerar chave nova significa intenção de nova operação e não serve como recuperação automática. Chaves são preservadas no MVP; política de expiração dependeria de janela de repetição definida. Diário local mínimo preservado antes do envio, vínculo ao alvo da jornada, reautenticação, múltiplas abas e limitações seguem [requisitos.md](requisitos.md#recuperação-de-marcação-online--decisão-p0). Não armazenar credenciais nem enviar fila offline.
 
@@ -102,3 +106,7 @@ Erros com Problem Details e identificador de correlação, sem stack traces: 400
 - [Spring Boot — inicialização do banco](https://docs.spring.io/spring-boot/how-to/data-initialization.html)
 
 As regras de negócio e prioridades são decisões propostas para o desafio, não prescrições dessas fontes.
+
+### Fronteira HTTP de jornada — etapa da PR #3
+
+POST de marcação, GET de recibo e GET de jornada atual implementados conforme [contrato e revisão](api-jornada.md), validados em CI com SQL Server real. Consulta vazia retorna session=null; ações e duração são provisórias. JSON estrito até 1.024 bytes; DTOs explícitos. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas 500, sem implicar resultado terminal. Histórico/detalhe/resumo e interface ainda pendentes. Correlação cobre erros tratados do controller; filtros e resolução MVC não têm correlação garantida ainda.

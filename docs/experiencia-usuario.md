@@ -130,3 +130,11 @@ Roteiro de relatório futuro: data/commit/ambiente, método e limitações, part
 Antes do código de jornada: aplicar protocolo HU14 decidido em 11/10/2026 e detalhar contratos do recorte RF17/RF18; aplicar RN05 revisada e planejar T27 para UX05. Implementar e retestar regularização de UX06 e recuperação HU14, incluindo compreensão de espera, rejeição e horário de repetição. Na próxima melhoria de interface: testar foco/teclado, rótulos, suporte e contraste; sem quebrar login/CSRF. Depois: testar reflow/zoom, Safari/dispositivo físico e fluxos completos. Revisar regras, histórias, interface e testes em conjunto.
 
 Interpretação do cenário: contextos internacionais e hipóteses explícitas. Organização/modelagem: ST → HU → RF/RN → T. Comunicação/decisões: riscos e limites registrados. Experiência/boas práticas: prevenção, recuperação e avaliação planejadas. Qualidade de código permanece sustentada por implementação/testes, não por este documento sozinho.
+
+## Etapa de tela de jornada — 14/10/2026
+
+Implementação, relação com os conteúdos de IHC, revisão e evidências em [tela-jornada.md](tela-jornada.md). Estados, ações, foco, diário de recuperação, fluxo de navegador/SQL e reflow possuem evidência na CI, com alcance e limitações descritos em tela-jornada.md. A ampliação de cenários com abas/troca de conta só é validada quando os logs correspondentes forem conferidos. Os registros anteriores de UX05/HU03–HU07/HU14 são históricos e recebem evidência progressiva nesse documento. UX06/regularização e pesquisa com usuários seguem pendentes.
+
+## Etapa de consultas — 14/10/2026
+
+Fluxo histórico → detalhe → retorno implementado, com filtros/página preservados, resumo separado de pendências e conversão visual de fuso. Labels, mensagens, foco e reflow têm evidências específicas em [consultas-jornada.md](consultas-jornada.md). Uma falha real no texto ampliado foi identificada pelo navegador; registrar reteste antes de considerar resolvida. Não há pesquisa com participantes, Safari físico ou certificação WCAG nesta etapa.

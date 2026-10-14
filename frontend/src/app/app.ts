@@ -1,13 +1,15 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from './auth/auth.service';
 import { authErrorMessage } from './auth/auth-feedback';
+import { HistoryComponent } from './history/history.component';
+import { JourneyComponent } from './journey/journey.component';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, JourneyComponent, HistoryComponent],
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
@@ -15,6 +17,11 @@ export class App {
   protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly busy = signal(false);
+  protected readonly journeyBusy = signal(false);
+  protected readonly view = signal<'current' | 'history'>('current');
+  private readonly journeyView = viewChild(JourneyComponent);
+  private readonly historyView = viewChild(HistoryComponent);
+  private readonly accessHeading = viewChild<ElementRef<HTMLElement>>('accessHeading');
   protected readonly checking = signal(true);
   protected readonly unavailable = signal(false);
   protected readonly message = signal('');
@@ -23,10 +30,27 @@ export class App {
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
-  constructor() { this.checkSession(); }
+  constructor() {
+    this.checkSession();
+    effect(() => {
+      const heading = this.accessHeading();
+      if (heading && !this.checking()) heading.nativeElement.focus();
+    });
+    effect(() => { if (!this.auth.user()) { this.journeyBusy.set(false); this.view.set('current'); } });
+  }
+
+  protected show(view: 'current' | 'history'): void {
+    if (this.busy() || this.journeyBusy()) return;
+    this.view.set(view);
+    setTimeout(() => {
+      if (this.destroyRef.destroyed) return;
+      if (view === 'current') this.journeyView()?.focusHeading();
+      else this.historyView()?.focusHeading();
+    });
+  }
 
   protected checkSession(): void {
-    if (this.busy()) return;
+    if (this.busy() || this.journeyBusy()) return;
     this.busy.set(true);
     this.checking.set(true);
     this.message.set('');
@@ -43,7 +67,7 @@ export class App {
   }
 
   protected login(): void {
-    if (this.busy()) return;
+    if (this.busy() || this.journeyBusy()) return;
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     const { email, password } = this.form.getRawValue();
@@ -70,7 +94,7 @@ export class App {
   }
 
   protected logout(): void {
-    if (this.busy()) return;
+    if (this.busy() || this.journeyBusy()) return;
     this.busy.set(true);
     this.message.set('');
     this.auth.logout().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.busy.set(false)))

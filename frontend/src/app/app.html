@@ -2,28 +2,31 @@
   <header>
     <p class="company">Dungeons &amp; Dragons Group</p>
     <h1>Jornada de trabalho</h1>
-    <p>Acesse sua conta para acompanhar sua jornada.</p>
+    <p>Registre seu trabalho e acompanhe suas marcações.</p>
   </header>
-  <section aria-labelledby="access-heading" [attr.aria-busy]="busy()">
+  <section [class.session-card]="!!auth.user() && !checking()" aria-labelledby="access-heading" [attr.aria-busy]="busy()">
     @if (checking()) {
-      <h2 id="access-heading">Verificando seu acesso</h2>
+      <h2 id="access-heading" #accessHeading tabindex="-1">Verificando seu acesso</h2>
       <p role="status">Aguarde enquanto consultamos sua sessão.</p>
     } @else if (auth.user(); as user) {
-      <span class="badge">Conta conectada</span>
-      <h2 id="access-heading">Olá, {{ user.name }}</h2>
-      <dl>
-        <dt>Email</dt><dd>{{ user.email }}</dd>
-        <dt>Fuso de referência</dt><dd>{{ user.referenceTimeZoneId }}</dd>
-      </dl>
-      <p>O registro de jornada e o histórico ainda não estão disponíveis.</p>
-      <button type="button" (click)="logout()" [disabled]="busy()">{{ busy() ? 'Aguarde…' : 'Sair' }}</button>
+      <div class="account-row">
+        <div>
+          <span class="badge">Conta conectada</span>
+          <h2 id="access-heading" #accessHeading tabindex="-1">Olá, {{ user.name }}</h2>
+          <p class="account-email">{{ user.email }}</p>
+        </div>
+        <div class="account-actions">
+          <button type="button" (click)="logout()" [disabled]="busy() || journeyBusy()">{{ busy() ? 'Aguarde…' : 'Sair' }}</button>
+          <button class="secondary" type="button" (click)="checkSession()" [disabled]="busy() || journeyBusy()">Verificar acesso</button>
+        </div>
+      </div>
     } @else if (unavailable()) {
-      <h2 id="access-heading">Acesso indisponível</h2>
+      <h2 id="access-heading" #accessHeading tabindex="-1">Acesso indisponível</h2>
       <p>Não conseguimos consultar a plataforma agora.</p>
     } @else {
-      <h2 id="access-heading">Entrar</h2>
+      <h2 id="access-heading" #accessHeading tabindex="-1">Entrar</h2>
       <p class="hint">Use a conta fornecida pela empresa.</p>
-      <form [formGroup]="form" (ngSubmit)="login()">
+      <form id="login-form" [formGroup]="form" (ngSubmit)="login()">
         <fieldset [disabled]="busy()">
           <label for="email">Email</label>
           <input id="email" type="email" formControlName="email" autocomplete="username"
@@ -44,10 +47,18 @@
         </fieldset>
       </form>
     }
-    <p class="feedback" role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
-    @if (!checking()) {
-      <button class="secondary" type="button" (click)="checkSession()" [disabled]="busy()">Verificar sessão</button>
+    <p class="feedback" data-testid="auth-feedback" role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+    @if (!checking() && !auth.user()) {
+      <button class="secondary" type="button" (click)="checkSession()" [disabled]="busy() || journeyBusy()">Verificar acesso</button>
     }
   </section>
+  @if (!checking() && auth.user(); as user) {
+    <nav aria-label="Navegação das jornadas">
+      <button type="button" (click)="show('current')" [class.secondary]="view() !== 'current'" [attr.aria-current]="view() === 'current' ? 'page' : null" [disabled]="busy() || journeyBusy()">Jornada atual</button>
+      <button type="button" (click)="show('history')" [class.secondary]="view() !== 'history'" [attr.aria-current]="view() === 'history' ? 'page' : null" [disabled]="busy() || journeyBusy()">Histórico</button>
+    </nav>
+    <app-journey [hidden]="view() !== 'current'" id="current-journey" [user]="user" (busyChange)="journeyBusy.set($event)" />
+    <app-history [hidden]="view() !== 'history'" [user]="user" />
+  }
   <footer>Acesso restrito a colaboradores. Contas são provisionadas pela empresa.</footer>
 </main>

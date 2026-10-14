@@ -48,7 +48,9 @@ export class AuthService {
       }).pipe(timeout(REQUEST_TIMEOUT_MS))));
   }
 
-  private csrf(): Observable<CsrfToken> {
+  invalidate(): void { this.identity.set(null); }
+
+  csrf(): Observable<CsrfToken> {
     // Relative URLs keep cookies same-origin; no persistent browser token storage.
     return this.http.get<CsrfToken>('/api/auth/csrf').pipe(timeout(REQUEST_TIMEOUT_MS));
   }

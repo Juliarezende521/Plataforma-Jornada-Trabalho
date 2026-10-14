@@ -126,3 +126,7 @@ Checklist obrigatório do projeto para demonstrar a exigência do enunciado de u
 Para cada item, registrar commit, ambiente, passos, resultado esperado/observado e evidência sanitizada. Falhas devem ser corrigidas e retestadas antes do aceite. Ambientes indisponíveis devem permanecer explicitamente pendentes na revisão final; não presumir compatibilidade universal. Usabilidade com participantes segue o plano de [experiencia-usuario.md](experiencia-usuario.md), sem inventar participantes ou resultados.
 
 Todos os requisitos explícitos funcionais; testes críticos aprovados; regras assumidas documentadas; API e interface coerentes; README executado desde zero; licença de desenvolvimento e arquitetura do banco esclarecidas; sem segredos; repositório público preparado. Enviar o link ao endereço do enunciado somente após concluir a entrega e por ação autorizada naquela etapa.
+
+## Consultas próprias — 14/10/2026
+
+Implementação e evidências de T07/T09/T10/T11/T16/T21 no escopo de histórico/detalhe/resumo em [consultas-jornada.md](consultas-jornada.md). T20 recebe evidência parcial de teclado/reflow; teste não certifica toda acessibilidade. Filtros por data de referência, propriedade, conta ativa, limite de período/página e soma com precisão possuem testes próprios. Demais dispositivos/contextos e regularização permanecem pendentes.

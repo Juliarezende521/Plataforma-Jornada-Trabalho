@@ -183,3 +183,7 @@ Rastreabilidade: ST03; RF18 recorte P0; RNF03/RNF05/RNF14; T26/T28/T30. Dependê
 Todas as histórias aplicáveis devem incluir acesso próprio, feedback textual, teclado, loading/erro/vazio quando pertinentes, segredos externos e testes. Esses critérios não podem ser substituídos por guards de interface. Histórias não criam autorização para geolocalização, offline, biometria, folha ou jornadas de oito horas.
 
 STs: [stakeholders.md](stakeholders.md); RF/RNF: [requisitos.md](requisitos.md); RN: [proposta.md](proposta.md); Ts: [validacao.md](validacao.md). Antes de marcar uma história como pronta, registrar commit, ambiente e evidência. Ainda não há estimativas de esforço nem aprovação de stakeholders.
+
+## Evidência de consultas — 14/10/2026
+
+HU08–HU11 implementadas no recorte próprio online, com detalhe de eventos/intervalos, resumo de encerradas e pendências separadas e fuso apenas visual. Contrato, revisão, CI e alcance em [consultas-jornada.md](consultas-jornada.md). Não encerra HU17/HU18 nem consulta de equipe/RH. Os status do início deste documento são registros de planejamento; não substituem essas evidências.

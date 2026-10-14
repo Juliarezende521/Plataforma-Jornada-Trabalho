@@ -1,5 +1,5 @@
 :host { display: block; }
-.shell { max-width: 42rem; margin: 0 auto; padding: 3rem 1.25rem; }
+.shell { overflow-wrap: anywhere; max-width: 56rem; margin: 0 auto; padding: 2rem 1rem; }
 .company { font-weight: 700; color: #3857ab; }
 h1 { font-size: clamp(2rem, 6vw, 3rem); margin: .5rem 0; }
 header > p:last-child, footer { color: #475569; line-height: 1.6; }
@@ -22,3 +22,19 @@ input[aria-invalid="true"] { border-color: #a32020; }
 .secondary { background: white; color: #30458a; border: 1px solid #30458a; }
 dd { margin: .3rem 0 1rem; overflow-wrap: anywhere; }
 dt { font-weight: 600; }
+
+h2[tabindex="-1"]:focus { outline: 2px solid #30458a; outline-offset: 5px; }
+
+.account-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+.account-row h2 { margin: .5rem 0 .25rem; font-size: 1.25rem; }
+.account-email { margin: 0; color: #475569; overflow-wrap: anywhere; }
+.account-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.session-card { padding: 1rem 1.5rem; margin-top: 1.5rem; }
+.session-card .feedback { min-height: 0; margin: .5rem 0 0; }
+
+nav[aria-label="Navegação das jornadas"] { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:1rem; align-items:center; }
+nav a { color:#30458a; min-height:44px; display:inline-flex; align-items:center; padding:0 .4rem; }
+nav a:focus-visible { outline:3px solid #b45309; outline-offset:3px; }
+@media (max-width: 420px) { .shell { padding-inline: .5rem; } }
+
+app-journey[hidden], app-history[hidden] { display: none; }

@@ -1,0 +1,51 @@
+<section class="journey" aria-labelledby="journey-heading" [attr.aria-busy]="state.busy()">
+  <div class="heading-row">
+    <div><p class="eyebrow">Sua rotina</p><h2 id="journey-heading" #journeyHeading tabindex="-1">Jornada atual</h2></div>
+    <span class="state-badge">{{ statusLabel() }}</span>
+  </div>
+  <p class="intro">Registre o início, as pausas e o encerramento do seu trabalho.</p>
+  <p class="zone"><strong>Fuso dos horários:</strong> {{ referenceZone() }}</p>
+  @if (state.pending().length) {
+    <div class="recovery" aria-labelledby="recovery-heading">
+      <h3 id="recovery-heading">Marcação aguardando confirmação</h3>
+      <p>Não sabemos ainda se a tentativa foi registrada. Consulte os resultados primeiro. A ausência de recibo não comprova que o envio falhou.</p>
+      <button class="secondary" type="button" (click)="state.refresh()" [disabled]="state.busy()">Consultar resultados</button>
+      <ul>
+        @for (attempt of state.pending(); track attempt.requestKey) {
+          <li><strong>{{ labels[attempt.type] }}</strong><p>Se ainda não foi registrada, a repetição receberá o horário do novo processamento, sem recuperar o horário do clique anterior.</p>
+            <button class="secondary" type="button" (click)="state.retry(attempt)" [disabled]="state.busy()">Consultar e repetir esta tentativa</button>
+          </li>
+        }
+      </ul>
+    </div>
+  } @else {
+    <div class="actions" aria-label="Ações da jornada">
+      @for (type of state.current()?.allowedActions ?? []; track type) {
+        <button type="button" (click)="mark(type)" [class.secondary]="type === 'EXIT'"
+          [disabled]="state.busy() || !state.ready()" aria-describedby="online-note">{{ labels[type] }}</button>
+      }
+    </div>
+  }
+  @if (state.lastReceipt(); as receipt) {
+    <p class="confirmation">{{ labels[receipt.type] }}: {{ receipt.httpStatus === 201 ? 'confirmado' : 'recusado' }}.
+      @if (receipt.occurredAtUtc; as instant) { <time [attr.datetime]="instant">{{ formatInstant(instant) }}</time> }
+    </p>
+  }
+  <p class="feedback" data-testid="journey-feedback" role="status" aria-live="polite" aria-atomic="true">{{ state.message() }}</p>
+  @if (state.current(); as current) {
+    @if (current.session; as session) {
+      <dl class="summary">
+        <div><dt>Data de referência</dt><dd>{{ formatWorkDate(session.workDate) }}</dd></div>
+        <div class="last-event"><dt>Última marcação confirmada</dt><dd>{{ lastType() }}<br /><time [attr.datetime]="session.lastEvent.occurredAtUtc">{{ formatInstant(session.lastEvent.occurredAtUtc) }}</time></dd></div>
+      </dl>
+      <p class="explanation">{{ session.state === 'CLOSED' ? 'Jornada de hoje encerrada. Uma nova entrada inicia outra jornada.' : session.state === 'PAUSED' ? 'Você pode retomar o trabalho ou encerrar a jornada.' : 'Inicie uma pausa ao interromper o trabalho.' }}</p>
+    } @else {
+      <div class="empty-state"><h3>Pronto para começar?</h3><p>Registre sua entrada quando iniciar o trabalho. Cada marcação recebe o horário confirmado pelo servidor.</p></div>
+    }
+    <p class="zone">As marcações são guardadas em UTC e exibidas no seu fuso. A data de referência permanece a do início da jornada.</p>
+  }
+  <div class="update-row"><button class="secondary" type="button" (click)="state.refresh()" [disabled]="state.busy()">{{ state.busy() ? 'Aguarde…' : 'Atualizar jornada' }}</button>
+    @if (state.current(); as current) { <p>Consultada em <time [attr.datetime]="current.observedAtUtc">{{ formatInstant(current.observedAtUtc) }}</time></p> }
+  </div>
+  <p id="online-note" class="online-note">É necessário estar conectado à internet. Aguarde a confirmação antes de fazer outra marcação.</p>
+</section>

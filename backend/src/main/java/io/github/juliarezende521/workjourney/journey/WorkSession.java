@@ -7,6 +7,7 @@ import io.github.juliarezende521.workjourney.time.ReferenceTimeZones;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -27,32 +28,66 @@ public final class WorkSession {
     private Instant workingSince;
     private Instant closedAtUtc;
 
-    private WorkSession(UUID employeeId, UUID actorUserId, String zoneId, Instant serverInstant) {
+    private WorkSession(UUID id, UUID employeeId, UUID actorUserId, String zoneId, Instant serverInstant) {
         this.employeeId = Objects.requireNonNull(employeeId, "Employee is required");
         this.actorUserId = Objects.requireNonNull(actorUserId, "Actor is required");
         var referenceZone = ReferenceTimeZones.requireValid(zoneId);
         Instant instant = UtcInstants.normalize(serverInstant);
-        this.id = UUID.randomUUID();
+        this.id = Objects.requireNonNull(id, "Session ID is required");
         this.referenceTimeZoneId = referenceZone.getId();
         this.workDate = instant.atZone(referenceZone).toLocalDate();
         this.workingSince = instant;
-        events.add(event(WorkEventType.ENTRY, instant));
     }
 
     public static WorkSession open(UUID employeeId, UUID actorUserId, String zoneId,
                                    Instant serverInstant) {
-        return new WorkSession(employeeId, actorUserId, zoneId, serverInstant);
+        var session = new WorkSession(UUID.randomUUID(), employeeId, actorUserId, zoneId, serverInstant);
+        session.events.add(session.event(WorkEventType.ENTRY, session.workingSince));
+        return session;
+    }
+
+    /** Internal persistence boundary: replay originals, preserving IDs and frozen reference date. */
+    public static WorkSession restore(UUID id, UUID employeeId, UUID actorUserId, String zoneId,
+                                      LocalDate workDate, List<WorkEvent> storedEvents) {
+        var originals = List.copyOf(storedEvents);
+        if (originals.isEmpty() || originals.get(0).type() != WorkEventType.ENTRY) {
+            throw new IllegalArgumentException("Stored session must start with ENTRY");
+        }
+        var session = new WorkSession(id, employeeId, actorUserId, zoneId, originals.get(0).occurredAtUtc());
+        if (!session.workDate.equals(Objects.requireNonNull(workDate, "Work date is required"))) {
+            throw new IllegalArgumentException("Stored reference date differs from entry date");
+        }
+        var ids = new HashSet<UUID>();
+        for (var original : originals) {
+            if (!original.workSessionId().equals(id) || !original.actorUserId().equals(actorUserId)
+                    || original.sequence() != session.events.size() + 1L || !ids.add(original.id())) {
+                throw new IllegalArgumentException("Stored event identity or sequence is invalid");
+            }
+            if (session.events.isEmpty()) session.events.add(original);
+            else session.apply(original);
+        }
+        return session;
     }
 
     public void record(WorkEventType type, Instant serverInstant) {
         Objects.requireNonNull(type, "Event type is required");
         Instant instant = UtcInstants.normalize(serverInstant);
+        apply(event(type, instant));
+    }
+
+    public void record(WorkEventType type, Instant serverInstant, String recordedZone) {
+        Objects.requireNonNull(type, "Event type is required");
+        Instant instant = UtcInstants.normalize(serverInstant);
+        apply(new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L, type, instant, instant, recordedZone));
+    }
+
+    private void apply(WorkEvent event) {
+        Instant instant = event.occurredAtUtc();
         if (instant.isBefore(lastInstant())) {
             throw new IllegalArgumentException("Event cannot precede the last event");
         }
-        WorkState next = state.nextFor(type);
+        WorkState next = state.nextFor(event.type());
         // Validate before changing any field; rejected commands leave this aggregate unchanged.
-        WorkEvent event = event(type, instant);
         Duration updatedWork = state == WorkState.WORKING
                 ? completedWork.plus(Duration.between(workingSince, instant)) : completedWork;
         completedWork = updatedWork;
@@ -79,6 +114,9 @@ public final class WorkSession {
 
     public UUID getId() { return id; }
     public UUID getEmployeeId() { return employeeId; }
+    public UUID getActorUserId() { return actorUserId; }
+    public Instant getOpenedAtUtc() { return events.get(0).occurredAtUtc(); }
+    public Instant getLastEventAtUtc() { return lastInstant(); }
     public String getReferenceTimeZoneId() { return referenceTimeZoneId; }
     public LocalDate getWorkDate() { return workDate; }
     public WorkState getState() { return state; }
@@ -87,7 +125,7 @@ public final class WorkSession {
 
     private WorkEvent event(WorkEventType type, Instant instant) {
         return new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L,
-                type, instant, instant);
+                type, instant, instant, referenceTimeZoneId);
     }
 
     private Instant lastInstant() { return events.get(events.size() - 1).occurredAtUtc(); }

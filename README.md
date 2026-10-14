@@ -2,7 +2,7 @@
 
 Plataforma web de registro e consulta de jornada para a empresa fictícia **Dungeons & Dragons Group**, com colaboradores no Brasil e Europa, trabalho remoto e viagens internacionais.
 
-**Status: autenticação integrada validada em CI.** Angular, Spring Boot e SQL Server real passaram juntos pelo fluxo de login, sessão, CSRF, logout e expiração em Chromium desktop e viewport de 360 px. Migration inicial, persistência de contas e seed após reinício também foram validados. Jornada e histórico ainda não estão implementados. Consulte [evidências da validação integrada](docs/validacao-integrada.md), [contrato de autenticação](docs/autenticacao.md) e [login Angular](docs/login-angular.md). Testes no celular físico/Safari e validação de produção continuam pendentes.
+**Status: autenticação integrada validada em CI; jornada online implementada e validada progressivamente na PR #4, ainda sem merge.** Angular, Spring Boot e SQL Server real passaram pelo fluxo de login, sessão, CSRF, logout e expiração em Chromium desktop e viewport de 360 px. Schema/JPA, serviço com identidade/Clock e recibos idempotentes têm validação própria em [persistência](docs/persistencia-jornada.md) e [marcações](docs/marcacoes-idempotencia.md). Endpoints de marcação/recibo/jornada atual implementados e validados em CI, conforme [API de jornada](docs/api-jornada.md). Tela de jornada e diário/reconciliação Angular implementados, com testes locais/CI e evidência progressiva em [tela e IHC](docs/tela-jornada.md). Histórico/detalhe/resumo implementados nesta branch, com evidências em [consultas](docs/consultas-jornada.md); regularização e aceite completo permanecem pendentes; journeyAvailable anuncia o recurso online fora do perfil bootstrap, sem representar aceite integral. Consulte também [validação da autenticação](docs/validacao-integrada.md), [contrato](docs/autenticacao.md) e [login Angular](docs/login-angular.md). Celular físico/Safari e produção ainda não validados.
 
 ## Tecnologias escolhidas
 
@@ -42,6 +42,8 @@ Regularização mínima de saída esquecida, com solicitação própria e decis�
 | [Experiência do usuário/IHC](docs/experiencia-usuario.md) | Fluxos, acessibilidade, inspeção e plano de teste de usabilidade |
 | [Arquitetura e decisões](docs/arquitetura.md) | Modelo, segurança, contratos e trade-offs |
 | [Modelo inicial de jornada](docs/modelo-jornada.md) | Domínio online, evidências dos testes e limites da etapa; sem persistência/API de jornada |
+| [Persistência de jornada](docs/persistencia-jornada.md) | SQL Server, mapeamento JPA, reconstituição e versão; evidências e limites separados de API |
+| [Marcações e idempotência](docs/marcacoes-idempotencia.md) | Identidade/Clock do servidor, recibos e conflitos; validação separada de HTTP/Angular |
 | [EAP](docs/eap.md) | Pacotes de entrega e dependências |
 | [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |
 | [Checklist de revisão por etapa](docs/checklist-revisoes.md) | Qualidade, segurança, desempenho, legibilidade e segunda análise dos achados em todas as próximas etapas |
@@ -88,7 +90,7 @@ Os testes backend padrão usam bootstrap ou testes unitários, sem banco. Exerci
 
 ### Configuração do SQL Server
 
-.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Flyway aplica V1__create_accounts_and_employees.sql e Hibernate valida o schema; esse fluxo foi aprovado em SQL Server 2022 CU20 na CI. Contas fictícias são provisionadas somente pelo perfil evaluation com EVALUATION_PASSWORD externa; veja [instruções](docs/autenticacao.md).
+.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Nesta branch, Flyway aplica V1–V3 e Hibernate valida o schema; o upgrade foi aprovado em SQL Server 2022 CU20 na CI. Usuários de migration/runtime são separados; conferir os [grants de execução](docs/marcacoes-idempotencia.md) após aplicar migrations. Contas fictícias são provisionadas somente pelo perfil evaluation com EVALUATION_PASSWORD externa; veja [instruções](docs/autenticacao.md).
 
 A conexão publicada deve validar TLS/certificado. Não usar sa como conta da aplicação. O usuário de migrations terá DDL, separado do usuário de execução. Secure=false existe somente no perfil bootstrap local, vinculado a 127.0.0.1 para permitir HTTP de desenvolvimento. Não publicar senhas reais.
 
@@ -102,3 +104,7 @@ O SQL Server deverá executar em ambiente suportado. A conexão será configurá
 4. Revisar documentação e repetir instruções locais com SQL Server.
 
 O repositório é público, conforme solicitado no desafio. Todas as informações demonstrativas serão fictícias; senhas, tokens e configurações privadas devem permanecer fora do Git.
+
+### Consultas próprias nesta branch
+
+Histórico paginado, detalhe explicável e resumo do período implementados nesta etapa; contrato, IHC, revisão e status de validação em [consultas de jornada](docs/consultas-jornada.md). Soma somente jornadas encerradas, pendências separadas, troca de fuso apenas visual. Regularização mínima e aceite completo continuam pendentes.

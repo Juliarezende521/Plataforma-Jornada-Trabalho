@@ -1,10 +1,10 @@
 # Levantamento de requisitos — Plataforma de Jornada de Trabalho
 
-Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server real/HTTPS/Chromium, conforme [validacao-integrada.md](validacao-integrada.md). Requisitos de jornada e aceite global permanecem pendentes; RNFs têm evidências parciais, não aprovação integral.
+Status: baseline de escopo. RF01/RF02 aprovados no ambiente de CI com SQL Server real/HTTPS/Chromium, conforme [validacao-integrada.md](validacao-integrada.md). A jornada online e recuperação têm evidência progressiva em [tela-jornada.md](tela-jornada.md); histórico/detalhe/resumo possuem implementação e evidência específica em [consultas-jornada.md](consultas-jornada.md); regularização e aceite global permanecem pendentes; RNFs têm evidências parciais, não aprovação integral.
 
 ## Objetivo e fontes
 
-Documentos derivados: [stakeholders](stakeholders.md), [histórias de usuário](historias-usuario.md) e [experiência/IHC](experiencia-usuario.md). Eles não ampliam o escopo nem substituem esta baseline. UX05 (RN05), UX06 (regularização mínima) e recuperação HU14 receberam decisões documentadas em 11/10/2026; todas ainda precisam de implementação e testes.
+Documentos derivados: [stakeholders](stakeholders.md), [histórias de usuário](historias-usuario.md) e [experiência/IHC](experiencia-usuario.md). Eles não ampliam o escopo nem substituem esta baseline. UX05 (RN05), UX06 (regularização mínima) e recuperação HU14 receberam decisões documentadas em 11/10/2026; RN05 tem cobertura de domínio/serviço; sua interface e recuperação Angular foram implementadas com evidência progressiva em tela-jornada.md; regularização mínima ainda precisa de implementação e testes. A fronteira HTTP atual está documentada em [API de jornada](api-jornada.md); não encerra o aceite global dos requisitos de jornada.
 
 Centralizar as marcações e consultas de jornada da Dungeons & Dragons Group, com colaboradores no Brasil e Europa, inclusive remotos e em viagem. Fonte principal: enunciado fornecido na entrevista. Fonte complementar: escolha de Java pela desenvolvedora e informação recebida de que a empresa utiliza SQL Server; não houve entrevista adicional com RH ou usuários.
 
@@ -62,7 +62,7 @@ Status: somente planejamento autorizado; permissões, migrations, endpoints, int
 
 ### Recuperação de marcação online — decisão P0
 
-Protocolo de RF14/HU14 definido em 11/10/2026; não é fila offline, registro retroativo nem funcionalidade implementada.
+Protocolo de RF14/HU14 definido em 11/10/2026, implementado no recorte online descrito em tela-jornada.md. Não é fila offline nem registro retroativo; consultar evidências e limitações da etapa.
 
 1. Antes de enviar, confirmar identidade/estado no servidor e gerar UUID aleatório para Idempotency-Key. Preservar em localStorage, sob namespace/versionamento próprios, apenas chave, userId/employeeId da identidade confirmada, tipo e expectedWorkSessionId (null para entrada; ID da jornada alvo para outras transições). Nenhuma senha, cookie, token CSRF, email, nome, justificativa ou horário de trabalho é armazenado. Falha ao gravar/reler a tentativa bloqueia o envio com orientação explícita, em vez de prometer recuperação após reload sem suporte.
 2. Enviar via HTTPS com sessão e CSRF atualizado; backend deriva autor da sessão, não do armazenamento. O payload inclui tipo e jornada esperada, sem timestamp do dispositivo. Validar que a jornada alvo pertence ao colaborador e coincide com a aberta; um comando antigo não pode atingir uma jornada nova. Hash canônico inclui operação/tipo/jornada alvo; chave não é credencial nem concede acesso.
@@ -120,4 +120,4 @@ RN01–RN12 são definidas em proposta.md e constituem a referência para estado
 
 ## Definição de pronto do núcleo
 
-RF01–RF14, recorte P0 de RF17/RF18 e RNF aplicáveis implementados; migrations executadas em SQL Server vazio; testes críticos aprovados com evidências; checklist de dispositivos/contextos verificado no fluxo completo; interface utilizável; README reproduzido; limitações declaradas; repositório sem segredos. O núcleo não está concluído: RF01/RF02 e schema de contas possuem evidência integrada; jornada, regularização mínima, restante do schema e avaliação completa de IHC continuam pendentes.
+RF01–RF14, recorte P0 de RF17/RF18 e RNF aplicáveis implementados; migrations executadas em SQL Server vazio; testes críticos aprovados com evidências; checklist de dispositivos/contextos verificado no fluxo completo; interface utilizável; README reproduzido; limitações declaradas; repositório sem segredos. O núcleo não está concluído: autenticação, schema/API/jornada online e recuperação possuem evidência integrada; histórico/detalhe/resumo possuem implementação e evidência delimitada em [consultas-jornada.md](consultas-jornada.md); regularização mínima e avaliação completa de IHC/dispositivos continuam pendentes.
