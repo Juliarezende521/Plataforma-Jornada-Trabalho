@@ -91,6 +91,43 @@ class HrJourneySqlServerIT {
         assertFalse(directory.findValuesAsText("id").contains(employee));
     }
 
+    @Test void overviewFollowsRealTransitionsAndPreservesAnOpenJourneyAcrossMidnight() throws Exception {
+        var target = login(false); var hr = login(true);
+        String employee = json(mvc.perform(get("/api/me").session(target.session())).andReturn()).get("employeeId").asText();
+        assertOverview(hr, employee, "NOT_STARTED");
+        String id = mark(target, UUID.randomUUID(), "ENTRY", null, 201).get("workSessionId").asText();
+        assertOverview(hr, employee, "WORKING");
+        mark(target, UUID.randomUUID(), "PAUSE_START", id, 201);
+        assertOverview(hr, employee, "PAUSED");
+        when(clock.instant()).thenReturn(Instant.parse("2026-10-15T02:00:00Z"));
+        assertOverview(hr, employee, "PAUSED");
+        mark(target, UUID.randomUUID(), "EXIT", id, 201);
+        assertOverview(hr, employee, "NOT_STARTED"); // closed yesterday in Amsterdam
+        String next = mark(target, UUID.randomUUID(), "ENTRY", null, 201).get("workSessionId").asText();
+        assertOverview(hr, employee, "WORKING");
+        mark(target, UUID.randomUUID(), "EXIT", next, 201);
+        assertOverview(hr, employee, "CLOSED");
+        mark(target, UUID.randomUUID(), "ENTRY", null, 201); // equal UTC instant: open wins over a closed session
+        assertOverview(hr, employee, "WORKING");
+        entityManager.createNativeQuery("UPDATE dbo.app_user SET active=0 WHERE id=:id").setParameter("id", target.userId().toString()).executeUpdate();
+        entityManager.clear();
+        var result = json(mvc.perform(get("/api/hr/employees/overview?size=100").session(hr.session())).andExpect(status().isOk()).andReturn());
+        assertFalse(result.findValuesAsText("id").contains(employee));
+    }
+
+    private void assertOverview(Login hr, String employee, String state) throws Exception {
+        var result = json(mvc.perform(get("/api/hr/employees/overview?size=100").session(hr.session()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.observedAtUtc").exists()).andReturn());
+        for (var person : result.get("items")) {
+            if (employee.equals(person.get("id").asText())) {
+                assertEquals(state, person.get("state").asText());
+                assertFalse(person.has("email"));
+                return;
+            }
+        }
+        fail("Expected active employee in overview");
+    }
+
     private Login login(boolean hr) throws Exception {
         var account = users.save(new AppUser(UUID.randomUUID() + "@example.invalid", encoder.encode(PASSWORD), hr));
         employees.save(new Employee(account, "Colaborador fictício", "Europe/Amsterdam"));

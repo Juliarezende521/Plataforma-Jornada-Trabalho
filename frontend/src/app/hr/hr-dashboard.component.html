@@ -1,0 +1,40 @@
+<nav class="hr-navigation" aria-label="Navegação do RH">
+  <button type="button" (click)="show('overview')" [class.secondary]="view() !== 'overview'" [attr.aria-current]="view() === 'overview' ? 'page' : null">Visão geral</button>
+  <button type="button" (click)="show('individual')" [class.secondary]="view() === 'overview'" [attr.aria-current]="view() === 'individual' ? 'page' : null">Consulta individual</button>
+</nav>
+@if (view() === 'individual') {
+  <app-hr [user]="user()" />
+} @else if (view() === 'selected') {
+  @if (selected(); as person) {
+    <p class="selected">Jornadas de <strong>{{ person.name }}</strong></p>
+    <button class="secondary" type="button" (click)="show('overview')">Voltar à visão geral</button>
+    <app-history [user]="user()" [targetEmployee]="person" />
+  }
+} @else {
+  <section class="overview" aria-labelledby="hr-overview-heading" [attr.aria-busy]="busy()">
+    <h2 id="hr-overview-heading" #heading tabindex="-1">Visão do RH</h2>
+    <p>Estados das jornadas por colaborador. Consulta somente de leitura.</p>
+    <p>Jornadas abertas de dias anteriores continuam em destaque. Encerrada indica a última jornada da data atual no fuso de referência.</p>
+    <button class="secondary" type="button" (click)="load(page()?.page ?? 0)" [disabled]="busy()">Atualizar visão geral</button>
+    <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+    @if (page(); as result) {
+      <p>Consultada em {{ observed(result.observedAtUtc) }}. Atualize para acompanhar novas marcações.</p>
+      <ul class="people">
+        @for (person of result.items; track person.id) {
+          <li>
+            <div><h3>{{ person.name }}</h3><p>Fuso de referência: {{ person.referenceTimeZoneId }}</p></div>
+            <div><span class="state" [class.working]="person.state === 'WORKING'" [class.paused]="person.state === 'PAUSED'" [class.closed]="person.state === 'CLOSED'">{{ labels[person.state] }}</span>
+              @if (person.workDate) { <p>Data da jornada: {{ formatWorkDate(person.workDate) }}</p> }
+            </div>
+            <button class="secondary" type="button" (click)="open(person)" [attr.aria-label]="'Ver jornadas de ' + person.name">Ver detalhes</button>
+          </li>
+        }
+      </ul>
+      <nav class="pages" aria-label="Páginas da visão geral">
+        <button class="secondary" type="button" (click)="load(result.page - 1)" [disabled]="busy() || result.page === 0">Página anterior</button>
+        <span>Página {{ result.page + 1 }} · {{ result.totalElements }} colaboradores</span>
+        <button class="secondary" type="button" (click)="load(result.page + 1)" [disabled]="busy() || (result.page + 1) * result.size >= result.totalElements">Próxima página</button>
+      </nav>
+    }
+  </section>
+}

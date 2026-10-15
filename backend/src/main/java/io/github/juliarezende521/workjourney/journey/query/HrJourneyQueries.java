@@ -45,6 +45,28 @@ public class HrJourneyQueries {
                 page, size, result.getTotalElements());
     }
 
+    @Transactional(readOnly = true)
+    public Overview overview(int page, int size) {
+        // Directory enforces live HR permission and bounded pagination before any checkpoint read.
+        var directory = employees(page, size);
+        var observed = UtcInstants.normalize(clock.instant());
+        var latest = store.latestCheckpoints(directory.items().stream().map(Person::id).toList()).stream()
+                .collect(java.util.stream.Collectors.toMap(JpaWorkSessionStore.LatestCheckpoint::employeeId, c -> c));
+        var items = directory.items().stream().map(person -> {
+            var checkpoint = latest.get(person.id());
+            var today = observed.atZone(ZoneId.of(person.referenceTimeZoneId())).toLocalDate();
+            String state = checkpoint == null ? "NOT_STARTED"
+                    : checkpoint.state() != io.github.juliarezende521.workjourney.journey.WorkState.CLOSED
+                        ? checkpoint.state().name() : checkpoint.workDate().equals(today) ? "CLOSED" : "NOT_STARTED";
+            return new OverviewPerson(person.id(), person.name(), person.referenceTimeZoneId(), state,
+                    state.equals("NOT_STARTED") ? null : checkpoint.workDate());
+        }).toList();
+        return new Overview(items, page, size, directory.totalElements(), observed);
+    }
+
+    public record OverviewPerson(UUID id, String name, String referenceTimeZoneId, String state, LocalDate workDate) { }
+    public record Overview(List<OverviewPerson> items, int page, int size, long totalElements, Instant observedAtUtc) { }
+
     // Same target-employee lock as marking: records and page describe a consistent snapshot.
     @Transactional
     public JourneyQueries.History history(UUID employeeId, LocalDate from, LocalDate to, int page, int size) {

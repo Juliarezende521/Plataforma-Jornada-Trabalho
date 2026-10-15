@@ -42,6 +42,12 @@ test('HR reads another employee history and detail while an employee remains iso
   await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
   await login(page, 'rh@example.invalid');
   await expect(page.getByRole('heading', { name: 'Visão do RH', exact: true })).toBeVisible();
+  await expect(page.locator('.people li').filter({ hasText: 'Colaborador Brasil' })).toContainText('Encerrada');
+  await page.getByRole('button', { name: 'Ver jornadas de Colaborador Brasil', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Histórico', exact: true })).toBeVisible();
+  await expect(page.getByText('Jornadas de Colaborador Brasil', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Voltar à visão geral', exact: true }).click();
+  await page.getByRole('button', { name: 'Consulta individual', exact: true }).click();
   await page.getByLabel('Colaborador', { exact: true }).selectOption(employee);
   await expect(page.getByText('Registros de', { exact: false })).toContainText('Colaborador Brasil');
   await page.getByLabel('Data inicial', { exact: true }).fill(journey.workDate);

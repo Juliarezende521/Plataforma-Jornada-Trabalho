@@ -30,7 +30,7 @@ class HrJourneyHttpTest {
     @Test void anonymousAndEmployeeCannotReadAndEvenHrCannotWriteHrRoutes() throws Exception {
         String root = "/api/hr/employees";
         mvc.perform(get(root)).andExpect(status().isUnauthorized());
-        for (String path : List.of(root, root + "/" + UUID.randomUUID() + "/work-sessions?from=2026-10-01&to=2026-10-14",
+        for (String path : List.of(root, root + "/overview", root + "/" + UUID.randomUUID() + "/work-sessions?from=2026-10-01&to=2026-10-14",
                 root + "/" + UUID.randomUUID() + "/work-sessions/" + UUID.randomUUID())) {
             mvc.perform(get(path).with(user(principal(false)))).andExpect(status().isForbidden());
         }
@@ -38,6 +38,14 @@ class HrJourneyHttpTest {
         mvc.perform(delete(root + "/" + UUID.randomUUID()).with(user(principal(true))).with(csrf())).andExpect(status().isForbidden());
         verifyNoInteractions(queries);
     }
+    @Test void overviewAcceptsOnlyBoundedPaginationParameters() throws Exception {
+        when(queries.overview(0, 20)).thenReturn(new HrJourneyQueries.Overview(List.of(), 0, 20, 0, java.time.Instant.EPOCH));
+        mvc.perform(get("/api/hr/employees/overview").with(user(principal(true)))).andExpect(status().isOk());
+        for (String query : List.of("?employeeId=forged", "?page=0&page=1", "?size=bad")) {
+            mvc.perform(get("/api/hr/employees/overview" + query).with(user(principal(true)))).andExpect(status().isBadRequest());
+        }
+    }
+
     @Test void hrGetsMinimalDirectoryAndInvalidParametersAreRejected() throws Exception {
         when(queries.employees(0, 20)).thenReturn(new HrJourneyQueries.Directory(
                 List.of(new HrJourneyQueries.Person(UUID.randomUUID(), "Brasil", "America/Sao_Paulo")), 0, 20, 1));

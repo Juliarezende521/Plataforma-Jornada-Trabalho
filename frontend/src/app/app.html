@@ -54,7 +54,7 @@
   </section>
   @if (!checking() && auth.user(); as user) {
     @if (user.hrReader) {
-      <app-hr [user]="user" />
+      <app-hr-dashboard [user]="user" />
     } @else {
     <nav aria-label="Navegação das jornadas">
       <button type="button" (click)="show('current')" [class.secondary]="view() !== 'current'" [attr.aria-current]="view() === 'current' ? 'page' : null" [disabled]="busy() || journeyBusy()">Jornada atual</button>
