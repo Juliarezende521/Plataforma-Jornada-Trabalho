@@ -1,0 +1,50 @@
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HrComponent } from './hr.component';
+const hr = { userId: 'hr', employeeId: 'hr-employee', name: 'RH', email: 'hr@example.invalid', referenceTimeZoneId: 'UTC', hrReader: true };
+const brazil = { id: 'brazil', name: 'Brasil', referenceTimeZoneId: 'America/Sao_Paulo' };
+const europe = { id: 'europe', name: 'Europa', referenceTimeZoneId: 'Europe/Amsterdam' };
+describe('Read-only HR screen', () => {
+  let fixture: ComponentFixture<HrComponent>; let http: HttpTestingController;
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HrComponent], providers: [provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
+    http = TestBed.inject(HttpTestingController); fixture = TestBed.createComponent(HrComponent);
+  });
+  afterEach(() => { fixture.destroy(); http.verify(); });
+  function mount(user = hr) { fixture.componentRef.setInput('user', user); fixture.detectChanges(); }
+  function directory() {
+    http.expectOne(r => r.url === '/api/hr/employees').flush({ items: [brazil, europe], page: 0, size: 20, totalElements: 2 }); fixture.detectChanges();
+  }
+  it('loads a bounded directory and routes selected history through HR without changing authenticated identity', () => {
+    mount(); directory(); fixture.componentInstance.choice.setValue(brazil.id); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Registros de Brasil');
+    const from = fixture.nativeElement.querySelector('#history-from') as HTMLInputElement;
+    const to = fixture.nativeElement.querySelector('#history-to') as HTMLInputElement;
+    from.value = '2026-10-01'; from.dispatchEvent(new Event('input'));
+    to.value = '2026-10-14'; to.dispatchEvent(new Event('input'));
+    fixture.nativeElement.querySelector('app-history form').dispatchEvent(new Event('submit'));
+    const request = http.expectOne(r => r.url === '/api/hr/employees/brazil/work-sessions');
+    expect(request.request.params.get('from')).toBe('2026-10-01');
+    request.flush({ items: [], page: 0, size: 20, totalElements: 0, observedAtUtc: '2026-10-14T14:00:00Z' });
+    http.expectNone('/api/me/work-sessions');
+    expect(fixture.componentInstance.user().userId).toBe('hr');
+  });
+  it('cancels pending history and clears selected data when switching employees or accounts', () => {
+    mount(); directory(); fixture.componentInstance.choice.setValue(brazil.id); fixture.detectChanges();
+    fixture.nativeElement.querySelector('app-history form').dispatchEvent(new Event('submit'));
+    const request = http.expectOne(r => r.url === '/api/hr/employees/brazil/work-sessions');
+    fixture.componentInstance.choice.setValue(europe.id); fixture.detectChanges();
+    expect(request.cancelled).toBe(true); expect(fixture.nativeElement.textContent).toContain('Registros de Europa');
+    fixture.componentRef.setInput('user', { ...hr, hrReader: false }); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-history')).toBeNull(); expect(fixture.componentInstance.directory()).toBeNull();
+    http.expectNone('/api/hr/employees');
+  });
+  it('does not query for a plain employee and clears the directory on forbidden access', () => {
+    mount({ ...hr, hrReader: false }); http.expectNone('/api/hr/employees');
+    fixture.componentRef.setInput('user', hr); fixture.detectChanges();
+    http.expectOne(r => r.url === '/api/hr/employees').flush({}, { status: 403, statusText: 'Forbidden' }); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Seu acesso de RH não está disponível');
+    expect(fixture.componentInstance.directory()).toBeNull(); expect(fixture.componentInstance.selected()).toBeNull();
+  });
+});

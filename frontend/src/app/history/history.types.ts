@@ -11,3 +11,6 @@ export interface JourneyDetail {
   events: { id: string; sequence: number; type: EventType; occurredAtUtc: string; recordedAtUtc: string; recordedTimeZoneId: string }[];
 }
 export interface HistoryFilter { from: string; to: string; }
+
+export interface EmployeeSummary { id: string; name: string; referenceTimeZoneId: string; }
+export interface EmployeePage { items: EmployeeSummary[]; page: number; size: number; totalElements: number; }

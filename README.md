@@ -11,7 +11,7 @@ Plataforma web de registro e consulta de jornada de trabalho para a empresa fict
 - Recuperação de tentativas sem confirmação: consulta do recibo e repetição explícita com a mesma chave, sem reenvio automático.
 - Instantes definidos pelo servidor em **UTC** e **fuso IANA do navegador registrado em cada marcação**.
 - Interface responsiva, com verificações automatizadas em Chromium desktop e viewport móvel de 360 px; os testes de jornada também verificam reflow em 320, 768 e 1280 px e texto a 200%.
-- Persistência em **SQL Server**, migrations **V1–V4** pelo Flyway e validação com SQL Server real na CI.
+- Persistência em **SQL Server**, migrations **V1–V5** pelo Flyway e validação com SQL Server real na CI.
 
 A regularização de saída esquecida e o resumo consolidado por período ainda não integram esta versão. A aprovação das suítes automatizadas não representa aceite integral do desafio nem validação de produção.
 
@@ -119,14 +119,15 @@ export EVALUATION_PASSWORD='EscolhaUmaSenhaLocal@2026'
 (cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=evaluation)
 ```
 
-O backend atende em `http://127.0.0.1:8080`. O perfil `evaluation` cria as duas contas abaixo se ainda não existirem. A senha deve ter pelo menos **12 caracteres e no máximo 72 bytes UTF-8**. Alterar `EVALUATION_PASSWORD` e reiniciar não altera senhas de contas já existentes. Esse perfil é somente para avaliação.
+O backend atende em `http://127.0.0.1:8080`. O perfil `evaluation` cria as três contas abaixo se ainda não existirem. A senha deve ter pelo menos **12 caracteres e no máximo 72 bytes UTF-8**. Alterar `EVALUATION_PASSWORD` e reiniciar não altera senhas de contas já existentes. Esse perfil é somente para avaliação.
 
 | E-mail | Fuso de referência |
 |---|---|
 | `brasil@example.invalid` | `America/Sao_Paulo` |
 | `europa@example.invalid` | `Europe/Amsterdam` |
+| `rh@example.invalid` (consulta RH) | `America/Sao_Paulo` |
 
-A senha de ambas é o valor usado em `EVALUATION_PASSWORD` quando as contas foram criadas.
+A senha das três contas é o valor usado em `EVALUATION_PASSWORD` quando as contas foram criadas.
 
 ### 4. Iniciar o frontend com HTTPS
 
@@ -149,6 +150,16 @@ npm start -- --ssl --ssl-cert /caminho/localhost.pem --ssl-key /caminho/localhos
 **Por que HTTPS?** O cookie de sessão tem `Secure=true` no modo com SQL Server. HTTP puro não é o caminho documentado para demonstrar o login: esta execução usa HTTPS explicitamente, sem desabilitar essa proteção. O certificado de desenvolvimento não substitui a configuração TLS de produção.
 
 No Windows/PowerShell, use `$env:NOME="valor"` em vez de `export` e `.\mvnw.cmd` no lugar de `./mvnw`; os comandos SQL são os mesmos, mas funções Bash e heredocs precisam ser adaptados.
+
+### Visão de RH nesta branch
+
+O perfil de avaliação também cria `rh@example.invalid` (Recursos Humanos, referência `America/Sao_Paulo`), com a mesma senha de avaliação definida na criação. A permissão `hr_reader` é persistida pela V5 e vem desabilitada para contas preexistentes; o seed não promove contas já existentes com esse e-mail. É necessário autenticar novamente após conceder uma permissão.
+
+A conta habilitada vê a opção **Visão do RH**, seleciona um colaborador ativo e consulta seu histórico por período e os detalhes. A tela reaproveita o histórico existente, sem trocar a identidade autenticada. Diretório paginado: 20 itens por página; limite de API: 100. Listagens não expõem e-mails, hashes ou credenciais. Fusos, filtros e paginação seguem o histórico próprio.
+
+As rotas GET `/api/hr/employees`, `/api/hr/employees/{employeeId}/work-sessions` e `/api/hr/employees/{employeeId}/work-sessions/{id}` exigem autoridade de RH e revalidam no banco a permissão, a conta ativa e o vínculo autenticado a cada consulta. Uma jornada precisa pertencer ao colaborador selecionado; acesso pela rota própria continua restrito aos registros próprios. As rotas RH rejeitam mutações. Essa permissão não inclui gestão de contas, correção de marcações ou aprovação de regularizações. RH conserva as operações de colaborador somente para os próprios registros.
+
+A implementação permanece isolada em `feature/hr-read-only` até revisão e testes; a main segue como alternativa de entrega. O teste de upgrade verifica que uma conta anterior à V5 não recebe permissão de RH. Evidências finais da branch devem ser consultadas nos checks da PR; não se confundem com as evidências históricas da PR #7 abaixo.
 
 ### Diagnóstico sem banco
 
@@ -203,7 +214,7 @@ O fuso é uma informação declarada pelo navegador: **não comprova localizaç�
 
 - **Regularização de saída esquecida**, com solicitação e decisão auditada: planejada no recorte P0, mas não disponível na `main`. Existe trabalho separado em `preserve/exit-regularization-p1`; essa branch não faz parte desta entrega.
 - **Resumo consolidado por período**, para acompanhamento de fechamento mensal.
-- Visão de gestor/RH, consultas gerais, administração e recuperação de contas.
+- Visão de gestor por equipe, administração e recuperação de contas.
 - Tipo de local de trabalho e observações por marcação.
 - Folha de pagamento, cálculo legal de horas extras, geolocalização e operação offline não fazem parte do escopo inicial.
 

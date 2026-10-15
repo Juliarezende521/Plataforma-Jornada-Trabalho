@@ -13,11 +13,17 @@ public class AppUser {
     @Column(nullable = false, length = 254, unique = true) private String email;
     @Column(name = "password_hash", nullable = false, length = 60) private String passwordHash;
     @Column(nullable = false) private boolean active;
+    @Column(name = "hr_reader", nullable = false) private boolean hrReader;
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY) private Employee employee;
 
     protected AppUser() { }
 
     public AppUser(String email, String passwordHash) {
+        this(email, passwordHash, false);
+    }
+
+    public AppUser(String email, String passwordHash, boolean hrReader) {
+        this.hrReader = hrReader;
         this.id = UUID.randomUUID();
         this.email = normalizeEmail(email);
         if (this.email.isBlank() || this.email.length() > 254 || !this.email.contains("@")) {
@@ -36,6 +42,7 @@ public class AppUser {
     public UUID getId() { return id; }
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
+    public boolean isHrReader() { return hrReader; }
     public boolean isActive() { return active; }
     public Employee getEmployee() { return employee; }
 }

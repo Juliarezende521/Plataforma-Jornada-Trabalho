@@ -5,11 +5,12 @@ import { finalize } from 'rxjs';
 import { AuthService } from './auth/auth.service';
 import { authErrorMessage } from './auth/auth-feedback';
 import { HistoryComponent } from './history/history.component';
+import { HrComponent } from './hr/hr.component';
 import { JourneyComponent } from './journey/journey.component';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule, JourneyComponent, HistoryComponent],
+  imports: [ReactiveFormsModule, JourneyComponent, HistoryComponent, HrComponent],
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
@@ -18,8 +19,9 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly busy = signal(false);
   protected readonly journeyBusy = signal(false);
-  protected readonly view = signal<'current' | 'history'>('current');
+  protected readonly view = signal<'current' | 'history' | 'hr'>('current');
   private readonly journeyView = viewChild(JourneyComponent);
+  private readonly hrView = viewChild(HrComponent);
   private readonly historyView = viewChild(HistoryComponent);
   private readonly accessHeading = viewChild<ElementRef<HTMLElement>>('accessHeading');
   protected readonly checking = signal(true);
@@ -39,12 +41,14 @@ export class App {
     effect(() => { if (!this.auth.user()) { this.journeyBusy.set(false); this.view.set('current'); } });
   }
 
-  protected show(view: 'current' | 'history'): void {
+  protected show(view: 'current' | 'history' | 'hr'): void {
     if (this.busy() || this.journeyBusy()) return;
+    if (view === 'hr' && !this.auth.user()?.hrReader) return;
     this.view.set(view);
     setTimeout(() => {
       if (this.destroyRef.destroyed) return;
       if (view === 'current') this.journeyView()?.focusHeading();
+      else if (view === 'hr') this.hrView()?.focusHeading();
       else this.historyView()?.focusHeading();
     });
   }
