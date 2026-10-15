@@ -13,6 +13,7 @@ async function login(page: Page, email = 'brasil@example.invalid', waitForEntry 
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   if (waitForEntry) await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
   else await expect(page.getByRole('heading', { name: 'Olá, Colaborador Brasil' })).toBeVisible();
+  if (waitForEntry) await page.getByLabel('Modalidade de trabalho', { exact: true }).selectOption('REMOTE');
 }
 async function logout(page: Page) {
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
@@ -59,8 +60,9 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.locator('#journey-heading')).toBeFocused();
   const saved = await diary(page);
   expect(saved).toHaveLength(1);
-  expect(Object.keys(saved[0]).sort()).toEqual(['employeeId', 'expectedWorkSessionId', 'requestKey', 'timeZoneId', 'type', 'userId', 'version']);
+  expect(Object.keys(saved[0]).sort()).toEqual(['employeeId', 'expectedWorkSessionId', 'requestKey', 'timeZoneId', 'type', 'userId', 'version', 'workMode']);
   expect(saved[0].timeZoneId).toBe('Europe/Lisbon');
+  expect(saved[0].workMode).toBe('REMOTE');
   expect(saved[0].requestKey).toBe(accepted!.requestKey);
   const lookup = await page.request.get('/api/me/work-event-requests/' + saved[0].requestKey);
   expect(lookup.status()).toBe(200);
@@ -72,6 +74,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   const snapshot = await current(page);
   expect(snapshot.session.referenceTimeZoneId).toBe('America/Sao_Paulo');
   expect(snapshot.session.lastEvent.recordedTimeZoneId).toBe('Europe/Lisbon');
+  expect(snapshot.session.lastEvent.workMode).toBe('REMOTE');
   await expect(page.locator('.last-event')).toContainText('Fuso no registro: Europe/Lisbon');
   expect(snapshot.session.lastEvent.id).toBe(accepted!.eventId);
   expect(snapshot.session.lastEvent.occurredAtUtc).toBe(accepted!.occurredAtUtc);
@@ -81,6 +84,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await peer.goto('/');
   await expect(peer.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
   await expect(peer.locator('#access-heading')).toBeFocused();
+  await page.getByLabel('Modalidade de trabalho', { exact: true }).selectOption('REMOTE');
   await page.getByRole('button', { name: 'Iniciar pausa', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Retomar trabalho', exact: true })).toBeEnabled();
   await expect(page.getByText('Em pausa', { exact: true })).toBeVisible();
@@ -91,6 +95,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await peer.close();
   await page.getByRole('button', { name: 'Retomar trabalho', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Iniciar pausa', exact: true })).toBeEnabled();
+  await page.getByLabel('Modalidade de trabalho', { exact: true }).selectOption('REMOTE');
   await page.getByRole('button', { name: 'Iniciar pausa', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Retomar trabalho', exact: true })).toBeEnabled();
   expect((await current(page)).session.referenceTimeZoneId).toBe('America/Sao_Paulo');
@@ -129,6 +134,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.locator('.events li')).toHaveCount(5);
   const detail = await (await page.request.get('/api/me/work-sessions/' + latest.id)).json();
   expect(detail.events.at(-1).type).toBe('EXIT');
+  expect(detail.events.every((event: { workMode: string }) => event.workMode === 'REMOTE')).toBe(true);
   expect(detail.events.every((event: { recordedTimeZoneId: string }) => event.recordedTimeZoneId === 'Europe/Lisbon')).toBe(true);
   await expect(page.locator('.events li small')).toHaveCount(5);
   await expect(page.locator('.events li small').first()).toHaveText('Fuso no registro: Europe/Lisbon');
@@ -180,6 +186,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   expect(repeated.requestKey).toBe(pending.requestKey);
   expect(repeated.httpStatus).toBe(201);
   expect(await diary(page)).toHaveLength(0);
+  await page.getByLabel('Modalidade de trabalho', { exact: true }).selectOption('REMOTE');
   await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
   await logout(page);

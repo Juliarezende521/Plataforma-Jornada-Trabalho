@@ -74,7 +74,7 @@ public class OnlineMarkingService {
             if (sessions.latestClosedAt(employee.getId()).filter(instant::isBefore).isPresent()) {
                 return MarkingResult.conflict(key, command, CLOCK_REGRESSION, instant);
             }
-            stored = sessions.create(WorkSession.open(employee.getId(), userId, employee.getReferenceTimeZoneId(), instant, recordedZone));
+            stored = sessions.create(WorkSession.open(employee.getId(), userId, employee.getReferenceTimeZoneId(), instant, recordedZone, command.workMode()));
         } else {
             if (current.isEmpty()) return MarkingResult.conflict(key, command, NO_OPEN_SESSION, instant);
             var open = current.get();
@@ -88,7 +88,7 @@ public class OnlineMarkingService {
             catch (IllegalStateException invalidTransition) {
                 return MarkingResult.conflict(key, command, INVALID_TRANSITION, instant);
             }
-            stored = sessions.append(open.session().getId(), employee.getId(), open.version(), command.type(), instant, recordedZone);
+            stored = sessions.append(open.session().getId(), employee.getId(), open.version(), command.type(), instant, recordedZone, command.workMode());
         }
         var events = stored.session().getEvents();
         var event = events.get(events.size() - 1);

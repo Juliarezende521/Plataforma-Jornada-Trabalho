@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
 import { formatInstant, formatWorkDate } from '../journey/journey-format';
+import { workModeLabel } from '../journey/journey.types';
 import { HistoryApi } from './history-api.service';
 import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
 @Component({ selector: 'app-history', imports: [ReactiveFormsModule], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
@@ -27,6 +28,7 @@ export class HistoryComponent {
   readonly form = new FormGroup({ from: new FormControl('', { nonNullable: true }), to: new FormControl('', { nonNullable: true }) });
   readonly heading = viewChild<ElementRef<HTMLElement>>('historyHeading');
   readonly detailHeading = viewChild<ElementRef<HTMLElement>>('detailHeading');
+  readonly workModeLabel = workModeLabel;
   readonly formatWorkDate = formatWorkDate;
   readonly eventLabels = { ENTRY: 'Entrada', PAUSE_START: 'Início de pausa', PAUSE_END: 'Retorno', EXIT: 'Saída' };
   constructor() {

@@ -33,6 +33,7 @@ test('HR reads another employee history and detail while an employee remains iso
   await expect(page.getByRole('button', { name: 'Visão do RH', exact: true })).toHaveCount(0);
   expect((await page.request.get('/api/hr/employees')).status()).toBe(403);
   const employee = (await (await page.request.get('/api/me')).json()).employeeId;
+  await page.getByLabel('Modalidade de trabalho', { exact: true }).selectOption('TRAVEL');
   await page.getByRole('button', { name: 'Registrar entrada', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Encerrar jornada', exact: true })).toBeEnabled();
   const journey = (await (await page.request.get('/api/me/work-sessions/current')).json()).session;
@@ -59,6 +60,7 @@ test('HR reads another employee history and detail while an employee remains iso
   await page.getByRole('button', { name: /^Ver detalhes da jornada de/ }).first().click();
   await expect(page.getByRole('heading', { name: 'Marcações originais', exact: true })).toBeVisible();
   await expect(page.locator('.events li')).toHaveCount(2);
+  await expect(page.locator('.event-work-mode').first()).toHaveText('Modalidade: Viagem');
   expect((await page.request.get('/api/me/work-sessions/' + journey.id)).status()).toBe(404);
   for (const width of [360, 1280]) {
     await page.setViewportSize({ width, height: 900 });

@@ -39,9 +39,9 @@ public final class JourneyResponses {
             var last = events.get(events.size() - 1);
             return new CurrentSession(session.getId(), session.getState(), session.getWorkDate(),
                     session.getReferenceTimeZoneId(), session.getOpenedAtUtc(),
-                    new LastEvent(last.id(), last.type(), last.occurredAtUtc(), last.recordedTimeZoneId()), session.durationAt(observed).toString());
+                    new LastEvent(last.id(), last.type(), last.occurredAtUtc(), last.recordedTimeZoneId(), last.workMode()), session.durationAt(observed).toString());
         }
     }
 
-    public record LastEvent(UUID id, WorkEventType type, Instant occurredAtUtc, String recordedTimeZoneId) { }
+    public record LastEvent(UUID id, WorkEventType type, Instant occurredAtUtc, String recordedTimeZoneId, WorkMode workMode) { }
 }

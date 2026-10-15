@@ -13,13 +13,18 @@
       <button class="secondary" type="button" (click)="state.refresh()" [disabled]="state.busy()">Consultar resultados</button>
       <ul>
         @for (attempt of state.pending(); track attempt.requestKey) {
-          <li><strong>{{ labels[attempt.type] }}</strong><p>Se ainda não foi registrada, a repetição receberá o horário do novo processamento, sem recuperar o horário do clique anterior.</p>
+          <li><strong>{{ labels[attempt.type] }}</strong><p>Modalidade da tentativa: {{ workModeLabel(attempt.workMode) }}</p><p>Se ainda não foi registrada, a repetição receberá o horário do novo processamento, sem recuperar o horário do clique anterior.</p>
             <button class="secondary" type="button" (click)="state.retry(attempt)" [disabled]="state.busy()">Consultar e repetir esta tentativa</button>
           </li>
         }
       </ul>
     </div>
   } @else {
+    <label for="marking-work-mode">Modalidade de trabalho</label>
+    <select id="marking-work-mode" #modeSelect [value]="workMode()" (change)="chooseMode(modeSelect.value)" [disabled]="state.busy()">
+      <option value="">Selecione uma opção</option>
+      <option value="OFFICE">Escritório</option><option value="REMOTE">Remoto</option><option value="TRAVEL">Viagem</option>
+    </select>
     <div class="actions" aria-label="Ações da jornada">
       @for (type of state.current()?.allowedActions ?? []; track type) {
         <button type="button" (click)="mark(type)" [class.secondary]="type === 'EXIT'"
@@ -40,7 +45,7 @@
         <div class="last-event"><dt>Última marcação confirmada</dt><dd>{{ lastType() }}<br /><time [attr.datetime]="session.lastEvent.occurredAtUtc">{{ formatInstant(session.lastEvent.occurredAtUtc) }}</time>
           @if (session.lastEvent.recordedTimeZoneId !== session.referenceTimeZoneId) {
             <br /><small>Fuso no registro: {{ session.lastEvent.recordedTimeZoneId }}</small>
-          }</dd></div>
+          }<br /><small>Modalidade: {{ workModeLabel(session.lastEvent.workMode) }}</small></dd></div>
       </dl>
       <p class="explanation">{{ session.state === 'CLOSED' ? 'Jornada de hoje encerrada. Uma nova entrada inicia outra jornada.' : session.state === 'PAUSED' ? 'Você pode retomar o trabalho ou encerrar a jornada.' : 'Inicie uma pausa ao interromper o trabalho.' }}</p>
     } @else {

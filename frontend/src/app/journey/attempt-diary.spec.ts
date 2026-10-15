@@ -31,6 +31,15 @@ describe('Minimal attempt diary', () => {
     expect(Object.hasOwn(legacy, 'timeZoneId')).toBe(false);
   });
 
+  it('preserva a modalidade escolhida sem inventar valor para tentativas antigas', () => {
+    const antiga = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null });
+    const viagem = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null, workMode: 'TRAVEL' });
+    expect(diary.list(identity)).toContainEqual(viagem);
+    expect(viagem.workMode).toBe('TRAVEL');
+    expect(Object.hasOwn(antiga, 'workMode')).toBe(false);
+    expect(() => diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null, workMode: 'INVALID' as never })).toThrow();
+  });
+
   it('does not overwrite another attempt and keeps keys distinct', () => {
     const first = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null });
     const second = diary.save(identity, { type: 'ENTRY', expectedWorkSessionId: null });

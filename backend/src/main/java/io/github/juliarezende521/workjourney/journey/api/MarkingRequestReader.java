@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
+import io.github.juliarezende521.workjourney.journey.WorkMode;
 import io.github.juliarezende521.workjourney.journey.marking.MarkingCommand;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -42,7 +43,8 @@ public final class MarkingRequestReader {
             var input = strictMapper.readValue(body, Input.class);
             if (input == null || input.type() == null) throw new InvalidJourneyRequest(400);
             return new MarkingCommand(WorkEventType.valueOf(input.type()),
-                    input.expectedWorkSessionId() == null ? null : uuid(input.expectedWorkSessionId()), input.timeZoneId());
+                    input.expectedWorkSessionId() == null ? null : uuid(input.expectedWorkSessionId()), input.timeZoneId(),
+                    input.workMode() == null ? null : WorkMode.valueOf(input.workMode()));
         } catch (JsonProcessingException | IllegalArgumentException invalid) {
             throw new InvalidJourneyRequest(400);
         }
@@ -53,5 +55,5 @@ public final class MarkingRequestReader {
         return UUID.fromString(value);
     }
 
-    private record Input(String type, String expectedWorkSessionId, String timeZoneId) { }
+    private record Input(String type, String expectedWorkSessionId, String timeZoneId, String workMode) { }
 }

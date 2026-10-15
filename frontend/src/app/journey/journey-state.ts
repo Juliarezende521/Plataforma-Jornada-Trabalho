@@ -5,7 +5,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
 import { AttemptDiary } from './attempt-diary';
 import { JourneyApi } from './journey-api.service';
-import { ACTION_LABELS, Attempt, CurrentJourney, EventType, Receipt, sameIdentity } from './journey.types';
+import { ACTION_LABELS, Attempt, CurrentJourney, EventType, WorkMode, Receipt, sameIdentity } from './journey.types';
 
 @Injectable()
 export class JourneyState {
@@ -61,7 +61,7 @@ export class JourneyState {
     finally { this.finish(); }
   }
 
-  async mark(type: EventType): Promise<void> {
+  async mark(type: EventType, workMode?: WorkMode): Promise<void> {
     if (this.busy() || !this.ready() || this.pending().length) return;
     const expected = this.current()?.session?.id ?? null;
     if (!this.current()?.allowedActions.includes(type)) return;
@@ -76,7 +76,7 @@ export class JourneyState {
         return;
       }
       const attempt = this.diary.save(this.identity, { type, expectedWorkSessionId: type === 'ENTRY' ? null : expected,
-        timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone });
+        timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(workMode ? { workMode } : {}) });
       this.pending.set(this.diary.list(this.identity));
       if (this.pending().some(item => item.requestKey !== attempt.requestKey)) {
         this.message.set('Outra aba também iniciou uma marcação. Consulte os resultados antes de continuar.');

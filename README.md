@@ -204,6 +204,8 @@ Evidências do código integrado pela [PR #7](https://github.com/Juliarezende521
 
 ## Trabalho remoto e viagens
 
+Antes de registrar, o colaborador escolhe **Escritório**, **Remoto** ou **Viagem**. A modalidade declarada fica guardada em cada marcação e aparece na jornada atual e no detalhe do histórico, inclusive no RH. A escolha pode mudar entre marcações. Registros antigos e pedidos de clientes anteriores sem esse campo aparecem como **Não informado**; o sistema não deduz a modalidade pelo fuso. A V6 acrescenta somente uma coluna opcional e uma restrição de valores, preservando o histórico e as migrations anteriores. Reenvios conservam a modalidade escolhida na tentativa original.
+
 O instante de cada marcação é definido pelo servidor, em UTC. O navegador informa o **fuso IANA** do dispositivo, como `Europe/Lisbon`, que o servidor valida e guarda no evento (`recordedTimeZoneId`). Sem `timeZoneId`, usa-se o fuso de referência atual do colaborador.
 
 O `referenceTimeZoneId` e o `workDate` da sessão continuam definidos pelo fuso de referência do colaborador na entrada. Por exemplo, às **01h30 UTC de 15/10/2026**, uma entrada com fuso de registro Lisboa e referência São Paulo pertence à jornada de **14/10/2026**. Os filtros e o agrupamento permanecem estáveis.
@@ -217,7 +219,7 @@ O fuso é uma informação declarada pelo navegador: **não comprova localizaç�
 - **Regularização de saída esquecida**, com solicitação e decisão auditada: planejada no recorte P0, mas não disponível na `main`. Existe trabalho separado em `preserve/exit-regularization-p1`; essa branch não faz parte desta entrega.
 - **Resumo consolidado por período**, para acompanhamento de fechamento mensal.
 - Visão de gestor por equipe, administração e recuperação de contas.
-- Tipo de local de trabalho e observações por marcação.
+- Campo de observação por marcação. A modalidade declarada já é registrada; ela não comprova localização física.
 - Folha de pagamento, cálculo legal de horas extras, geolocalização e operação offline não fazem parte do escopo inicial.
 
 ## Limitações conhecidas

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Identity } from '../auth/auth.service';
-import { Attempt, EVENT_TYPES, MarkingCommand } from './journey.types';
+import { Attempt, EVENT_TYPES, WORK_MODES, MarkingCommand } from './journey.types';
 
 const PREFIX = 'work-journey.online.v1.';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -24,6 +24,7 @@ export class AttemptDiary {
     const attempt: Attempt = { version: 1, requestKey: crypto.randomUUID(), userId: identity.userId,
       employeeId: identity.employeeId, type: command.type, expectedWorkSessionId: command.expectedWorkSessionId };
     if (command.timeZoneId !== undefined) attempt.timeZoneId = command.timeZoneId;
+    if (command.workMode !== undefined) attempt.workMode = command.workMode;
     if (!this.valid(attempt)) throw new Error('Invalid identity or command');
     const serialized = JSON.stringify(attempt);
     const key = PREFIX + attempt.requestKey;
@@ -48,7 +49,8 @@ export class AttemptDiary {
     const item = value as Record<string, unknown>;
     const fields = ['version', 'requestKey', 'userId', 'employeeId', 'type', 'expectedWorkSessionId'];
     if (!fields.every(key => Object.hasOwn(item, key)) ||
-        Object.keys(item).some(key => !fields.includes(key) && key !== 'timeZoneId')) return false;
+        Object.keys(item).some(key => !fields.includes(key) && key !== 'timeZoneId' && key !== 'workMode')) return false;
+    if (Object.hasOwn(item, 'workMode') && !WORK_MODES.some(mode => mode === item['workMode'])) return false;
     if (Object.hasOwn(item, 'timeZoneId') &&
         (typeof item['timeZoneId'] !== 'string' || item['timeZoneId'].length === 0 || item['timeZoneId'].length > 100)) return false;
     return item['version'] === 1 && ['requestKey', 'userId', 'employeeId'].every(key =>

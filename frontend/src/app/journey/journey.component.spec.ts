@@ -89,6 +89,31 @@ describe('Journey screen and recovery protocol', () => {
     http.expectNone('/api/me'); http.expectNone('/api/me/work-sessions/current');
   });
 
+  it('exige escolha explícita na interface antes de iniciar uma marcação', async () => {
+    await initial();
+    fixture.componentInstance.mark('ENTRY'); await turn();
+    expect(view.textContent).toContain('Escolha a modalidade de trabalho');
+    http.expectNone('/api/me/work-events'); http.expectNone('/api/me');
+  });
+
+  it('envia e preserva a modalidade da tentativa durante reenvio mesmo após outra escolha', async () => {
+    const attempt = diary.save(user, { type: 'ENTRY', expectedWorkSessionId: null, timeZoneId: 'Europe/Lisbon', workMode: 'TRAVEL' });
+    mount(); http.expectOne('/api/me').flush(user); await turn();
+    http.expectOne('/api/me/work-event-requests/' + attempt.requestKey).flush({}, { status: 404, statusText: 'Not Found' }); await turn();
+    http.expectOne('/api/me/work-sessions/current').flush(empty); await turn();
+    fixture.componentInstance.chooseMode('OFFICE');
+    const action = fixture.componentInstance.state.retry(attempt);
+    http.expectOne('/api/me').flush(user); await turn();
+    http.expectOne('/api/me/work-event-requests/' + attempt.requestKey).flush({}, { status: 404, statusText: 'Not Found' }); await turn();
+    http.expectOne('/api/auth/csrf').flush({ headerName: 'X-CSRF-TOKEN', token: 'csrf' }); await turn();
+    const post = http.expectOne('/api/me/work-events');
+    expect(post.request.body.workMode).toBe('TRAVEL');
+    expect(post.request.headers.get('Idempotency-Key')).toBe(attempt.requestKey);
+    post.flush(receipt(attempt)); await turn();
+    http.expectOne('/api/me/work-sessions/current').flush(working);
+    await action; await turn();
+  });
+
   it('preserves an attempt before POST, prevents double-click and waits for server confirmation', async () => {
     await initial();
     const { action, attempt, post } = await prepareEntry();

@@ -1,6 +1,7 @@
 package io.github.juliarezende521.workjourney.journey.persistence;
 
 import io.github.juliarezende521.workjourney.journey.WorkEvent;
+import io.github.juliarezende521.workjourney.journey.WorkMode;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
@@ -21,6 +22,8 @@ public class WorkEventRow {
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 16, updatable = false) private WorkEventType eventType;
     @Column(name = "recorded_time_zone_id", nullable = false, updatable = false, length = 100) private String recordedTimeZoneId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "work_mode", updatable = false, length = 16) private WorkMode workMode;
     @TimeZoneStorage(TimeZoneStorageType.NATIVE)
     @Column(name = "occurred_at_utc", nullable = false, updatable = false, columnDefinition = "datetimeoffset(7)", precision = 7)
     private OffsetDateTime occurredAtUtc;
@@ -37,12 +40,13 @@ public class WorkEventRow {
         sequence = event.sequence();
         eventType = event.type();
         recordedTimeZoneId = event.recordedTimeZoneId();
+        workMode = event.workMode();
         occurredAtUtc = event.occurredAtUtc().atOffset(ZoneOffset.UTC);
         recordedAtUtc = event.recordedAtUtc().atOffset(ZoneOffset.UTC);
     }
 
     WorkEvent toDomain() {
         return new WorkEvent(id, workSessionId, authorUserId, sequence, eventType,
-                occurredAtUtc.toInstant(), recordedAtUtc.toInstant(), recordedTimeZoneId);
+                occurredAtUtc.toInstant(), recordedAtUtc.toInstant(), recordedTimeZoneId, workMode);
     }
 }

@@ -72,12 +72,18 @@ public class JpaWorkSessionStore {
 
     @Transactional
     public StoredSession append(UUID id, UUID employeeId, long expectedVersion, WorkEventType type, Instant serverInstant, String recordedZone) {
+        return append(id, employeeId, expectedVersion, type, serverInstant, recordedZone, null);
+    }
+
+    @Transactional
+    public StoredSession append(UUID id, UUID employeeId, long expectedVersion, WorkEventType type,
+                                Instant serverInstant, String recordedZone, WorkMode workMode) {
         var row = ownedRow(id, employeeId).orElseThrow(() -> new IllegalArgumentException("Session is not visible"));
         if (expectedVersion < 0 || row.version() != expectedVersion) {
             throw new OptimisticLockException("Session version changed");
         }
         var session = restoreConsistent(row, id);
-        session.record(type, serverInstant, recordedZone == null ? session.getReferenceTimeZoneId() : recordedZone);
+        session.record(type, serverInstant, recordedZone == null ? session.getReferenceTimeZoneId() : recordedZone, workMode);
         row.updateCheckpoint(session);
         // A valid transition always changes state, including when timestamps are equal.
         // Flush the @Version UPDATE before inserting the new event; failures roll back both.
