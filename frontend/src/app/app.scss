@@ -24,6 +24,7 @@ input { margin-top: var(--space-2); }
 nav[aria-label="Navegação das jornadas"] { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); padding: var(--space-2); background: #e8edf5; border-radius: var(--radius-md); }
 nav button { flex: 1; margin: 0; }
 nav button.secondary { border-color: transparent; background: transparent; color: var(--color-muted); }
+nav button.secondary:disabled { background: #e7ebf2; color: #59677e; border-color: #b7c2d2; }
 nav button[aria-current="page"] { box-shadow: 0 2px 5px rgb(23 43 73 / 12%); }
 footer { margin-top: var(--space-6); padding: var(--space-2) 0; color: var(--color-muted); font-size: .8rem; }
 app-journey[hidden], app-history[hidden] { display: none; }
