@@ -1,6 +1,6 @@
 # Arquitetura, modelo e decisões técnicas
 
-Status: proposta para implementação. A documentação inicial descreve as regras de negócio; este documento detalha sua tradução técnica.
+Status: arquitetura da versão atual. Itens futuros estão identificados explicitamente.
 
 ## ADR01 — Stack e organização
 
@@ -44,11 +44,9 @@ erDiagram
 | work_session | id UUID, employee_id, work_date, reference_time_zone_id, state, closed_at_utc, version bigint | FK; version não nulo; estado e encerramento coerentes |
 | work_event | id UUID, work_session_id, event_type, occurred_at_utc, recorded_at_utc, sequence, author_user_id | FKs; tipo permitido; sequence positiva e única por jornada |
 | idempotency_request | id UUID, employee_id, request_key, payload_hash, result_event_id | FK; chave única por colaborador; resultado do comando confirmado |
-| audit_entry | id UUID, actor_user_id opcional, action, entity_id, recorded_at_utc, correlation_id | Dados mínimos; ausência de cookies, senhas e tokens |
+| audit_entry (planejada) | id UUID, actor_user_id opcional, action, entity_id, recorded_at_utc, correlation_id | Necessária para futuras regularizações auditáveis |
 
-V1 implementa app_user e employee com UUID/uniqueidentifier, comprimentos, nullability, unicidade e FK. DDL/mapeamento foram aprovados em SQL Server 2022 CU20, na CI 38090975052; manager_id e demais tabelas continuam propostas. Contrato de autenticação: [autenticacao.md](autenticacao.md). Evidências: [validacao-integrada.md](validacao-integrada.md).
-
-Atualização de 13/10/2026: V2/JPA/reconstituição/versão estão na PR #3 ([persistencia-jornada.md](persistencia-jornada.md)); V3 e serviço interno com identidade/Clock, lock de colaborador e recibos estão em [marcacoes-idempotencia.md](marcacoes-idempotencia.md). HTTP/Angular, auditoria de regularizações e manager_id continuam pendentes; a tabela acima descreve o modelo geral proposto. PR #3 ainda sem integração à main.
+As migrations V1–V6 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH e modalidade de trabalho. Auditoria de regularizações e vínculo de gestor continuam planejados.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
@@ -60,9 +58,9 @@ Um comando válido grava, na mesma transação, resultado idempotente, evento e 
 
 Para abertura simultânea, índice único filtrado protege o colaborador mesmo sem jornada anterior. Para chaves repetidas, índice único da idempotência protege o resultado. Mesmo colaborador + chave + payload retorna o resultado confirmado; chave reutilizada com payload diferente retorna 409. Verificar o resultado idempotente antes de rejeitar pela nova situação da jornada. Uma colisão simultânea pode exigir rollback e nova consulta em outra transação; não continuar dentro de transação inválida.
 
-Decisão implementada na fatia online: PESSIMISTIC_WRITE no colaborador ativo/vinculado serializa comandos antes de verificar recibo/estado, junto ao @Version e às constraints. Conflitos de negócio validados sem erro SQL geram recibo terminal na mesma transação; falha de banco propaga para rollback, sem retry automático. Fluxos futuros de regularização devem seguir a mesma ordem de lock. Fonte temporal verifica também o último encerramento antes de nova ENTRY, evitando sobreposição quando Clock regride. Limites/evidências em marcacoes-idempotencia.md; não há idempotência de interface comprovada ainda.
+`PESSIMISTIC_WRITE` no colaborador ativo serializa comandos antes de verificar recibo e estado, junto ao `@Version` e às constraints. Conflitos de negócio geram recibo terminal na mesma transação; falha de banco causa rollback, sem repetição automática. A fonte temporal também verifica o último encerramento antes de uma nova entrada, evitando sobreposição se o relógio regredir.
 
-Se houver timeout de resposta, a gravação pode ter ocorrido. O cliente deve consultar o recibo autenticado e, se necessário, repetir explicitamente com a mesma chave/payload. Gerar chave nova significa intenção de nova operação e não serve como recuperação automática. Chaves são preservadas no MVP; política de expiração dependeria de janela de repetição definida. Diário local mínimo preservado antes do envio, vínculo ao alvo da jornada, reautenticação, múltiplas abas e limitações seguem [requisitos.md](requisitos.md#recuperação-de-marcação-online--decisão-p0). Não armazenar credenciais nem enviar fila offline.
+Se houver timeout de resposta, a gravação pode ter ocorrido. O cliente consulta o recibo autenticado e, se necessário, repete explicitamente a mesma chave e o mesmo conteúdo. Gerar uma chave nova representa outra intenção. O diário local não armazena credenciais e não funciona como fila offline.
 
 ## ADR05 — Migrations e execução
 
@@ -74,14 +72,6 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 
 ## Contrato mínimo da API
 
-### Regularização mínima P0 — arquitetura planejada
-
-Adicionar autoridade específica de aprovador e vínculo de escopo provisionado no servidor; o papel EMPLOYEE existente não oferece essa autorização. Sem RF16 implícito, administração pública de contas ou autorização baseada em IDs/perfis enviados pelo navegador. Novo principal/seed deverão incluir permissões e testes, sem alterar a conclusão atual de autenticação apenas EMPLOYEE.
-
-Persistir pedido de regularização e revisão efetiva separados de work_event original. Pedido referencia jornada, versão e autor; revisão aprovada referencia pedido único, instante efetivo UTC, valores anterior/novo e decisor. Instantes de pedido/decisão são do servidor; instante efetivo é proposta manual validada, nunca confundido com marcação online. Unicidade de pedido PENDING por jornada e de revisão por pedido, FKs, estado terminal e versão devem ser definidos na migration e comprovados em SQL Server real.
-
-Aprovação revalida estado/versão e grava decisão, revisão, encerramento efetivo/versão e auditoria em uma transação; rejeição/cancelamento não encerram jornada. Saída online válida cancela pedido superado atomicamente. Idempotência é vinculada ao ator autenticado e operação; consultar resultado confirmado antes de validar novo estado. Concorrência entre decisões, marcação e cancelamento exige testes de estado final e rollback. Contratos HTTP específicos e limites ainda serão definidos antes de implementação; regra canônica em [requisitos.md](requisitos.md#regularização-mínima-de-saída-esquecida--decisão-p0).
-
 | Operação | Entrada | Resposta |
 |---|---|---|
 | GET /api/auth/csrf | Nenhuma | Token para mutações; sem identidade secreta na resposta |
@@ -90,10 +80,10 @@ Aprovação revalida estado/versão e grava decisão, revisão, encerramento efe
 | POST /api/me/work-events | Tipo, expectedWorkSessionId (null para entrada) e header Idempotency-Key | Evento confirmado; novo registro 201; repetição retorna resposta original |
 | GET /api/me/work-event-requests/{key} | Chave UUID e sessão autenticada | 200: recibo terminal próprio com resultado original; 404: sem recibo visível, não garante que a primeira requisição terminou; 401: reautenticar |
 | GET /api/me/work-sessions/current | Sessão | Jornada atual ou representação vazia documentada |
-| GET /api/me/work-sessions | from/to/page/size | Histórico próprio e resumo conforme contrato final |
+| GET /api/me/work-sessions | from/to/page/size | Histórico próprio paginado; consolidado ainda não implementado |
 | GET /api/me/work-sessions/{id} | ID e sessão | Detalhe próprio; 404 se inexistente ou alheio |
 
-Filtros from/to são datas de referência inclusivas; limite inicial proposto: 366 dias. Página inicial 0, size padrão 20, máximo 100. Ordenar por work_date decrescente e id como desempate. Parâmetros inválidos: 400. Instantes ISO 8601 UTC. Duração total em unidade numérica documentada; apresentação em horas/minutos apenas no frontend. Congelar contrato após implementação e validar exemplos reais.
+Filtros `from` e `to` são datas de referência inclusivas, limitadas a 366 dias. A página inicial é 0; o tamanho padrão é 20 e o máximo é 100. A ordenação usa data e abertura decrescentes, com ID como desempate. Parâmetros inválidos retornam 400 e instantes usam ISO 8601 UTC.
 
 Erros com Problem Details e identificador de correlação, sem stack traces: 400 validação, 401 ausência/expiração da sessão, 403 permissão ou CSRF inválido, 404 recurso invisível, 409 transição/concorrência/chave incompatível, 429 limite de requisições quando configurado.
 
@@ -107,6 +97,6 @@ Erros com Problem Details e identificador de correlação, sem stack traces: 400
 
 As regras de negócio e prioridades são decisões propostas para o desafio, não prescrições dessas fontes.
 
-### Fronteira HTTP de jornada — etapa da PR #3
+## Estado atual
 
-POST de marcação, GET de recibo e GET de jornada atual implementados conforme [contrato e revisão](api-jornada.md), validados em CI com SQL Server real. Consulta vazia retorna session=null; ações e duração são provisórias. JSON estrito até 1.024 bytes; DTOs explícitos. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas 500, sem implicar resultado terminal. Histórico/detalhe/resumo e interface ainda pendentes. Correlação cobre erros tratados do controller; filtros e resolução MVC não têm correlação garantida ainda.
+POST de marcação, GET de recibo, jornada atual, histórico, detalhe e consultas do RH estão implementados com DTOs explícitos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500. O consolidado do período e a regularização auditável ainda não fazem parte desta versão.
