@@ -16,7 +16,7 @@ export class HrDashboardComponent {
   readonly user = input.required<Identity>();
   readonly view = signal<'overview' | 'individual' | 'selected'>('overview');
   readonly page = signal<OverviewPage | null>(null);
-  readonly selected = signal<EmployeeSummary | null>(null);
+  readonly selected = signal<OverviewPerson | null>(null);
   readonly busy = signal(false);
   readonly message = signal('');
   readonly labels = { WORKING: 'Trabalhando', PAUSED: 'Em pausa', CLOSED: 'Encerrada', NOT_STARTED: 'Sem jornada iniciada' };
