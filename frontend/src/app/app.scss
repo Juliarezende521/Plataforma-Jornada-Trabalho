@@ -1,40 +1,32 @@
 :host { display: block; }
-.shell { overflow-wrap: anywhere; max-width: 56rem; margin: 0 auto; padding: 2rem 1rem; }
-.company { font-weight: 700; color: #3857ab; }
-h1 { font-size: clamp(2rem, 6vw, 3rem); margin: .5rem 0; }
-header > p:last-child, footer { color: #475569; line-height: 1.6; }
-section { margin-top: 2rem; background: white; border: 1px solid #dbe3ef; border-radius: 1rem; padding: clamp(1rem, 4vw, 2rem); }
-.badge { display: inline-block; border-radius: 2rem; background: #eef2ff; color: #30458a; padding: .4rem .8rem; font-size: .875rem; font-weight: 600; }
-h2 { font-size: 1.5rem; }
-p { line-height: 1.6; }
-button { margin-top: .5rem; padding: .9rem 1.2rem; border: 0; border-radius: .5rem; background: #30458a; color: white; font: inherit; cursor: pointer; }
-button:disabled { opacity: .7; cursor: wait; }
-button:focus-visible { outline: 3px solid #b45309; outline-offset: 4px; }
-.feedback { min-height: 4rem; color: #334155; }
-footer { margin-top: 1.5rem; font-size: .9rem; }
-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
-label { display: block; margin-top: .75rem; font-weight: 600; }
-input { display: block; width: 100%; min-height: 3rem; padding: .75rem; margin-top: .4rem; border: 1px solid #64748b; border-radius: .5rem; color: inherit; background: white; font: inherit; }
-input:focus-visible { outline: 3px solid #30458a; outline-offset: 2px; }
-input[aria-invalid="true"] { border-color: #a32020; }
-.field-error { min-height: 1.4rem; margin: .25rem 0; color: #a32020; font-size: .875rem; }
-.hint { color: #475569; }
-.secondary { background: white; color: #30458a; border: 1px solid #30458a; }
-dd { margin: .3rem 0 1rem; overflow-wrap: anywhere; }
-dt { font-weight: 600; }
-
-h2[tabindex="-1"]:focus { outline: 2px solid #30458a; outline-offset: 5px; }
-
-.account-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
-.account-row h2 { margin: .5rem 0 .25rem; font-size: 1.25rem; }
-.account-email { margin: 0; color: #475569; overflow-wrap: anywhere; }
-.account-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
-.session-card { padding: 1rem 1.5rem; margin-top: 1.5rem; }
-.session-card .feedback { min-height: 0; margin: .5rem 0 0; }
-
-nav[aria-label="Navegação das jornadas"] { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:1rem; align-items:center; }
-nav a { color:#30458a; min-height:44px; display:inline-flex; align-items:center; padding:0 .4rem; }
-nav a:focus-visible { outline:3px solid #b45309; outline-offset:3px; }
-@media (max-width: 420px) { .shell { padding-inline: .5rem; } }
-
+.shell { max-width: 66rem; margin: 0 auto; padding: var(--space-6) var(--space-4); overflow-wrap: anywhere; }
+header { padding: var(--space-2) 0 var(--space-6); border-bottom: 1px solid var(--color-border); }
+.company { margin: 0; color: var(--color-primary); font-size: .8rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+h1 { margin: var(--space-3) 0; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.035em; }
+header > p:last-child { margin: 0; color: var(--color-muted); }
+section { margin-top: var(--space-6); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: clamp(1rem, 3vw, 2rem); box-shadow: var(--shadow-card); }
+h2 { margin-top: 0; font-size: 1.5rem; letter-spacing: -.02em; }
+.badge { display: inline-block; padding: .3rem .75rem; background: var(--color-success-bg); color: var(--color-success); border-radius: 999px; font-size: .8rem; font-weight: 700; }
+fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+label { display: block; margin-top: var(--space-4); font-weight: 650; }
+input { margin-top: var(--space-2); }
+.field-error { min-height: 1.4rem; margin: var(--space-1) 0; color: var(--color-error); font-size: .875rem; }
+.hint, .account-email { color: var(--color-muted); }
+#login-form { max-width: 32rem; }
+#login-form button { width: 100%; margin-top: var(--space-4); }
+.feedback { color: var(--color-muted); min-height: 1.5rem; margin: var(--space-4) 0; }
+.account-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-6); }
+.account-row > div { min-width: 0; }
+.account-row h2 { margin: var(--space-3) 0 var(--space-1); font-size: 1.25rem; }
+.account-email { margin: 0; font-size: .9rem; }
+.account-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.session-card .feedback { min-height: 0; margin: var(--space-3) 0 0; }
+nav[aria-label="Navegação das jornadas"] { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-6); padding: var(--space-2); background: #e8edf5; border-radius: var(--radius-md); }
+nav button { flex: 1; margin: 0; }
+nav button.secondary { border-color: transparent; background: transparent; color: var(--color-muted); }
+nav button.secondary:disabled { background: #e7ebf2; color: #59677e; border-color: #b7c2d2; }
+nav button[aria-current="page"] { box-shadow: 0 2px 5px rgb(23 43 73 / 12%); }
+footer { margin-top: var(--space-6); padding: var(--space-2) 0; color: var(--color-muted); font-size: .8rem; }
 app-journey[hidden], app-history[hidden] { display: none; }
+@media (min-width: 640px) { .shell { padding: var(--space-8) var(--space-6); } nav button { flex: 0 1 auto; } }
+@media (max-width: 420px) { .account-actions, .account-actions button { width: 100%; } }
