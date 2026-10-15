@@ -99,7 +99,10 @@ class HrJourneySqlServerIT {
         var csrf = mvc.perform(get("/api/auth/csrf")).andReturn();
         var token = json(csrf);
         var session = (MockHttpSession) csrf.getRequest().getSession();
-        mvc.perform(post("/api/auth/login").session(session).header(token.get("headerName").asText(), token.get("token").asText())
+        mvc.perform(post("/api/auth/login")
+                // Isolated fictitious client: do not consume the own-history suite's limiter window.
+                .with(request -> { request.setRemoteAddr("198.51.100.50"); return request; })
+                .session(session).header(token.get("headerName").asText(), token.get("token").asText())
                 .param("email", account.getEmail()).param("password", PASSWORD)).andExpect(status().isNoContent());
         var renewed = json(mvc.perform(get("/api/auth/csrf").session(session)).andReturn());
         return new Login(session, renewed.get("headerName").asText(), renewed.get("token").asText(), account.getId());
