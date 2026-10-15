@@ -1,10 +1,10 @@
-<main class="shell">
-  <header>
+<main class="shell" [class.access-layout]="!auth.user()" [class.workspace-layout]="!!auth.user()">
+  <header class="brand-panel">
     <p class="company">Dungeons &amp; Dragons Group</p>
     <h1>Jornada de trabalho</h1>
     <p>Registre seu trabalho e acompanhe suas marcações.</p>
   </header>
-  <section [class.session-card]="!!auth.user() && !checking()" aria-labelledby="access-heading" [attr.aria-busy]="busy()">
+  <section class="access-panel" [class.session-card]="!!auth.user() && !checking()" aria-labelledby="access-heading" [attr.aria-busy]="busy()">
     @if (checking()) {
       <h2 id="access-heading" #accessHeading tabindex="-1">Verificando seu acesso</h2>
       <p role="status">Aguarde enquanto consultamos sua sessão.</p>
@@ -53,16 +53,13 @@
     }
   </section>
   @if (!checking() && auth.user(); as user) {
+    @if (user.hrReader) {
+      <app-hr [user]="user" />
+    } @else {
     <nav aria-label="Navegação das jornadas">
       <button type="button" (click)="show('current')" [class.secondary]="view() !== 'current'" [attr.aria-current]="view() === 'current' ? 'page' : null" [disabled]="busy() || journeyBusy()">Jornada atual</button>
       <button type="button" (click)="show('history')" [class.secondary]="view() !== 'history'" [attr.aria-current]="view() === 'history' ? 'page' : null" [disabled]="busy() || journeyBusy()">Histórico</button>
-      @if (user.hrReader) {
-        <button type="button" (click)="show('hr')" [class.secondary]="view() !== 'hr'" [attr.aria-current]="view() === 'hr' ? 'page' : null" [disabled]="busy() || journeyBusy()">Visão do RH</button>
-      }
     </nav>
-    @if (view() === 'hr' && user.hrReader) {
-      <app-hr [user]="user" />
-    } @else {
     <app-journey [hidden]="view() !== 'current'" id="current-journey" [user]="user" (busyChange)="journeyBusy.set($event)" />
     <app-history [hidden]="view() !== 'history'" [user]="user" />
     }

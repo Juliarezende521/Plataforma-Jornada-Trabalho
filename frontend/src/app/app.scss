@@ -30,3 +30,38 @@ footer { margin-top: var(--space-6); padding: var(--space-2) 0; color: var(--col
 app-journey[hidden], app-history[hidden] { display: none; }
 @media (min-width: 640px) { .shell { padding: var(--space-8) var(--space-6); } nav button { flex: 0 1 auto; } }
 @media (max-width: 420px) { .account-actions, .account-actions button { width: 100%; } }
+
+.access-layout { max-width: none; min-height: 100dvh; padding: 0; display: grid; }
+.access-layout .brand-panel { padding: 2rem 1.5rem; background: #344fc4; color: white; border: 0; }
+.access-layout .company, .access-layout header > p:last-child { color: white; }
+.access-layout h1 { max-width: 12ch; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.08; }
+.access-layout .access-panel { width: 100%; max-width: 28rem; min-width: 0; margin: 0 auto; padding: 2rem 1.5rem; border: 0; box-shadow: none; background: transparent; }
+.access-layout footer { margin: 0; padding: 1rem 1.5rem; }
+@media (min-width: 900px) {
+  .access-layout { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto; }
+  .access-layout .brand-panel { grid-row: 1 / 3; display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 6vw, 6rem); }
+  .access-layout .company { margin-bottom: 3rem; }
+  .access-layout .access-panel { align-self: center; padding-top: 4rem; padding-bottom: 3rem; }
+  .access-layout footer { grid-column: 2; text-align: center; }
+}
+
+.workspace-layout { max-width: 80rem; padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+.workspace-layout .brand-panel { padding: var(--space-4) 0; }
+.workspace-layout .brand-panel h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin-block: var(--space-2); }
+.workspace-layout .session-card { box-shadow: none; }
+.workspace-layout nav[aria-label="Navegação das jornadas"] {
+  position: fixed; bottom: 0; inset-inline: 0; z-index: 10; margin: 0;
+  padding: var(--space-2) var(--space-4) calc(var(--space-2) + env(safe-area-inset-bottom));
+  background: var(--color-surface); border-top: 1px solid var(--color-border); border-radius: 0;
+}
+.workspace-layout nav button { min-height: 48px; flex: 1; }
+.workspace-layout nav button[aria-current="page"] { background: var(--color-primary-soft); border-color: transparent; color: var(--color-primary); box-shadow: none; }
+@media (min-width: 1100px) {
+  .workspace-layout { padding-left: 17rem; padding-bottom: var(--space-8); }
+  .workspace-layout .brand-panel { position: fixed; top: 0; left: 0; width: 15rem; padding: var(--space-8) var(--space-6); z-index: 11; border-bottom: 0; }
+  .workspace-layout .brand-panel h1 { font-size: 1.65rem; }
+  .workspace-layout .brand-panel p:last-child { font-size: .875rem; }
+  .workspace-layout::before { content: ''; position: fixed; inset-block: 0; left: 0; width: 15rem; background: var(--color-surface); border-right: 1px solid var(--color-border); }
+  .workspace-layout nav[aria-label="Navegação das jornadas"] { inset: 16rem auto auto 0; width: 15rem; padding: var(--space-4); border: 0; flex-direction: column; }
+  .workspace-layout nav button { width: 100%; text-align: left; }
+}
