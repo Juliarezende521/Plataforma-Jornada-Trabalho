@@ -1,116 +1,231 @@
 # Work Journey Platform
 
-Plataforma web de registro e consulta de jornada para a empresa fictícia **Dungeons & Dragons Group**, com colaboradores no Brasil e Europa, trabalho remoto e viagens internacionais.
+Plataforma web de registro e consulta de jornada de trabalho para a empresa fictícia **Dungeons & Dragons Group**, com colaboradores no Brasil e na Europa, trabalho remoto e viagens internacionais.
 
-**Status: autenticação integrada validada em CI; jornada online implementada e validada progressivamente na PR #4, ainda sem merge.** Angular, Spring Boot e SQL Server real passaram pelo fluxo de login, sessão, CSRF, logout e expiração em Chromium desktop e viewport de 360 px. Schema/JPA, serviço com identidade/Clock e recibos idempotentes têm validação própria em [persistência](docs/persistencia-jornada.md) e [marcações](docs/marcacoes-idempotencia.md). Endpoints de marcação/recibo/jornada atual implementados e validados em CI, conforme [API de jornada](docs/api-jornada.md). Tela de jornada e diário/reconciliação Angular implementados, com testes locais/CI e evidência progressiva em [tela e IHC](docs/tela-jornada.md). Histórico/detalhe/resumo implementados nesta branch, com evidências em [consultas](docs/consultas-jornada.md); regularização e aceite completo permanecem pendentes; journeyAvailable anuncia o recurso online fora do perfil bootstrap, sem representar aceite integral. Consulte também [validação da autenticação](docs/validacao-integrada.md), [contrato](docs/autenticacao.md) e [login Angular](docs/login-angular.md). Celular físico/Safari e produção ainda não validados.
+## O que funciona nesta versão
 
-## Tecnologias escolhidas
+- Login e logout com sessão, proteção CSRF e contas provisionadas, sem cadastro público.
+- Registro de **entrada, início de pausa, retorno e saída**, sempre para o colaborador autenticado.
+- Validação da sequência de eventos, recibos idempotentes e proteção transacional contra marcações concorrentes.
+- **Jornada atual**, histórico paginado por período e detalhe das marcações, com acesso somente aos próprios registros.
+- Recuperação de tentativas sem confirmação: consulta do recibo e repetição explícita com a mesma chave, sem reenvio automático.
+- Instantes definidos pelo servidor em **UTC** e **fuso IANA do navegador registrado em cada marcação**.
+- Interface responsiva, com verificações automatizadas em Chromium desktop e viewport móvel de 360 px; os testes de jornada também verificam reflow em 320, 768 e 1280 px e texto a 200%.
+- Persistência em **SQL Server**, migrations **V1–V4** pelo Flyway e validação com SQL Server real na CI.
+
+A regularização de saída esquecida e o resumo consolidado por período ainda não integram esta versão. A aprovação das suítes automatizadas não representa aceite integral do desafio nem validação de produção.
+
+## Tecnologias e decisões
 
 | Parte | Tecnologia |
 |---|---|
-| Backend | Java, Spring Boot e Spring Web MVC |
-| Interface web | Angular e TypeScript |
-| Banco de dados | Microsoft SQL Server |
-| Persistência | Spring Data JPA/Hibernate |
-| Segurança | Spring Security, sessão e proteção CSRF |
-| Versionamento do schema no SQL Server (migrations) | Flyway |
+| Backend | Java 17, Spring Boot 3.5.16, Spring Security |
+| Interface | Angular 22.2 e TypeScript |
+| Banco de dados | Microsoft SQL Server 2022 |
+| Persistência | Spring Data JPA/Hibernate e Flyway |
+| Ferramentas | Maven Wrapper, Node 24.19.0, Playwright |
 
-**O banco de dados é o Microsoft SQL Server.** O Flyway executa e registra a versão dos scripts SQL que criam ou alteram tabelas nesse banco. Spring Data JPA/Hibernate faz o acesso aos dados pela aplicação.
+Java foi escolhido pela minha experiência com a linguagem. O backend difere do ecossistema Microsoft predominante na empresa; esse trade-off está registrado em [arquitetura e decisões](docs/arquitetura.md). Angular segue o direcionamento do desafio, e SQL Server combina familiaridade acadêmica com a informação recebida sobre seu uso pela empresa.
 
-Java foi escolhido pela experiência da desenvolvedora. Angular segue o direcionamento do desafio. SQL Server combina familiaridade acadêmica e a informação recebida sobre sua utilização pela empresa. O backend difere do ecossistema Microsoft predominante; esse trade-off está documentado.
+As versões Node e npm estão indicadas em `.nvmrc` e `frontend/package.json`; as dependências npm resolvidas estão em `frontend/package-lock.json`. A CI usa SQL Server 2022 CU20 e Java 17.
 
-Versões nesta base: Java 17, Spring Boot 3.5.16, Maven 3.9.11 (Wrapper), Angular/CLI 22.2 e Node 24.19.0. As versões npm resolvidas estão travadas em package-lock.json. SQL Server validado em CI: 2022 CU20 (16.0.4205.1); Chromium via Playwright 1.64.0.
+## Como executar localmente
 
-## Escopo inicial
-
-- Login e logout de contas provisionadas.
-- Entrada, início de pausa, retorno e saída.
-- Consulta de jornada atual, histórico, detalhes e resumo por período.
-- Instantes UTC, fuso de referência estável e visualização em outros fusos.
-- Autorização por usuário, transações, idempotência e controle de concorrência.
-- Interface responsiva e execução reproduzível.
-
-Regularização mínima de saída esquecida, com solicitação própria e decisão auditada por aprovador autorizado, integra o núcleo planejado (RF17/RF18, recorte P0); ainda não implementada. Consulta geral por gestor/RH e outras correções permanecem P1. Folha de pagamento, cálculo legal de horas extras, geolocalização e operação offline estão fora do escopo inicial.
-
-## Documentação
-
-| Documento | Finalidade |
-|---|---|
-| [Requisitos](docs/requisitos.md) | Origem, prioridade e critérios de aceite |
-| [Stakeholders](docs/stakeholders.md) | Interessados, contextos de uso e hipóteses a validar |
-| [Histórias de usuário](docs/historias-usuario.md) | Necessidades e aceite rastreáveis aos requisitos/testes |
-| [Experiência do usuário/IHC](docs/experiencia-usuario.md) | Fluxos, acessibilidade, inspeção e plano de teste de usabilidade |
-| [Arquitetura e decisões](docs/arquitetura.md) | Modelo, segurança, contratos e trade-offs |
-| [Modelo inicial de jornada](docs/modelo-jornada.md) | Domínio online, evidências dos testes e limites da etapa; sem persistência/API de jornada |
-| [Persistência de jornada](docs/persistencia-jornada.md) | SQL Server, mapeamento JPA, reconstituição e versão; evidências e limites separados de API |
-| [Marcações e idempotência](docs/marcacoes-idempotencia.md) | Identidade/Clock do servidor, recibos e conflitos; validação separada de HTTP/Angular |
-| [EAP](docs/eap.md) | Pacotes de entrega e dependências |
-| [Validação e riscos](docs/validacao.md) | Cenários, evidências esperadas e roteiro do avaliador |
-| [Checklist de revisão por etapa](docs/checklist-revisoes.md) | Qualidade, segurança, desempenho, legibilidade e segunda análise dos achados em todas as próximas etapas |
-| [Proposta inicial](docs/proposta.md) | Contexto, regras e matriz dos oito critérios de avaliação |
-
-## Execução e testes
-
-### Diagnóstico local sem banco
-
-Pré-requisitos: Git, JDK 17 e Node 24.19.0. O Maven Wrapper baixa Maven na primeira execução; não é necessário instalá-lo globalmente. A primeira execução exige internet para baixar dependências. No perfil bootstrap não existem contas demonstrativas; elas são provisionadas apenas no perfil evaluation com SQL Server.
-
-Clone o repositório e abra dois terminais. Este modo **não valida SQL Server** e não deve ser utilizado em produção.
-
-Backend (macOS/Linux):
+Os comandos abaixo são para **Bash em macOS/Linux**, em um banco exclusivo de desenvolvimento. Pré-requisitos: Git, **JDK 17**, **Node 24.19.0** e **Docker** com suporte à imagem do SQL Server. O Maven Wrapper dispensa instalação global do Maven; a primeira execução precisa de internet.
 
 ```bash
-cd backend
-./mvnw spring-boot:run -Dspring-boot.run.profiles=bootstrap
+git clone https://github.com/Juliarezende521/work-journey-platform.git
+cd work-journey-platform
 ```
 
-No Windows/PowerShell, substitua `./mvnw` por `.\mvnw.cmd`.
+O Spring Boot **não lê `.env.example` automaticamente**: exporte as variáveis no terminal ou configure a IDE. As senhas dos exemplos abaixo são fictícias, para um ambiente local isolado; não são credenciais de um serviço publicado.
 
-Interface, no segundo terminal:
+### 1. Iniciar e provisionar o SQL Server
+
+A imagem abaixo acompanha a versão usada pela CI. A porta fica acessível somente pelo computador local; o volume preserva os dados ao reiniciar o contêiner.
 
 ```bash
+export MSSQL_SA_PASSWORD='LocalSqlServer@2026'
+docker run -d --name work-journey-sql \
+  -p 127.0.0.1:1433:1433 \
+  -e ACCEPT_EULA=Y -e MSSQL_PID=Developer -e MSSQL_SA_PASSWORD \
+  -v work-journey-sql-data:/var/opt/mssql \
+  mcr.microsoft.com/mssql/server:2022-CU20-ubuntu-22.04
+
+sql() {
+  docker exec -i -e SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" work-journey-sql \
+    /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b "$@"
+}
+```
+
+Verifique a prontidão com `sql -Q 'SELECT 1'`. Se a conexão ainda não estiver disponível, aguarde e repita. Após conectar, execute **uma única vez em uma instância nova**:
+
+```bash
+sql <<'SQL'
+CREATE DATABASE work_journey;
+GO
+CREATE LOGIN work_journey_migrator WITH PASSWORD = 'LocalMigrator@2026';
+CREATE LOGIN work_journey_app WITH PASSWORD = 'LocalApplication@2026';
+GO
+USE work_journey;
+CREATE USER work_journey_migrator FOR LOGIN work_journey_migrator;
+ALTER ROLE db_ddladmin ADD MEMBER work_journey_migrator;
+ALTER ROLE db_datareader ADD MEMBER work_journey_migrator;
+ALTER ROLE db_datawriter ADD MEMBER work_journey_migrator;
+CREATE USER work_journey_app FOR LOGIN work_journey_app;
+GO
+SQL
+```
+
+### 2. Criar o schema e conceder permissões específicas
+
+Na raiz do projeto, configure a conexão e inicialize o schema com a conta de provisionamento. Essa primeira inicialização não usa o perfil de contas demonstrativas.
+
+```bash
+export DB_URL='jdbc:sqlserver://localhost:1433;databaseName=work_journey;encrypt=true;trustServerCertificate=true'
+export DB_MIGRATION_USERNAME='work_journey_migrator'
+export DB_MIGRATION_PASSWORD='LocalMigrator@2026'
+export DB_USERNAME="$DB_MIGRATION_USERNAME"
+export DB_PASSWORD="$DB_MIGRATION_PASSWORD"
+export SERVER_ADDRESS='127.0.0.1'
+
+(cd backend && ./mvnw spring-boot:run)
+```
+
+Espere a mensagem `Started WorkJourneyApplication`, que indica a conclusão das migrations e da validação do schema, e encerre essa inicialização com **Ctrl+C**. A aplicação não deve continuar rodando com a conta de provisionamento.
+
+No mesmo terminal, conceda as permissões de execução agora que as tabelas existem:
+
+```bash
+sql -d work_journey <<'SQL'
+GRANT SELECT, INSERT ON dbo.app_user TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.employee TO work_journey_app;
+GRANT SELECT, INSERT, UPDATE ON dbo.work_session TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.work_event TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.idempotency_request TO work_journey_app;
+GO
+SQL
+```
+
+A conta de execução não recebe DDL, nem UPDATE/DELETE em eventos ou recibos. As credenciais de migration continuam separadas. `trustServerCertificate=true` e `sqlcmd -C` aceitam o certificado do SQL Server local; em um ambiente publicado, a conexão deve validar o certificado. Detalhes em [autenticação](docs/autenticacao.md) e [permissões de marcação](docs/marcacoes-idempotencia.md).
+
+### 3. Iniciar o backend com as contas de avaliação
+
+```bash
+export DB_USERNAME='work_journey_app'
+export DB_PASSWORD='LocalApplication@2026'
+export EVALUATION_PASSWORD='EscolhaUmaSenhaLocal@2026'
+
+(cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=evaluation)
+```
+
+O backend atende em `http://127.0.0.1:8080`. O perfil `evaluation` cria as duas contas abaixo se ainda não existirem. A senha deve ter pelo menos **12 caracteres e no máximo 72 bytes UTF-8**. Alterar `EVALUATION_PASSWORD` e reiniciar não altera senhas de contas já existentes. Esse perfil é somente para avaliação.
+
+| E-mail | Fuso de referência |
+|---|---|
+| `brasil@example.invalid` | `America/Sao_Paulo` |
+| `europa@example.invalid` | `Europe/Amsterdam` |
+
+A senha de ambas é o valor usado em `EVALUATION_PASSWORD` quando as contas foram criadas.
+
+### 4. Iniciar o frontend com HTTPS
+
+Em outro terminal, na raiz do projeto:
+
+```bash
+cd frontend
+npm ci
+npm start -- --ssl
+```
+
+Abra **https://localhost:4200**. A API é encaminhada pelo proxy para `http://127.0.0.1:8080`; o navegador acessa frontend e API pela mesma origem HTTPS.
+
+O servidor de desenvolvimento pode apresentar um certificado local não confiável. Para usar um certificado local já confiável pelo seu navegador, informe os caminhos:
+
+```bash
+npm start -- --ssl --ssl-cert /caminho/localhost.pem --ssl-key /caminho/localhost-key.pem
+```
+
+**Por que HTTPS?** O cookie de sessão tem `Secure=true` no modo com SQL Server. HTTP puro não é o caminho documentado para demonstrar o login: esta execução usa HTTPS explicitamente, sem desabilitar essa proteção. O certificado de desenvolvimento não substitui a configuração TLS de produção.
+
+No Windows/PowerShell, use `$env:NOME="valor"` em vez de `export` e `.\mvnw.cmd` no lugar de `./mvnw`; os comandos SQL são os mesmos, mas funções Bash e heredocs precisam ser adaptados.
+
+### Diagnóstico sem banco
+
+Para verificar apenas a base HTTP e a interface, sem contas ou marcações:
+
+```bash
+# Terminal 1, na raiz do projeto
+(cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=bootstrap)
+
+# Terminal 2, na raiz do projeto
 cd frontend
 npm ci
 npm start
 ```
 
-Abra http://localhost:4200. A interface consulta /api/me e mostra o formulário quando não há sessão. O proxy encaminha /api para http://127.0.0.1:8080. Bootstrap não tem contas: tentativas de login retornam erro genérico e não demonstram autenticação com banco. GET /api/status continua disponível para diagnóstico da base, com journeyAvailable=false.
+Nesse modo, abra http://localhost:4200. O perfil `bootstrap` não oferece contas de demonstração, persistência ou operações de jornada; `/api/status` informa `journeyAvailable=false`. A exceção local de cookie sem Secure é restrita a esse perfil de diagnóstico.
 
-### Build e testes
+## Testes e evidências
 
-No diretório backend, execute `./mvnw verify` (Windows: `.\mvnw.cmd verify`). No diretório frontend:
+Execute cada bloco a partir da raiz do projeto:
 
 ```bash
-npm ci
-npm run build
-npm test -- --watch=false
+(cd backend && ./mvnw verify)
 ```
 
-Os testes backend padrão usam bootstrap ou testes unitários, sem banco. Exercitam login por senha com serviço de contas simulado, sessão, CSRF, logout, modelo e limite de tentativas. Não comprovam SQL Server nem regras de jornada. O teste opt-in SqlServerIT exige banco real e variáveis de conexão. O workflow de CI repete builds/testes; sua aprovação deve ser conferida no GitHub.
+```bash
+(cd frontend && npm ci && npm run build && npm test -- --watch=false)
+```
 
-### Configuração do SQL Server
+A suíte backend padrão não exige banco e inclui testes de domínio e HTTP/segurança com dependências simuladas. **`./mvnw verify` sozinho não executa os testes `*IT` de SQL Server.** O workflow [SQL Server e navegador](.github/workflows/auth-integration.yml) provisiona um banco descartável, verifica migrations/upgrade, permissões e concorrência, repete o seed e executa Playwright contra o backend real e uma origem HTTPS. O script desse workflow é exclusivo da CI, não um instalador local.
 
-.env.example documenta DB_URL, DB_USERNAME, DB_PASSWORD, DB_MIGRATION_USERNAME e DB_MIGRATION_PASSWORD. Spring Boot **não carrega esse arquivo automaticamente**: configure as variáveis no terminal ou na IDE. Sem bootstrap, a configuração exige SQL Server e credenciais. Nesta branch, Flyway aplica V1–V3 e Hibernate valida o schema; o upgrade foi aprovado em SQL Server 2022 CU20 na CI. Usuários de migration/runtime são separados; conferir os [grants de execução](docs/marcacoes-idempotencia.md) após aplicar migrations. Contas fictícias são provisionadas somente pelo perfil evaluation com EVALUATION_PASSWORD externa; veja [instruções](docs/autenticacao.md).
+Evidências do código integrado pela [PR #7](https://github.com/Juliarezende521/work-journey-platform/pull/7): [builds/testes](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38657348945) e [SQL Server/HTTPS/Chromium](https://github.com/Juliarezende521/work-journey-platform/actions/runs/38657349129), com 66 testes backend, 50 Angular, 38 de integração SQL Server, 1 de upgrade e 4 execuções E2E aprovados. Reexecuções não são somadas como testes distintos. Para alterações posteriores, consulte os checks do respectivo commit.
 
-A conexão publicada deve validar TLS/certificado. Não usar sa como conta da aplicação. O usuário de migrations terá DDL, separado do usuário de execução. Secure=false existe somente no perfil bootstrap local, vinculado a 127.0.0.1 para permitir HTTP de desenvolvimento. Não publicar senhas reais.
+## Premissas assumidas
 
-O SQL Server deverá executar em ambiente suportado. A conexão será configurável para permitir instância local ou externa; a compatibilidade da arquitetura do equipamento será verificada antes de definir Docker Compose e Testcontainers.
-
-## Próximas entregas
-
-1. Implementar registro, cálculo, autorização e consultas de jornada.
-2. Construir interface de jornada e executar os testes críticos de fusos/concorrência.
-3. Validar dispositivo físico/Safari, teclado e acessibilidade; certificados do ambiente publicado.
-4. Revisar documentação e repetir instruções locais com SQL Server.
-
-O repositório é público, conforme solicitado no desafio. Todas as informações demonstrativas serão fictícias; senhas, tokens e configurações privadas devem permanecer fora do Git.
-
-### Consultas próprias nesta branch
-
-Histórico paginado, detalhe explicável e resumo do período implementados nesta etapa; contrato, IHC, revisão e status de validação em [consultas de jornada](docs/consultas-jornada.md). Soma somente jornadas encerradas, pendências separadas, troca de fuso apenas visual. Regularização mínima e aceite completo continuam pendentes.
+- Eventos de entrada, início de pausa, retorno e saída como recorte inicial; as regras assumidas estão em [requisitos](docs/requisitos.md) e [proposta](docs/proposta.md).
+- Identidade e instante das marcações definidos pelo servidor, sem aceitar colaborador ou horário arbitrários do cliente.
+- Contas provisionadas e um único perfil de colaborador, com acesso aos próprios registros.
+- Jornada vinculada à data de entrada no fuso de referência; mudar o fuso de visualização não reclassifica o histórico.
 
 ## Trabalho remoto e viagens
 
-Cada nova marcação envia o fuso IANA informado pelo navegador e o preserva nas repetições da mesma tentativa. O servidor valida esse fuso e o guarda em `recordedTimeZoneId`; o instante continua sendo definido pelo servidor em UTC. Sem `timeZoneId`, usa-se o fuso de referência atual do colaborador. O fuso enviado não comprova localização física.
+O instante de cada marcação é definido pelo servidor, em UTC. O navegador informa o **fuso IANA** do dispositivo, como `Europe/Lisbon`, que o servidor valida e guarda no evento (`recordedTimeZoneId`). Sem `timeZoneId`, usa-se o fuso de referência atual do colaborador.
 
-O `referenceTimeZoneId` e o `workDate` da sessão continuam calculados pelo fuso de referência do colaborador na entrada, preservando os filtros e o agrupamento do histórico. O detalhe do histórico e a última marcação da jornada atual indicam o fuso do registro quando ele difere do fuso de referência da sessão.
+O `referenceTimeZoneId` e o `workDate` da sessão continuam definidos pelo fuso de referência do colaborador na entrada. Por exemplo, às **01h30 UTC de 15/10/2026**, uma entrada com fuso de registro Lisboa e referência São Paulo pertence à jornada de **14/10/2026**. Os filtros e o agrupamento permanecem estáveis.
+
+Quando o fuso do evento difere do da sessão, a última marcação da jornada atual e o detalhe do histórico indicam essa diferença. Repetições da mesma tentativa preservam o fuso original e o mesmo payload idempotente.
+
+O fuso é uma informação declarada pelo navegador: **não comprova localização física nem identifica se o trabalho é presencial, remoto ou em viagem**.
+
+## Fora desta versão e próximos passos
+
+- **Regularização de saída esquecida**, com solicitação e decisão auditada: planejada no recorte P0, mas não disponível na `main`. Existe trabalho separado em `preserve/exit-regularization-p1`; essa branch não faz parte desta entrega.
+- **Resumo consolidado por período**, para acompanhamento de fechamento mensal.
+- Visão de gestor/RH, consultas gerais, administração e recuperação de contas.
+- Tipo de local de trabalho e observações por marcação.
+- Folha de pagamento, cálculo legal de horas extras, geolocalização e operação offline não fazem parte do escopo inicial.
+
+## Limitações conhecidas
+
+- Os testes em viewport móvel não substituem teste em celular físico. Safari, dispositivos físicos e pesquisa de usabilidade com participantes continuam pendentes.
+- O provisionamento local do SQL Server é manual; não há Docker Compose. Use um host compatível com a imagem utilizada. Em equipamento ARM, não presumir suporte nativo ou emulação validada: a conexão pode apontar para uma instância SQL Server externa compatível.
+- As etapas locais acima foram revisadas contra o código e o provisionamento da CI; a reprodução integral desse roteiro em uma máquina nova ainda precisa ser validada. A CI usa um proxy HTTPS próprio.
+- TLS publicado, gestão de segredos, permissões e configuração operacional de produção não foram validados como um ambiente de produção completo.
+
+## Documentação
+
+| Documento | Finalidade |
+|---|---|
+| [Requisitos](docs/requisitos.md) | Prioridades, regras e critérios de aceite |
+| [Arquitetura](docs/arquitetura.md) | Modelo, segurança e trade-offs |
+| [Autenticação](docs/autenticacao.md) | Contas, sessão, CSRF e provisionamento |
+| [API de jornada](docs/api-jornada.md) | Contratos de marcação, recibo e jornada atual |
+| [Marcações e idempotência](docs/marcacoes-idempotencia.md) | Identidade, instante e integridade das gravações |
+| [Consultas](docs/consultas-jornada.md) | Histórico e detalhes; contém registros de etapas anteriores |
+| [Experiência do usuário/IHC](docs/experiencia-usuario.md) | Fluxos, acessibilidade e plano de avaliação |
+| [Validação](docs/validacao.md) | Cenários e riscos |
+| [Checklist de revisão](docs/checklist-revisoes.md) | Critérios de revisão por etapa |
+
+Os documentos de etapas preservam registros históricos e podem descrever planejamento ou recursos que não estão na versão atual. Confira o código da `main`, o escopo acima e os checks do commit para distinguir implementado, validado e planejado. Outros materiais estão em [docs/](docs/).
