@@ -1,9 +1,14 @@
-# Migrations
+# Migrations do banco
 
-V1 cria dbo.app_user e dbo.employee, com unicidade de email, vínculo único de colaborador e FK. Nomes usam nvarchar para caracteres internacionais; fuso IANA é validado em Java. Seed não contém senhas no SQL: é executado somente pelo perfil evaluation. A migration foi aplicada em SQL Server 2022 CU20 vazio, com Hibernate validate e testes de integração aprovados na execução 38090975052. Ver docs/validacao-integrada.md.
+Flyway é a fonte de evolução do schema. Migrations já aplicadas não devem ser editadas; qualquer mudança deve receber uma nova versão e ser validada desde um SQL Server vazio.
 
-Usar arquivos V1__descricao.sql, V2__descricao.sql etc. Não editar scripts já aplicados. Validar criação desde SQL Server vazio antes de considerar a persistência pronta.
+| Versão | Conteúdo |
+|---|---|
+| V1 | Contas e colaboradores |
+| V2 | Jornadas e eventos |
+| V3 | Recibos idempotentes |
+| V4 | Fuso IANA registrado no evento |
+| V5 | Permissão de leitura do RH |
+| V6 | Modalidade da marcação: escritório, remoto ou viagem |
 
-V2 adiciona jornadas/eventos online, UTC datetimeoffset(7), autoria composta, sequência única e índice de uma jornada aberta por colaborador. Migration/testes inicialmente escritos em 13/10/2026; status e evidências em docs/persistencia-jornada.md. Não inclui JPA de jornada, idempotência ou regularização.
-
-V3 adiciona recibos de marcação online com unicidade colaborador/operação/chave, snapshots de sucesso/conflito e FKs de resultado próprio. Código/testes da etapa iniciados em 13/10/2026; status em docs/marcacoes-idempotencia.md. V1/V2 permanecem intactas; recibos não completam recuperação no frontend nem regularização manual.
+O Hibernate usa `ddl-auto=validate`: ele confere o mapeamento, mas não cria nem atualiza o schema. O perfil de avaliação provisiona contas fictícias depois que as migrations foram aplicadas.

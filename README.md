@@ -58,8 +58,8 @@ Os scripts de desenvolvimento usam Bash em macOS ou Linux. As senhas incluídas 
 ### 1. Clonar o projeto
 
 ```bash
-git clone https://github.com/Juliarezende521/work-journey-platform.git
-cd work-journey-platform
+git clone https://github.com/Juliarezende521/Plataforma-Jornada-Trabalho.git
+cd Plataforma-Jornada-Trabalho
 ```
 
 ### 2. Preparar o banco
