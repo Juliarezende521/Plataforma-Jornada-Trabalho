@@ -21,7 +21,7 @@ public class AccountDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
         var employee = account.getEmployee();
         return new AccountPrincipal(new AccountPrincipal.Identity(account.getId(), employee.getId(),
-                account.getEmail(), employee.getName(), employee.getReferenceTimeZoneId()),
+                account.getEmail(), employee.getName(), employee.getReferenceTimeZoneId(), account.isHrReader()),
                 account.getPasswordHash(), account.isActive());
     }
 }

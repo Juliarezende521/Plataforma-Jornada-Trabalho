@@ -21,6 +21,8 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/status", "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/hr/**").hasRole("HR")
+                .requestMatchers("/api/hr/**").denyAll()
                 .anyRequest().authenticated())
             // Construct only inside the security chain, avoiding duplicate servlet registration.
             .addFilterBefore(new LoginProtectionFilter(limiter, problems), UsernamePasswordAuthenticationFilter.class)

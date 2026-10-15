@@ -1,14 +1,16 @@
-import { Component, DestroyRef, ElementRef, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
 import { formatInstant, formatWorkDate } from '../journey/journey-format';
 import { HistoryApi } from './history-api.service';
-import { HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
+import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
 @Component({ selector: 'app-history', imports: [ReactiveFormsModule], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
 export class HistoryComponent {
   readonly user = input.required<Identity>();
+  readonly targetEmployee = input<EmployeeSummary | null>(null);
+  readonly referenceZone = computed(() => this.targetEmployee()?.referenceTimeZoneId ?? this.user().referenceTimeZoneId);
   private readonly api = inject(HistoryApi);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
@@ -28,18 +30,18 @@ export class HistoryComponent {
   readonly eventLabels = { ENTRY: 'Entrada', PAUSE_START: 'Início de pausa', PAUSE_END: 'Retorno', EXIT: 'Saída' };
   constructor() {
     this.destroyRef.onDestroy(() => this.request?.unsubscribe());
-    effect(() => { const user=this.user(); untracked(() => {
-      const key=user.userId + ':' + user.employeeId;
+    effect(() => { const user=this.user(); const target=this.targetEmployee(); untracked(() => {
+      const key=user.userId + ':' + user.employeeId + ':' + (target?.id ?? 'own');
       if (key===this.identityKey) return;
       this.identityKey=key; this.request?.unsubscribe(); this.result.set(null); this.detail.set(null); this.applied.set(null); this.busy.set(false);
       this.zone.setValue('reference'); this.fieldError.set(''); this.message.set('Escolha o período para consultar suas jornadas.');
-      const today=new Intl.DateTimeFormat('en-CA', { timeZone: user.referenceTimeZoneId, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const today=new Intl.DateTimeFormat('en-CA', { timeZone: this.referenceZone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
       this.form.setValue({ from: today.slice(0,8) + '01', to: today });
     }); });
   }
   focusHeading(): void { this.heading()?.nativeElement.focus(); }
 
-  formatInstant(instant: string, reference: string): string { return formatInstant(instant, this.zone.value==='reference' ? this.user().referenceTimeZoneId : this.zone.value); }
+  formatInstant(instant: string, reference: string): string { return formatInstant(instant, this.zone.value==='reference' ? this.referenceZone() : this.zone.value); }
   stateLabel(state: string): string { return state==='CLOSED' ? 'Encerrada' : state==='PAUSED' ? 'Em pausa · pendente' : 'Trabalhando · pendente'; }
   consult(): void {
     if (this.busy()) return;
@@ -54,14 +56,14 @@ export class HistoryComponent {
   load(page: number): void {
     const filter=this.applied(); if (!filter || this.busy() || page<0) return;
     this.busy.set(true); this.result.set(null); this.detail.set(null); this.message.set('Consultando jornadas do período…');
-    this.request=this.api.history(filter,page).subscribe({ next: result => { this.result.set(result); this.busy.set(false);
+    this.request=this.api.history(filter,page,this.targetEmployee()?.id).subscribe({ next: result => { this.result.set(result); this.busy.set(false);
       this.message.set(result.totalElements ? 'Consulta concluída. Seus registros estão disponíveis.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
       error: error => this.fail(error) });
   }
   open(id: string): void {
     if (this.busy()) return;
     this.busy.set(true); this.detail.set(null); this.message.set('Consultando os detalhes…');
-    this.request=this.api.detail(id).subscribe({ next: detail => { this.detail.set(detail); this.busy.set(false); this.message.set('Detalhes consultados.');
+    this.request=this.api.detail(id,this.targetEmployee()?.id).subscribe({ next: detail => { this.detail.set(detail); this.busy.set(false); this.message.set('Detalhes consultados.');
       setTimeout(() => { if (!this.destroyRef.destroyed) this.detailHeading()?.nativeElement.focus(); }); }, error: error => this.fail(error) });
   }
   back(): void { this.detail.set(null); this.message.set('Filtros e página preservados.'); this.heading()?.nativeElement.focus(); }

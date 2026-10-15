@@ -11,6 +11,13 @@ import org.springframework.data.repository.query.Param;
 
 @Profile("!bootstrap")
 public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
+    @Query("SELECT e FROM Employee e JOIN e.user u WHERE u.active = true")
+    org.springframework.data.domain.Page<Employee> findActive(org.springframework.data.domain.Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM Employee e JOIN e.user u WHERE e.id = :id AND u.active = true")
+    Optional<Employee> lockActive(@Param("id") UUID id);
+
     String OWNED_ACTIVE_QUERY = "SELECT e FROM Employee e JOIN e.user u WHERE e.id = :employee AND u.id = :user AND u.active = true";
 
     @Query(OWNED_ACTIVE_QUERY)

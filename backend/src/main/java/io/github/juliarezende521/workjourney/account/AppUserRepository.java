@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 @Profile("!bootstrap")
 public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
+    boolean existsByIdAndActiveTrueAndHrReaderTrue(UUID id);
+
     @EntityGraph(attributePaths = "employee")
     Optional<AppUser> findByEmail(String email);
 }

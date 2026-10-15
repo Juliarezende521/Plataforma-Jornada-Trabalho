@@ -1,0 +1,24 @@
+<section class="hr" aria-labelledby="hr-heading" [attr.aria-busy]="busy()">
+  <h2 id="hr-heading" #heading tabindex="-1">Visão do RH</h2>
+  <p>Consulta de jornadas por colaborador. Este acesso não permite alterar marcações ou aprovar regularizações.</p>
+  <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+  <button class="secondary" type="button" (click)="load(0)" [disabled]="busy()">Atualizar colaboradores</button>
+  @if (directory(); as page) {
+    <label for="hr-employee">Colaborador</label>
+    <select id="hr-employee" [formControl]="choice">
+      <option value="">Selecione um colaborador</option>
+      @for (person of page.items; track person.id) {
+        <option [value]="person.id">{{ person.name }} · {{ person.referenceTimeZoneId }}</option>
+      }
+    </select>
+    <nav aria-label="Páginas de colaboradores">
+      <button class="secondary" type="button" (click)="load(page.page - 1)" [disabled]="busy() || page.page === 0">Colaboradores anteriores</button>
+      <span>Página {{ page.page + 1 }} · {{ page.totalElements }} colaboradores</span>
+      <button class="secondary" type="button" (click)="load(page.page + 1)" [disabled]="busy() || (page.page + 1) * page.size >= page.totalElements">Próximos colaboradores</button>
+    </nav>
+  }
+</section>
+@if (selected(); as person) {
+  <p class="selected">Registros de <strong>{{ person.name }}</strong> · {{ person.referenceTimeZoneId }}</p>
+  <app-history [user]="user()" [targetEmployee]="person" />
+}

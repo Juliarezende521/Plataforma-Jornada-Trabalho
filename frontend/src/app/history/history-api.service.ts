@@ -5,8 +5,9 @@ import { HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
 @Injectable({ providedIn: 'root' })
 export class HistoryApi {
   private readonly http = inject(HttpClient);
-  history(filter: HistoryFilter, page: number) {
-    return this.http.get<HistoryPage>('/api/me/work-sessions', { params: { ...filter, page, size: 20 } }).pipe(timeout(15000));
+  history(filter: HistoryFilter, page: number, employeeId?: string) {
+    return this.http.get<HistoryPage>(this.base(employeeId), { params: { ...filter, page, size: 20 } }).pipe(timeout(15000));
   }
-  detail(id: string) { return this.http.get<JourneyDetail>('/api/me/work-sessions/' + encodeURIComponent(id)).pipe(timeout(15000)); }
+  detail(id: string, employeeId?: string) { return this.http.get<JourneyDetail>(this.base(employeeId) + '/' + encodeURIComponent(id)).pipe(timeout(15000)); }
+  private base(employeeId?: string) { return employeeId ? '/api/hr/employees/' + encodeURIComponent(employeeId) + '/work-sessions' : '/api/me/work-sessions'; }
 }

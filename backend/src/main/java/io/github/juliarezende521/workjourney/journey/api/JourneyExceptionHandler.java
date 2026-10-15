@@ -11,7 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class})
+@RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class, HrJourneyController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);
 

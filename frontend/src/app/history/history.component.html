@@ -12,7 +12,7 @@
   </form>
   <label for="history-zone">Fuso de visualização</label>
   <select id="history-zone" [formControl]="zone" aria-describedby="zone-help">
-    <option value="reference">Meu fuso: {{ user().referenceTimeZoneId }}</option>
+    <option value="reference">{{ targetEmployee() ? 'Fuso do colaborador' : 'Meu fuso' }}: {{ referenceZone() }}</option>
     <option value="America/Sao_Paulo">São Paulo · America/Sao_Paulo</option>
     <option value="Europe/Lisbon">Lisboa · Europe/Lisbon</option>
     <option value="UTC">UTC</option>
@@ -43,6 +43,6 @@
         <button class="secondary" type="button" (click)="load(page.page + 1)" [disabled]="busy() || (page.page + 1) * page.size >= page.totalElements">Próxima página</button>
       </nav>
     }
-    <p>Consulta do servidor: {{ formatInstant(page.observedAtUtc, user().referenceTimeZoneId) }}. Consulte novamente após novas marcações.</p>
+    <p>Consulta do servidor: {{ formatInstant(page.observedAtUtc, referenceZone()) }}. Consulte novamente após novas marcações.</p>
   }
 </section>

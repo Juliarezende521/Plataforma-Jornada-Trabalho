@@ -31,13 +31,14 @@ public class EvaluationAccounts implements ApplicationRunner {
         if (password.length() < 12 || password.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new IllegalArgumentException("Evaluation password must have at least 12 characters and at most 72 UTF-8 bytes");
         }
-        create("brasil@example.invalid", "Colaborador Brasil", "America/Sao_Paulo");
-        create("europa@example.invalid", "Colaborador Europa", "Europe/Amsterdam");
+        create("brasil@example.invalid", "Colaborador Brasil", "America/Sao_Paulo", false);
+        create("europa@example.invalid", "Colaborador Europa", "Europe/Amsterdam", false);
+        create("rh@example.invalid", "Recursos Humanos", "America/Sao_Paulo", true);
     }
 
-    private void create(String email, String name, String zone) {
+    private void create(String email, String name, String zone, boolean hrReader) {
         if (users.findByEmail(email).isPresent()) return;
-        AppUser account = users.save(new AppUser(email, encoder.encode(password)));
+        AppUser account = users.save(new AppUser(email, encoder.encode(password), hrReader));
         employees.save(new Employee(account, name, zone));
     }
 }
