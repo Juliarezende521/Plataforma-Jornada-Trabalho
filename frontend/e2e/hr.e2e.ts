@@ -8,7 +8,13 @@ async function login(page: Page, email: string) {
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Senha', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+  if (email === 'rh@example.invalid') {
+    await expect(page.getByRole('heading', { name: 'Visão do RH', exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Navegação das jornadas' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toHaveCount(0);
+  } else {
+    await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
+  }
 }
 
 test.afterEach(async ({ page }) => {
@@ -35,7 +41,6 @@ test('HR reads another employee history and detail while an employee remains iso
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
   await login(page, 'rh@example.invalid');
-  await page.getByRole('button', { name: 'Visão do RH', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Visão do RH', exact: true })).toBeVisible();
   await page.getByLabel('Colaborador', { exact: true }).selectOption(employee);
   await expect(page.getByText('Registros de', { exact: false })).toContainText('Colaborador Brasil');

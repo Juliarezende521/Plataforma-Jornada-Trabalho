@@ -1,11 +1,12 @@
 import { Component, computed, effect, ElementRef, inject, input, output, untracked, viewChild } from '@angular/core';
 import { formatInstant, formatWorkDate, formatDuration } from './journey-format';
+import { JourneyClockComponent } from './journey-clock.component';
 import { Identity } from '../auth/auth.service';
 import { JourneyState } from './journey-state';
 import { ACTION_LABELS, EventType } from './journey.types';
 
 @Component({
-  selector: 'app-journey', providers: [JourneyState],
+  selector: 'app-journey', imports: [JourneyClockComponent], providers: [JourneyState],
   templateUrl: './journey.component.html', styleUrl: './journey.component.scss',
 })
 export class JourneyComponent {

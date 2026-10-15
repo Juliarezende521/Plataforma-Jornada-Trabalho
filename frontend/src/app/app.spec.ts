@@ -88,6 +88,18 @@ describe('Access screen', () => {
     expect(view.querySelector('#login-form')).not.toBeNull();
   });
 
+  it('opens HR directly without mounting personal journey views', () => {
+    http.expectOne('/api/me').flush({ userId: 'h', employeeId: 'he', name: 'Recursos Humanos', email: 'rh@example.invalid', referenceTimeZoneId: 'America/Sao_Paulo', hrReader: true });
+    fixture.detectChanges();
+    http.expectOne('/api/hr/employees?page=0&size=20').flush({ items: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+    fixture.detectChanges();
+    expect(view.querySelector('app-hr')).not.toBeNull();
+    expect(view.querySelector('app-journey')).toBeNull();
+    expect(view.querySelector('app-history')).toBeNull();
+    expect(view.querySelector('nav[aria-label="Navegação das jornadas"]')).toBeNull();
+    http.expectNone('/api/me/work-sessions/current');
+  });
+
   it('offers session recovery after an unavailable backend', () => {
     http.expectOne('/api/me').flush({}, { status: 503, statusText: 'Unavailable' });
     fixture.detectChanges();

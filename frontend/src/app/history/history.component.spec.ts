@@ -17,6 +17,19 @@ describe('History and detail',()=>{
   });
   afterEach(()=>{fixture.destroy();http.verify();});
   function consult(){component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush(page);fixture.detectChanges();}
+  it('identifies the selected HR employee in history cards and details and clears the old name on selection change',()=>{
+    fixture.componentRef.setInput('targetEmployee',{id:'brasil',name:'Colaborador Brasil',referenceTimeZoneId:'America/Sao_Paulo'});fixture.detectChanges();
+    component().form.setValue({from:'2026-10-01',to:'2026-10-31'});
+    component().consult();http.expectOne(r=>r.url==='/api/hr/employees/brasil/work-sessions').flush(page);fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.journeys .history-person').textContent).toContain('Colaborador Brasil');
+    component().open(item.id);http.expectOne('/api/hr/employees/brasil/work-sessions/session1').flush(detail);fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.history-person').length).toBe(2);
+    for(const label of fixture.nativeElement.querySelectorAll('.history-person')) expect(label.textContent).toContain('Colaborador Brasil');
+    fixture.componentRef.setInput('targetEmployee',{id:'europa',name:'Colaborador Europa',referenceTimeZoneId:'Europe/Amsterdam'});fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Colaborador Brasil');
+    expect(fixture.nativeElement.querySelector('.history-person').textContent).toContain('Colaborador Europa');
+    expect(component().detail()).toBeNull();
+  });
   it('validates the inclusive range without querying and prevents duplicate queries',()=>{
     component().form.setValue({from:'2026-10-31',to:'2026-10-01'});component().consult();expect(component().fieldError()).toContain('366');http.expectNone('/api/me/work-sessions');
     component().form.setValue({from:'2026-10-01',to:'2026-10-31'});component().consult();component().consult();
