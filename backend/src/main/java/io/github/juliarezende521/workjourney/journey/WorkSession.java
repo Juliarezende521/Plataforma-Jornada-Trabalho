@@ -41,8 +41,14 @@ public final class WorkSession {
 
     public static WorkSession open(UUID employeeId, UUID actorUserId, String zoneId,
                                    Instant serverInstant) {
-        var session = new WorkSession(UUID.randomUUID(), employeeId, actorUserId, zoneId, serverInstant);
-        session.events.add(session.event(WorkEventType.ENTRY, session.workingSince));
+        return open(employeeId, actorUserId, zoneId, serverInstant, zoneId);
+    }
+
+    public static WorkSession open(UUID employeeId, UUID actorUserId, String referenceZoneId,
+                                   Instant serverInstant, String recordedZoneId) {
+        var session = new WorkSession(UUID.randomUUID(), employeeId, actorUserId, referenceZoneId, serverInstant);
+        session.events.add(new WorkEvent(UUID.randomUUID(), session.id, actorUserId, 1,
+                WorkEventType.ENTRY, session.workingSince, session.workingSince, recordedZoneId));
         return session;
     }
 

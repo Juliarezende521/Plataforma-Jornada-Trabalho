@@ -21,7 +21,9 @@ export class JourneyApi {
 
   mark(attempt: Attempt): Observable<Receipt> {
     const command = { type: attempt.type, expectedWorkSessionId: attempt.expectedWorkSessionId };
-    return this.auth.csrf().pipe(switchMap(csrf => this.http.post<Receipt>('/api/me/work-events', command,
+    // Replay the preserved zone, even if the browser moved to another zone since the first POST.
+    const payload = attempt.timeZoneId === undefined ? command : { ...command, timeZoneId: attempt.timeZoneId };
+    return this.auth.csrf().pipe(switchMap(csrf => this.http.post<Receipt>('/api/me/work-events', payload,
       { headers: { [csrf.headerName]: csrf.token, 'Idempotency-Key': attempt.requestKey } }).pipe(timeout(20000))),
       catchError((error: unknown) => {
         if (error instanceof HttpErrorResponse && error.status === 409 && this.isReceipt(error.error, attempt) && error.error.httpStatus === 409) return of(error.error);

@@ -2,6 +2,8 @@ import { test, expect, Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 
 const prefix = 'work-journey.online.v1.';
+// A Brazilian employee working remotely in Lisbon.
+test.use({ timezoneId: 'Europe/Lisbon' });
 async function login(page: Page, email = 'brasil@example.invalid', waitForEntry = true) {
   const password = process.env['EVALUATION_PASSWORD'];
   if (!password) throw new Error('Evaluation password is required outside Git');
@@ -57,7 +59,8 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.locator('#journey-heading')).toBeFocused();
   const saved = await diary(page);
   expect(saved).toHaveLength(1);
-  expect(Object.keys(saved[0]).sort()).toEqual(['employeeId', 'expectedWorkSessionId', 'requestKey', 'type', 'userId', 'version']);
+  expect(Object.keys(saved[0]).sort()).toEqual(['employeeId', 'expectedWorkSessionId', 'requestKey', 'timeZoneId', 'type', 'userId', 'version']);
+  expect(saved[0].timeZoneId).toBe('Europe/Lisbon');
   expect(saved[0].requestKey).toBe(accepted!.requestKey);
   const lookup = await page.request.get('/api/me/work-event-requests/' + saved[0].requestKey);
   expect(lookup.status()).toBe(200);
@@ -67,6 +70,9 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   expect(await diary(page)).toHaveLength(0);
   expect(posts).toBe(1);
   const snapshot = await current(page);
+  expect(snapshot.session.referenceTimeZoneId).toBe('America/Sao_Paulo');
+  expect(snapshot.session.lastEvent.recordedTimeZoneId).toBe('Europe/Lisbon');
+  await expect(page.locator('.last-event')).toContainText('Fuso no registro: Europe/Lisbon');
   expect(snapshot.session.lastEvent.id).toBe(accepted!.eventId);
   expect(snapshot.session.lastEvent.occurredAtUtc).toBe(accepted!.occurredAtUtc);
   const peer = await page.context().newPage();
@@ -123,6 +129,9 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   await expect(page.locator('.events li')).toHaveCount(5);
   const detail = await (await page.request.get('/api/me/work-sessions/' + latest.id)).json();
   expect(detail.events.at(-1).type).toBe('EXIT');
+  expect(detail.events.every((event: { recordedTimeZoneId: string }) => event.recordedTimeZoneId === 'Europe/Lisbon')).toBe(true);
+  await expect(page.locator('.events li small')).toHaveCount(5);
+  await expect(page.locator('.events li small').first()).toHaveText('Fuso no registro: Europe/Lisbon');
   await expect(page.getByRole('heading', { name: /^Detalhes da jornada de/ })).toBeFocused();
   const dateBefore = detail.session.workDate;
   await page.getByLabel('Fuso de visualização', { exact: true }).selectOption('America/Sao_Paulo');

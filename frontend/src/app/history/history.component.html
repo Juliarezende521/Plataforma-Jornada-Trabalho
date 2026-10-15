@@ -25,7 +25,7 @@
     <p>{{ stateLabel(d.session.state) }} · Fuso de referência: {{ d.session.referenceTimeZoneId }}</p>
     <h4>Marcações originais</h4>
     <ol class="events">@for (event of d.events; track event.id) {
-      <li><strong>{{ eventLabels[event.type] }}</strong><br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time><br /><small>Fuso no registro: {{ event.recordedTimeZoneId }}</small></li>
+      <li><strong>{{ eventLabels[event.type] }}</strong><br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time>@if (event.recordedTimeZoneId !== d.session.referenceTimeZoneId) {<br /><small>Fuso no registro: {{ event.recordedTimeZoneId }}</small>}</li>
     }</ol>
   } @else if (result(); as page) {
     @if (applied(); as period) { <h3>Período consultado: {{ formatWorkDate(period.from) }} a {{ formatWorkDate(period.to) }}</h3> }

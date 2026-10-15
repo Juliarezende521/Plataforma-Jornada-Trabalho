@@ -75,7 +75,8 @@ export class JourneyState {
         this.message.set('A jornada mudou ou existe marcação pendente. Confira o estado atualizado antes de registrar.');
         return;
       }
-      const attempt = this.diary.save(this.identity, { type, expectedWorkSessionId: type === 'ENTRY' ? null : expected });
+      const attempt = this.diary.save(this.identity, { type, expectedWorkSessionId: type === 'ENTRY' ? null : expected,
+        timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone });
       this.pending.set(this.diary.list(this.identity));
       if (this.pending().some(item => item.requestKey !== attempt.requestKey)) {
         this.message.set('Outra aba também iniciou uma marcação. Consulte os resultados antes de continuar.');

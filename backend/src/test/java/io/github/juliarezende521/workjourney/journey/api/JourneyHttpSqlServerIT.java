@@ -158,6 +158,43 @@ class JourneyHttpSqlServerIT {
         assertEquals(event,after.get("events").get(0));assertEquals("Europe/Lisbon",after.get("events").get(1).get("recordedTimeZoneId").asText());
     }
 
+    @Test void browserZoneIsRecordedWhileBrazilReferenceDateAndReplayStayStable() throws Exception {
+        var actor = login();
+        entityManager.createNativeQuery("UPDATE dbo.employee SET reference_time_zone_id='America/Sao_Paulo' WHERE user_id=:id")
+                .setParameter("id", actor.userId().toString()).executeUpdate();
+        entityManager.clear();
+        Instant instant = Instant.parse("2026-10-15T01:30:00Z");
+        when(clock.instant()).thenReturn(instant);
+        UUID key = UUID.randomUUID();
+        var entry = mark(actor, key, "ENTRY", null, "Europe/Lisbon", 201);
+        String id = entry.get("workSessionId").asText();
+        when(clock.instant()).thenReturn(instant.plusSeconds(60));
+        assertEquals(entry, mark(actor, key, "ENTRY", null, "Europe/Lisbon", 201));
+        assertEquals("KEY_REUSED", mark(actor, key, "ENTRY", null, "America/Sao_Paulo", 409).get("code").asText());
+        mark(actor, UUID.randomUUID(), "PAUSE_START", id, "Europe/Lisbon", 201);
+        mvc.perform(get("/api/me/work-sessions/current").session(actor.session()))
+                .andExpect(jsonPath("$.session.lastEvent.recordedTimeZoneId").value("Europe/Lisbon"));
+        mark(actor, UUID.randomUUID(), "PAUSE_END", id, 201);
+        mark(actor, UUID.randomUUID(), "EXIT", id, "Europe/Lisbon", 201);
+        mvc.perform(get("/api/me/work-sessions/" + id).session(actor.session()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.session.referenceTimeZoneId").value("America/Sao_Paulo"))
+                .andExpect(jsonPath("$.session.workDate").value("2026-10-14"))
+                .andExpect(jsonPath("$.events[0].occurredAtUtc").value(instant.toString()))
+                .andExpect(jsonPath("$.events[0].recordedTimeZoneId").value("Europe/Lisbon"))
+                .andExpect(jsonPath("$.events[1].recordedTimeZoneId").value("Europe/Lisbon"))
+                .andExpect(jsonPath("$.events[2].recordedTimeZoneId").value("America/Sao_Paulo"))
+                .andExpect(jsonPath("$.events[3].recordedTimeZoneId").value("Europe/Lisbon"));
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-14&to=2026-10-14").session(actor.session()))
+                .andExpect(jsonPath("$.items[0].id").value(id));
+        mvc.perform(get("/api/me/work-sessions?from=2026-10-15&to=2026-10-15").session(actor.session()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        UUID invalidKey = UUID.randomUUID();
+        mark(actor, invalidKey, "ENTRY", null, "Invalid/Zone", 400);
+        mvc.perform(get("/api/me/work-event-requests/" + invalidKey).session(actor.session()))
+                .andExpect(status().isNotFound());
+    }
+
     @Test void queryFiltersAndSessionAreEnforced() throws Exception {
         mvc.perform(get("/api/me/work-sessions?from=2026-10-14&to=2026-10-14")).andExpect(status().isUnauthorized());
         var actor=login();
@@ -188,7 +225,12 @@ class JourneyHttpSqlServerIT {
     }
 
     private JsonNode mark(Login actor, UUID key, String type, String target, int status) throws Exception {
+        return mark(actor, key, type, target, null, status);
+    }
+
+    private JsonNode mark(Login actor, UUID key, String type, String target, String zone, int status) throws Exception {
         var body = mapper.createObjectNode().put("type", type);
+        if (zone != null) body.put("timeZoneId", zone);
         if (target != null) body.put("expectedWorkSessionId", target);
         return json(mvc.perform(post("/api/me/work-events").session(actor.session()).header(actor.header(), actor.token())
                 .header("Idempotency-Key", key).contentType("application/json").content(mapper.writeValueAsBytes(body)))

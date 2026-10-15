@@ -23,6 +23,7 @@ export class AttemptDiary {
   save(identity: Identity, command: MarkingCommand): Attempt {
     const attempt: Attempt = { version: 1, requestKey: crypto.randomUUID(), userId: identity.userId,
       employeeId: identity.employeeId, type: command.type, expectedWorkSessionId: command.expectedWorkSessionId };
+    if (command.timeZoneId !== undefined) attempt.timeZoneId = command.timeZoneId;
     if (!this.valid(attempt)) throw new Error('Invalid identity or command');
     const serialized = JSON.stringify(attempt);
     const key = PREFIX + attempt.requestKey;
@@ -46,7 +47,10 @@ export class AttemptDiary {
     if (typeof value !== 'object' || value === null) return false;
     const item = value as Record<string, unknown>;
     const fields = ['version', 'requestKey', 'userId', 'employeeId', 'type', 'expectedWorkSessionId'];
-    if (Object.keys(item).length !== fields.length || !fields.every(key => Object.hasOwn(item, key))) return false;
+    if (!fields.every(key => Object.hasOwn(item, key)) ||
+        Object.keys(item).some(key => !fields.includes(key) && key !== 'timeZoneId')) return false;
+    if (Object.hasOwn(item, 'timeZoneId') &&
+        (typeof item['timeZoneId'] !== 'string' || item['timeZoneId'].length === 0 || item['timeZoneId'].length > 100)) return false;
     return item['version'] === 1 && ['requestKey', 'userId', 'employeeId'].every(key =>
       typeof item[key] === 'string' && UUID.test(item[key])) &&
       EVENT_TYPES.some(type => type === item['type']) &&

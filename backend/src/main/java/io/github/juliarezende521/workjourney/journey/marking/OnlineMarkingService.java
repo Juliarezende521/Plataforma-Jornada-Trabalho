@@ -66,6 +66,7 @@ public class OnlineMarkingService {
     }
 
     private MarkingResult apply(Employee employee, UUID userId, UUID key, MarkingCommand command, Instant instant) {
+        String recordedZone = command.timeZoneId() == null ? employee.getReferenceTimeZoneId() : command.timeZoneId();
         var current = sessions.findCurrentOwned(employee.getId());
         JpaWorkSessionStore.StoredSession stored;
         if (command.type() == WorkEventType.ENTRY) {
@@ -73,7 +74,7 @@ public class OnlineMarkingService {
             if (sessions.latestClosedAt(employee.getId()).filter(instant::isBefore).isPresent()) {
                 return MarkingResult.conflict(key, command, CLOCK_REGRESSION, instant);
             }
-            stored = sessions.create(WorkSession.open(employee.getId(), userId, employee.getReferenceTimeZoneId(), instant));
+            stored = sessions.create(WorkSession.open(employee.getId(), userId, employee.getReferenceTimeZoneId(), instant, recordedZone));
         } else {
             if (current.isEmpty()) return MarkingResult.conflict(key, command, NO_OPEN_SESSION, instant);
             var open = current.get();
@@ -87,7 +88,7 @@ public class OnlineMarkingService {
             catch (IllegalStateException invalidTransition) {
                 return MarkingResult.conflict(key, command, INVALID_TRANSITION, instant);
             }
-            stored = sessions.append(open.session().getId(), employee.getId(), open.version(), command.type(), instant, employee.getReferenceTimeZoneId());
+            stored = sessions.append(open.session().getId(), employee.getId(), open.version(), command.type(), instant, recordedZone);
         }
         var events = stored.session().getEvents();
         var event = events.get(events.size() - 1);

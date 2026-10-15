@@ -85,6 +85,10 @@ class JourneyHttpTest {
     @ValueSource(strings = {"{}", "null", "[]", "{", "{\"type\":\"entry\"}",
             "{\"type\":\"EXIT\"}", "{\"type\":\"ENTRY\",\"expectedWorkSessionId\":\"1-1-1-1-1\"}",
             "{\"type\":\"ENTRY\",\"employeeId\":\"fake\"}",
+            "{\"type\":\"ENTRY\",\"timeZoneId\":\"Europe/Lisbon\",\"employeeId\":\"fake\"}",
+            "{\"type\":\"ENTRY\",\"timeZoneId\":\"Invalid/Zone\"}",
+            "{\"type\":\"ENTRY\",\"timeZoneId\":\"\"}",
+            "{\"type\":\"ENTRY\",\"recordedTimeZoneId\":\"Europe/Lisbon\"}",
             "{\"type\":\"ENTRY\",\"occurredAtUtc\":\"2020-01-01T00:00:00Z\"}",
             "{\"type\":\"ENTRY\",\"type\":\"EXIT\"}", "{\"type\":\"ENTRY\"} {}"})
     void malformedOrAdditionalFieldsNeverReachService(String body) throws Exception {
@@ -93,6 +97,17 @@ class JourneyHttpTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Invalid journey request"));
         verifyNoInteractions(markings);
+    }
+
+    @Test void acceptsOnlyTheNewOptionalZoneAlongsideExistingCommandFields() throws Exception {
+        UUID key = UUID.randomUUID();
+        var command = new MarkingCommand(WorkEventType.ENTRY, null, "Europe/Lisbon");
+        when(markings.execute(key, command)).thenReturn(new MarkingResult(key, WorkEventType.ENTRY, 201,
+                MarkingResult.Code.RECORDED, UUID.randomUUID(), UUID.randomUUID(), NOW, NOW));
+        mvc.perform(post(MARK).with(user(principal())).with(csrf()).header("Idempotency-Key", key)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"type\":\"ENTRY\",\"timeZoneId\":\"Europe/Lisbon\"}"))
+                .andExpect(status().isCreated());
+        verify(markings).execute(key, command);
     }
 
     @Test void keysMustBeSingleFullUuidAndBodyIsBounded() throws Exception {

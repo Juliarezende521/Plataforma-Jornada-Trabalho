@@ -2,7 +2,7 @@ import { Identity } from '../auth/auth.service';
 
 export const EVENT_TYPES = ['ENTRY', 'PAUSE_START', 'PAUSE_END', 'EXIT'] as const;
 export type EventType = typeof EVENT_TYPES[number];
-export interface MarkingCommand { type: EventType; expectedWorkSessionId: string | null; }
+export interface MarkingCommand { type: EventType; expectedWorkSessionId: string | null; timeZoneId?: string; }
 export interface Attempt extends MarkingCommand { version: 1; requestKey: string; userId: string; employeeId: string; }
 export interface Receipt {
   requestKey: string; type: EventType; httpStatus: number; code: string;
@@ -11,7 +11,7 @@ export interface Receipt {
 export interface CurrentJourney {
   session: {
     id: string; state: 'WORKING' | 'PAUSED' | 'CLOSED'; workDate: string; referenceTimeZoneId: string;
-    openedAtUtc: string; lastEvent: { id: string; type: EventType; occurredAtUtc: string };
+    openedAtUtc: string; lastEvent: { id: string; type: EventType; occurredAtUtc: string; recordedTimeZoneId: string };
     provisionalWorkDuration: string;
   } | null;
   observedAtUtc: string;
