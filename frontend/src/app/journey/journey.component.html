@@ -3,6 +3,7 @@
     <div><p class="eyebrow">Sua rotina</p><h2 id="journey-heading" #journeyHeading tabindex="-1">Jornada atual</h2></div>
     <span class="state-badge" [class.working]="state.current()?.session?.state === 'WORKING'" [class.paused]="state.current()?.session?.state === 'PAUSED'" [class.closed]="state.current()?.session?.state === 'CLOSED'">{{ statusLabel() }}</span>
   </div>
+  <app-journey-clock />
   <p class="intro">Registre o início, as pausas e o encerramento do seu trabalho.</p>
   <p class="zone"><strong>Fuso dos horários:</strong> {{ referenceZone() }}</p>
   @if (state.pending().length) {
