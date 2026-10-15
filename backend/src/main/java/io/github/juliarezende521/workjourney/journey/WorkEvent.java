@@ -7,9 +7,12 @@ import io.github.juliarezende521.workjourney.time.UtcInstants;
 
 /** Immutable online event. Manual regularization must use a separate audited revision. */
 public record WorkEvent(UUID id, UUID workSessionId, UUID actorUserId, long sequence,
-                        WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId) {
+                        WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode) {
     public WorkEvent(UUID id, UUID session, UUID actor, long sequence, WorkEventType type, Instant occurred, Instant recorded) {
         this(id, session, actor, sequence, type, occurred, recorded, "UTC");
+    }
+    public WorkEvent(UUID id, UUID session, UUID actor, long sequence, WorkEventType type, Instant occurred, Instant recorded, String zone) {
+        this(id, session, actor, sequence, type, occurred, recorded, zone, null);
     }
     public WorkEvent {
         io.github.juliarezende521.workjourney.time.ReferenceTimeZones.requireValid(recordedTimeZoneId);

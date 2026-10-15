@@ -50,7 +50,7 @@ public class JourneyQueries {
     public static Detail describe(WorkSession session, Instant observed) {
         var events=session.getEvents();
         return new Detail(Item.from(session, observed), observed,
-                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId())).toList());
+                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId(), e.workMode())).toList());
     }
 
     public record Item(UUID id, WorkState state, LocalDate workDate, String referenceTimeZoneId,
@@ -60,7 +60,7 @@ public class JourneyQueries {
         }
     }
     public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc) { }
-    public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId) { }
+    public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode) { }
     public record Detail(Item session, Instant observedAtUtc, List<Event> events) { }
     public static final class InvalidFilter extends RuntimeException { }
     public static final class NotVisible extends RuntimeException { }

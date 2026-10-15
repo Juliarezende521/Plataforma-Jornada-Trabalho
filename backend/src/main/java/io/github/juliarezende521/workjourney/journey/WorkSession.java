@@ -46,9 +46,14 @@ public final class WorkSession {
 
     public static WorkSession open(UUID employeeId, UUID actorUserId, String referenceZoneId,
                                    Instant serverInstant, String recordedZoneId) {
+        return open(employeeId, actorUserId, referenceZoneId, serverInstant, recordedZoneId, null);
+    }
+
+    public static WorkSession open(UUID employeeId, UUID actorUserId, String referenceZoneId,
+                                   Instant serverInstant, String recordedZoneId, WorkMode workMode) {
         var session = new WorkSession(UUID.randomUUID(), employeeId, actorUserId, referenceZoneId, serverInstant);
         session.events.add(new WorkEvent(UUID.randomUUID(), session.id, actorUserId, 1,
-                WorkEventType.ENTRY, session.workingSince, session.workingSince, recordedZoneId));
+                WorkEventType.ENTRY, session.workingSince, session.workingSince, recordedZoneId, workMode));
         return session;
     }
 
@@ -82,9 +87,13 @@ public final class WorkSession {
     }
 
     public void record(WorkEventType type, Instant serverInstant, String recordedZone) {
+        record(type, serverInstant, recordedZone, null);
+    }
+
+    public void record(WorkEventType type, Instant serverInstant, String recordedZone, WorkMode workMode) {
         Objects.requireNonNull(type, "Event type is required");
         Instant instant = UtcInstants.normalize(serverInstant);
-        apply(new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L, type, instant, instant, recordedZone));
+        apply(new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L, type, instant, instant, recordedZone, workMode));
     }
 
     private void apply(WorkEvent event) {

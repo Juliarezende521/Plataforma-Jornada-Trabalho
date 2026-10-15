@@ -30,6 +30,14 @@ describe('History and detail',()=>{
     expect(fixture.nativeElement.querySelector('.history-person').textContent).toContain('Colaborador Europa');
     expect(component().detail()).toBeNull();
   });
+  it('mostra a modalidade declarada e identifica registros antigos sem informação',()=>{
+    consult(); component().open(item.id);
+    http.expectOne('/api/me/work-sessions/session1').flush({...detail,events:[
+      {...detail.events[0],workMode:'TRAVEL'}, {...detail.events[0],id:'event2',sequence:2,type:'EXIT',workMode:null}
+    ]});fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Modalidade: Viagem');
+    expect(fixture.nativeElement.textContent).toContain('Modalidade: Não informado');
+  });
   it('validates the inclusive range without querying and prevents duplicate queries',()=>{
     component().form.setValue({from:'2026-10-31',to:'2026-10-01'});component().consult();expect(component().fieldError()).toContain('366');http.expectNone('/api/me/work-sessions');
     component().form.setValue({from:'2026-10-01',to:'2026-10-31'});component().consult();component().consult();

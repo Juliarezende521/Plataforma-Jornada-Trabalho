@@ -32,5 +32,12 @@ class MarkingCommandTest {
         assertNotEquals(new MarkingCommand(ENTRY, null).payloadHash(), lisbon.payloadHash());
         assertNotEquals(new MarkingCommand(ENTRY, null, "America/Sao_Paulo").payloadHash(), lisbon.payloadHash());
         assertThrows(IllegalArgumentException.class, () -> new MarkingCommand(ENTRY, null, "Invalid/Zone"));
+    }    @Test void modalidadeFazParteDoHashSemMudarComandosAntigos() {
+        var travel = new MarkingCommand(ENTRY, null, "Europe/Lisbon", io.github.juliarezende521.workjourney.journey.WorkMode.TRAVEL);
+        assertEquals(travel.payloadHash(), new MarkingCommand(ENTRY, null, "Europe/Lisbon", io.github.juliarezende521.workjourney.journey.WorkMode.TRAVEL).payloadHash());
+        assertNotEquals(travel.payloadHash(), new MarkingCommand(ENTRY, null, "Europe/Lisbon", io.github.juliarezende521.workjourney.journey.WorkMode.REMOTE).payloadHash());
+        assertNotEquals(travel.payloadHash(), new MarkingCommand(ENTRY, null, "Europe/Lisbon").payloadHash());
+        assertEquals(new MarkingCommand(ENTRY, null, "Europe/Lisbon").payloadHash(), new MarkingCommand(ENTRY, null, "Europe/Lisbon", null).payloadHash());
     }
+
 }

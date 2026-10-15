@@ -1,9 +1,9 @@
-import { Component, computed, effect, ElementRef, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { formatInstant, formatWorkDate, formatDuration } from './journey-format';
 import { JourneyClockComponent } from './journey-clock.component';
 import { Identity } from '../auth/auth.service';
 import { JourneyState } from './journey-state';
-import { ACTION_LABELS, EventType } from './journey.types';
+import { ACTION_LABELS, EventType, WorkMode, workModeLabel } from './journey.types';
 
 @Component({
   selector: 'app-journey', imports: [JourneyClockComponent], providers: [JourneyState],
@@ -14,6 +14,8 @@ export class JourneyComponent {
   readonly busyChange = output<boolean>();
   readonly state = inject(JourneyState);
   readonly labels = ACTION_LABELS;
+  readonly workMode = signal<WorkMode | ''>('');
+  readonly workModeLabel = workModeLabel;
   private readonly heading = viewChild<ElementRef<HTMLElement>>('journeyHeading');
   readonly referenceZone = computed(() => this.user().referenceTimeZoneId);
   readonly statusLabel = computed(() => {
@@ -38,5 +40,12 @@ export class JourneyComponent {
 
   focusHeading(): void { this.heading()?.nativeElement.focus(); }
 
-  mark(type: EventType): void { void this.state.mark(type); }
+  mark(type: EventType): void {
+    const mode = this.workMode();
+    if (!mode) { this.state.message.set('Escolha a modalidade de trabalho antes de registrar.'); return; }
+    void this.state.mark(type, mode);
+  }
+  chooseMode(value: string): void {
+    if (value === 'OFFICE' || value === 'REMOTE' || value === 'TRAVEL' || value === '') this.workMode.set(value);
+  }
 }

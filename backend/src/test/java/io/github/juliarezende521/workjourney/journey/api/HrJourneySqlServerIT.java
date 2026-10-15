@@ -115,6 +115,30 @@ class HrJourneySqlServerIT {
         assertFalse(result.findValuesAsText("id").contains(employee));
     }
 
+    @Test void modalidadePersisteEmCadaEventoEReenvioPreservaRecibo() throws Exception {
+        var target = login(false); var hr = login(true); var key = UUID.randomUUID();
+        var entry = mark(target, key, "ENTRY", null, "Europe/Lisbon", "TRAVEL", 201);
+        assertEquals(entry, mark(target, key, "ENTRY", null, "Europe/Lisbon", "TRAVEL", 201));
+        mark(target, key, "ENTRY", null, "Europe/Lisbon", "REMOTE", 409);
+        String id = entry.get("workSessionId").asText();
+        mvc.perform(get("/api/me/work-sessions/current").session(target.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.session.lastEvent.workMode").value("TRAVEL"));
+        mark(target, UUID.randomUUID(), "PAUSE_START", id, "Europe/Lisbon", "OFFICE", 201);
+        mark(target, UUID.randomUUID(), "EXIT", id, "Europe/Lisbon", "REMOTE", 201);
+        String employee = json(mvc.perform(get("/api/me").session(target.session())).andReturn()).get("employeeId").asText();
+        for (String path : new String[]{"/api/me/work-sessions/" + id, "/api/hr/employees/" + employee + "/work-sessions/" + id}) {
+            var actor = path.startsWith("/api/hr") ? hr : target;
+            mvc.perform(get(path).session(actor.session())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.events[0].workMode").value("TRAVEL"))
+                    .andExpect(jsonPath("$.events[1].workMode").value("OFFICE"))
+                    .andExpect(jsonPath("$.events[2].workMode").value("REMOTE"));
+        }
+        mark(target, UUID.randomUUID(), "ENTRY", null, "Europe/Lisbon", "INVALID", 400);
+        mark(target, UUID.randomUUID(), "ENTRY", null, 201);
+        mvc.perform(get("/api/me/work-sessions/current").session(target.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.session.lastEvent.workMode").isEmpty());
+    }
+
     private void assertOverview(Login hr, String employee, String state) throws Exception {
         var result = json(mvc.perform(get("/api/hr/employees/overview?size=100").session(hr.session()))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.observedAtUtc").exists()).andReturn());
@@ -150,7 +174,12 @@ class HrJourneySqlServerIT {
     }
 
     private JsonNode mark(Login actor, UUID key, String type, String target, String zone, int status) throws Exception {
+        return mark(actor, key, type, target, zone, null, status);
+    }
+
+    private JsonNode mark(Login actor, UUID key, String type, String target, String zone, String mode, int status) throws Exception {
         var body = mapper.createObjectNode().put("type", type);
+        if (mode != null) body.put("workMode", mode);
         if (zone != null) body.put("timeZoneId", zone);
         if (target != null) body.put("expectedWorkSessionId", target);
         return json(mvc.perform(post("/api/me/work-events").session(actor.session()).header(actor.header(), actor.token())
