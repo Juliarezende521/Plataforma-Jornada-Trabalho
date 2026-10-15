@@ -27,9 +27,10 @@ class HrJourneyQueriesTest {
         when(employees.findOwnedActive(actor.employeeId(), actor.userId())).thenReturn(Optional.of(brazil));
         when(employees.findActive(any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(brazil, europe)));
         var date = java.time.LocalDate.parse("2026-10-14");
-        when(store.latestCheckpoints(List.of(brazil.getId(), europe.getId()))).thenReturn(List.of(
-                new JpaWorkSessionStore.LatestCheckpoint(brazil.getId(), date, io.github.juliarezende521.workjourney.journey.WorkState.CLOSED),
-                new JpaWorkSessionStore.LatestCheckpoint(europe.getId(), date, io.github.juliarezende521.workjourney.journey.WorkState.CLOSED)));
+        var brazilId = brazil.getId(); var europeId = europe.getId();
+        when(store.latestCheckpoints(List.of(brazilId, europeId))).thenReturn(List.of(
+                new JpaWorkSessionStore.LatestCheckpoint(brazilId, date, io.github.juliarezende521.workjourney.journey.WorkState.CLOSED),
+                new JpaWorkSessionStore.LatestCheckpoint(europeId, date, io.github.juliarezende521.workjourney.journey.WorkState.CLOSED)));
         var clock = Clock.fixed(java.time.Instant.parse("2026-10-15T02:00:00Z"), java.time.ZoneOffset.UTC);
         var queries = new HrJourneyQueries(identity, users, employees, store, clock);
         var overview = queries.overview(0, 20);
