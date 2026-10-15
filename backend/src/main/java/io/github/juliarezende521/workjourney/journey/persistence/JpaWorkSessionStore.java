@@ -107,6 +107,22 @@ public class JpaWorkSessionStore {
         return restored;
     }
 
+    /** One bounded checkpoint query for an HR page; original events are loaded only in detail. */
+    public List<LatestCheckpoint> latestCheckpoints(List<UUID> employees) {
+        if (employees.isEmpty()) return List.of();
+        return entityManager.createQuery("""
+                SELECT s.employeeId, s.workDate, s.state FROM WorkSessionRow s
+                WHERE s.employeeId IN :employees AND (s.closedAtUtc IS NULL OR (
+                    NOT EXISTS (SELECT active.id FROM WorkSessionRow active WHERE active.employeeId=s.employeeId AND active.closedAtUtc IS NULL)
+                    AND NOT EXISTS (
+                    SELECT newer.id FROM WorkSessionRow newer WHERE newer.employeeId=s.employeeId
+                    AND (newer.openedAtUtc>s.openedAtUtc OR (newer.openedAtUtc=s.openedAtUtc AND newer.id>s.id)))))
+                """, Object[].class).setParameter("employees", employees).getResultList().stream()
+                .map(row -> new LatestCheckpoint((UUID) row[0], (java.time.LocalDate) row[1], (WorkState) row[2])).toList();
+    }
+
+    public record LatestCheckpoint(UUID employeeId, java.time.LocalDate workDate, WorkState state) { }
+
     public long historyCount(UUID employee, java.time.LocalDate from, java.time.LocalDate to) {
         return entityManager.createQuery("SELECT COUNT(s) FROM WorkSessionRow s WHERE s.employeeId=:employee AND s.workDate BETWEEN :from AND :to", Long.class)
                 .setParameter("employee", employee).setParameter("from", from).setParameter("to", to).getSingleResult();

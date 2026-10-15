@@ -91,9 +91,9 @@ describe('Access screen', () => {
   it('opens HR directly without mounting personal journey views', () => {
     http.expectOne('/api/me').flush({ userId: 'h', employeeId: 'he', name: 'Recursos Humanos', email: 'rh@example.invalid', referenceTimeZoneId: 'America/Sao_Paulo', hrReader: true });
     fixture.detectChanges();
-    http.expectOne('/api/hr/employees?page=0&size=20').flush({ items: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+    http.expectOne('/api/hr/employees/overview?page=0&size=20').flush({ items: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
     fixture.detectChanges();
-    expect(view.querySelector('app-hr')).not.toBeNull();
+    expect(view.querySelector('app-hr-dashboard')).not.toBeNull();
     expect(view.querySelector('app-journey')).toBeNull();
     expect(view.querySelector('app-history')).toBeNull();
     expect(view.querySelector('nav[aria-label="Navegação das jornadas"]')).toBeNull();

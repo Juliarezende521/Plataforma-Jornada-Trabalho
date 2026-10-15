@@ -16,12 +16,23 @@ public class HrJourneyController {
 
     @GetMapping
     public HrJourneyQueries.Directory employees(HttpServletRequest request) {
+        var page = page(request);
+        return queries.employees(page[0], page[1]);
+    }
+
+    @GetMapping("/overview")
+    public HrJourneyQueries.Overview overview(HttpServletRequest request) {
+        var page = page(request);
+        return queries.overview(page[0], page[1]);
+    }
+
+    private int[] page(HttpServletRequest request) {
         var parameters = request.getParameterMap();
         if (!Set.of("page", "size").containsAll(parameters.keySet())
                 || parameters.values().stream().anyMatch(values -> values.length != 1)) throw new JourneyQueries.InvalidFilter();
         try {
-            return queries.employees(Integer.parseInt(request.getParameter("page") == null ? "0" : request.getParameter("page")),
-                    Integer.parseInt(request.getParameter("size") == null ? "20" : request.getParameter("size")));
+            return new int[]{Integer.parseInt(request.getParameter("page") == null ? "0" : request.getParameter("page")),
+                    Integer.parseInt(request.getParameter("size") == null ? "20" : request.getParameter("size"))};
         } catch (NumberFormatException invalid) { throw new JourneyQueries.InvalidFilter(); }
     }
 
