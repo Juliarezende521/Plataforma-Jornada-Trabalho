@@ -34,6 +34,25 @@ describe('HR overview and separate individual consultation', () => {
     fixture.componentInstance.show('overview'); fixture.detectChanges();
     expect(fixture.componentInstance.selected()).toBeNull(); expect(view.querySelector('app-history')).toBeNull();
   });
+  it('opens an older journey with its own reference date and sends that period to the HR API', () => {
+    loaded(); fixture.componentInstance.open({ ...person, workDate: '2026-09-30' }); fixture.detectChanges();
+    const view = fixture.nativeElement as HTMLElement;
+    expect(view.querySelector<HTMLInputElement>('#history-from')?.value).toBe('2026-09-30');
+    expect(view.querySelector<HTMLInputElement>('#history-to')?.value).toBe('2026-09-30');
+    view.querySelector('app-history form')!.dispatchEvent(new Event('submit'));
+    const request = http.expectOne(r => r.url === '/api/hr/employees/b/work-sessions');
+    expect(request.request.params.get('from')).toBe('2026-09-30');
+    expect(request.request.params.get('to')).toBe('2026-09-30');
+    request.flush({ items: [], page: 0, size: 20, totalElements: 0, observedAtUtc: '2026-10-14T14:00:00Z' });
+    http.expectNone('/api/me/work-sessions');
+  });
+  it('keeps the default period when the selected employee has no journey date', () => {
+    loaded(); fixture.componentInstance.open({ ...person, state: 'NOT_STARTED', workDate: null }); fixture.detectChanges();
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: person.referenceTimeZoneId, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const view = fixture.nativeElement as HTMLElement;
+    expect(view.querySelector<HTMLInputElement>('#history-from')?.value).toBe(today.slice(0, 8) + '01');
+    expect(view.querySelector<HTMLInputElement>('#history-to')?.value).toBe(today);
+  });
   it('removes stale states when refresh fails', () => {
     loaded(); fixture.componentInstance.load(0); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.people')).toBeNull();

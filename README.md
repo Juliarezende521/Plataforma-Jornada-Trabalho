@@ -151,15 +151,17 @@ npm start -- --ssl --ssl-cert /caminho/localhost.pem --ssl-key /caminho/localhos
 
 No Windows/PowerShell, use `$env:NOME="valor"` em vez de `export` e `.\mvnw.cmd` no lugar de `./mvnw`; os comandos SQL são os mesmos, mas funções Bash e heredocs precisam ser adaptados.
 
-### Visão de RH nesta branch
+### Visão de RH
 
 O perfil de avaliação também cria `rh@example.invalid` (Recursos Humanos, referência `America/Sao_Paulo`), com a mesma senha de avaliação definida na criação. A permissão `hr_reader` é persistida pela V5 e vem desabilitada para contas preexistentes; o seed não promove contas já existentes com esse e-mail. É necessário autenticar novamente após conceder uma permissão.
 
-A conta habilitada vê a opção **Visão do RH**, seleciona um colaborador ativo e consulta seu histórico por período e os detalhes. A tela reaproveita o histórico existente, sem trocar a identidade autenticada. Diretório paginado: 20 itens por página; limite de API: 100. Listagens não expõem e-mails, hashes ou credenciais. Fusos, filtros e paginação seguem o histórico próprio.
+A conta habilitada entra diretamente na **Visão geral** do RH, com colaboradores ativos e estados **Trabalhando**, **Em pausa**, **Encerrada** e **Sem jornada iniciada**. Jornadas abertas de dias anteriores continuam visíveis; sem jornada aberta, Encerrada se refere à última jornada da data atual no fuso de referência do colaborador. A tela informa o instante da consulta e tem atualização manual.
 
-As rotas GET `/api/hr/employees`, `/api/hr/employees/{employeeId}/work-sessions` e `/api/hr/employees/{employeeId}/work-sessions/{id}` exigem autoridade de RH e revalidam no banco a permissão, a conta ativa e o vínculo autenticado a cada consulta. Uma jornada precisa pertencer ao colaborador selecionado; acesso pela rota própria continua restrito aos registros próprios. As rotas RH rejeitam mutações. Essa permissão não inclui gestão de contas, correção de marcações ou aprovação de regularizações. RH conserva as operações de colaborador somente para os próprios registros.
+A **Consulta individual** permanece em uma tela separada, com seleção de colaborador, filtro por período, histórico e detalhes das marcações. **Ver detalhes** na visão geral abre o histórico da pessoa com as duas datas preenchidas pela data de referência da jornada selecionada, inclusive de outro mês. Para quem não tem jornada indicada, o período inicial vai do primeiro dia do mês até a data atual no fuso de referência. Os filtros podem ser ajustados antes de consultar. A identidade autenticada permanece a do RH. Diretórios paginados: 20 itens por página; limite de API: 100. Listagens não expõem e-mails, hashes ou credenciais.
 
-A implementação permanece isolada em `feature/hr-read-only` até revisão e testes; a main segue como alternativa de entrega. O teste de upgrade verifica que uma conta anterior à V5 não recebe permissão de RH. Evidências finais da branch devem ser consultadas nos checks da PR; não se confundem com as evidências históricas da PR #7 abaixo.
+As rotas GET `/api/hr/employees`, `/api/hr/employees/overview`, `/api/hr/employees/{employeeId}/work-sessions` e `/api/hr/employees/{employeeId}/work-sessions/{id}` exigem autoridade de RH e revalidam no banco a permissão, a conta ativa e o vínculo autenticado a cada consulta. Uma jornada precisa pertencer ao colaborador selecionado; acesso pela rota própria continua restrito aos registros próprios. As rotas RH rejeitam mutações. Essa permissão não inclui gestão de contas, correção de marcações ou aprovação de regularizações. A interface do RH não oferece menus de marcação pessoal; as APIs próprias continuam autorizando somente os registros da própria conta.
+
+A visão de RH integra a `main` desde os merges das PRs #10–#12. O teste de upgrade verifica que uma conta anterior à V5 não recebe permissão de RH. As evidências de backend, Angular, SQL Server e navegador estão nos checks das respectivas PRs; não substituem validação de produção.
 
 ### Diagnóstico sem banco
 

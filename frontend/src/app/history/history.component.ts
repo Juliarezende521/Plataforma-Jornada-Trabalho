@@ -10,6 +10,7 @@ import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail } from './hi
 export class HistoryComponent {
   readonly user = input.required<Identity>();
   readonly targetEmployee = input<EmployeeSummary | null>(null);
+  readonly initialWorkDate = input<string | null>(null);
   readonly referenceZone = computed(() => this.targetEmployee()?.referenceTimeZoneId ?? this.user().referenceTimeZoneId);
   private readonly api = inject(HistoryApi);
   private readonly auth = inject(AuthService);
@@ -30,13 +31,13 @@ export class HistoryComponent {
   readonly eventLabels = { ENTRY: 'Entrada', PAUSE_START: 'Início de pausa', PAUSE_END: 'Retorno', EXIT: 'Saída' };
   constructor() {
     this.destroyRef.onDestroy(() => this.request?.unsubscribe());
-    effect(() => { const user=this.user(); const target=this.targetEmployee(); untracked(() => {
-      const key=user.userId + ':' + user.employeeId + ':' + (target?.id ?? 'own');
+    effect(() => { const user=this.user(); const target=this.targetEmployee(); const initialDate=this.initialWorkDate(); untracked(() => {
+      const key=user.userId + ':' + user.employeeId + ':' + (target?.id ?? 'own') + ':' + (initialDate ?? 'default');
       if (key===this.identityKey) return;
       this.identityKey=key; this.request?.unsubscribe(); this.result.set(null); this.detail.set(null); this.applied.set(null); this.busy.set(false);
       this.zone.setValue('reference'); this.fieldError.set(''); this.message.set('Escolha o período para consultar suas jornadas.');
       const today=new Intl.DateTimeFormat('en-CA', { timeZone: this.referenceZone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-      this.form.setValue({ from: today.slice(0,8) + '01', to: today });
+      this.form.setValue({ from: initialDate ?? today.slice(0,8) + '01', to: initialDate ?? today });
     }); });
   }
   focusHeading(): void { this.heading()?.nativeElement.focus(); }

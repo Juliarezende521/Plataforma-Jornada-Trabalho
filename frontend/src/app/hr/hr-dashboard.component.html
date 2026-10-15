@@ -8,7 +8,7 @@
   @if (selected(); as person) {
     <p class="selected">Jornadas de <strong>{{ person.name }}</strong></p>
     <button class="secondary" type="button" (click)="show('overview')">Voltar à visão geral</button>
-    <app-history [user]="user()" [targetEmployee]="person" />
+    <app-history [user]="user()" [targetEmployee]="person" [initialWorkDate]="person.workDate" />
   }
 } @else {
   <section class="overview" aria-labelledby="hr-overview-heading" [attr.aria-busy]="busy()">
