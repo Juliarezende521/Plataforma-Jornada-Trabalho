@@ -149,6 +149,12 @@ scripts/ci/            validação integrada com SQL Server e navegador
 - A execução local do SQL Server depende de host compatível com a imagem oficial. Em máquinas ARM pode ser necessário usar uma instância externa.
 - O perfil de avaliação e as credenciais de exemplo não representam uma configuração de produção.
 
+## Uso de inteligência artificial
+
+Durante o desenvolvimento, utilizei ferramentas de inteligência artificial como apoio para explorar soluções, revisar pontos de segurança e qualidade e agilizar algumas tarefas de implementação e documentação.
+
+As escolhas de arquitetura, a definição das regras de negócio e a composição da solução foram avaliadas por mim de acordo com o contexto do desafio. Revisei o código produzido e validei seu funcionamento por meio de testes locais e dos fluxos automatizados configurados no projeto. Estou preparada para explicar as decisões adotadas, seus benefícios, limitações e possíveis evoluções.
+
 ## Próximos passos
 
 1. Fluxo auditável para solicitar e aprovar correções.
