@@ -103,13 +103,23 @@ Use `docker compose down -v` somente se também quiser apagar os dados locais.
 
 ### Contas de avaliação
 
-As contas usam a senha definida em `EVALUATION_PASSWORD` na primeira inicialização:
+Ao executar `./scripts/local/backend.sh` sem configurar outra senha, use:
+
+**Senha:** `AvaliacaoLocal@2026`
 
 | Conta | Perfil |
 |---|---|
 | `brasil@example.invalid` | Colaborador em São Paulo |
 | `europa@example.invalid` | Colaborador em Amsterdã |
 | `rh@example.invalid` | Consulta do RH |
+
+Para definir outra senha antes da primeira inicialização:
+
+```bash
+EVALUATION_PASSWORD='SuaSenhaLocal@2026' ./scripts/local/backend.sh
+```
+
+A senha é definida quando as contas são criadas; alterar a variável depois disso não modifica contas existentes.
 
 ## Testes
 
