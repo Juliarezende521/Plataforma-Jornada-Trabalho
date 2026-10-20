@@ -23,6 +23,8 @@ label { display: block; margin: 0 0 var(--space-2); font-size: .8rem; font-weigh
 .events strong { color: var(--color-muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
 .events time { display: inline-block; margin: var(--space-2) 0; font-size: clamp(1.15rem, 2.5vw, 1.5rem); font-weight: 750; line-height: 1.5; }
 .events small { color: var(--color-muted); }
+.effective-events .adjusted-event { border-left-color:var(--color-success); background:var(--color-success-bg); }
+.adjustment-badge { display:inline-block; margin-left:var(--space-2); padding:.2rem .5rem; border-radius:999px; background:var(--color-success-bg); color:var(--color-success); font-size:.7rem; font-weight:700; }
 .pages { display: flex; flex-direction: column; gap: var(--space-3); align-items: stretch; padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
 .pages span { color: var(--color-muted); font-size: .875rem; }
 @media (min-width: 640px) {

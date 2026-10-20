@@ -18,6 +18,8 @@ class JourneyQueriesTest {
         assertEquals(WorkState.CLOSED,d.session().state());
         assertEquals(s.getEvents().get(0).id(),d.events().get(0).id());
         assertEquals(LocalDate.of(2026,10,25),d.session().workDate());
+        assertFalse(d.effective().adjusted());
+        assertEquals("PT1H15M0.0000001S",d.effective().workDuration());
     }
     @Test void detailPreservesPausedAndClosedStates() {
         var now=Instant.parse("2026-10-14T23:30:00Z");

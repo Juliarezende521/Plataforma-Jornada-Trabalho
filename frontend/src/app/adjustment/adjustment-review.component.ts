@@ -46,7 +46,7 @@ export class AdjustmentReviewComponent {
   private fail(error:unknown):void {
     this.busy.set(false);
     if(error instanceof HttpErrorResponse&&error.status===401){this.auth.invalidate();return;}
-    this.message.set(error instanceof HttpErrorResponse&&error.status===409?'Esta solicitação já foi analisada. Atualize a lista.':
+    this.message.set(error instanceof HttpErrorResponse&&error.status===409?'A decisão conflita com a jornada atual ou a solicitação já foi analisada. Atualize a lista.':
       error instanceof HttpErrorResponse&&error.status===403?'Seu acesso não permite analisar ajustes.':'Não foi possível concluir a operação. Tente novamente.');
   }
 }

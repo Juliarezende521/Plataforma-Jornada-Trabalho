@@ -39,7 +39,7 @@ public class JourneyExceptionHandler {
     ResponseEntity<Problem> hiddenAdjustment() { return problem(404, "Adjustment not visible"); }
 
     @ExceptionHandler(io.github.juliarezende521.workjourney.adjustment.AdjustmentConflict.class)
-    ResponseEntity<Problem> adjustmentConflict() { return problem(409, "Adjustment already decided"); }
+    ResponseEntity<Problem> adjustmentConflict() { return problem(409, "Adjustment decision conflicts with current journey"); }
 
     @ExceptionHandler(AuthenticationException.class)
     ResponseEntity<Problem> unauthenticated() { return problem(401, "Authentication required"); }

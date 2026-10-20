@@ -9,6 +9,9 @@ export interface HistoryPage {
 export interface JourneyDetail {
   session: HistoryItem; observedAtUtc: string;
   events: { id: string; sequence: number; type: EventType; occurredAtUtc: string; recordedAtUtc: string; recordedTimeZoneId: string; workMode?: WorkMode | null }[];
+  effective?: { state: 'WORKING'|'PAUSED'|'CLOSED'; workDuration: string; adjusted: boolean;
+    events: { source: 'ORIGINAL'|'ADJUSTMENT'; originalEventId: string|null; adjustmentId: string|null; originalSequence?:number|null;
+      type: EventType; occurredAtUtc: string; recordedTimeZoneId: string|null; workMode?: WorkMode|null }[] };
 }
 export interface HistoryFilter { from: string; to: string; }
 

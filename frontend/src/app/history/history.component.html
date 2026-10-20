@@ -29,6 +29,19 @@
     <ol class="events">@for (event of d.events; track event.id) {
       <li><strong>{{ eventLabels[event.type] }}</strong><br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time>@if (event.recordedTimeZoneId !== d.session.referenceTimeZoneId) {<br /><small>Fuso no registro: {{ event.recordedTimeZoneId }}</small>}<p class="event-work-mode">Modalidade: {{ workModeLabel(event.workMode) }}</p></li>
     }</ol>
+    @if (d.effective; as effective) {
+      <p><strong>Tempo efetivo:</strong> {{ formatDuration(effective.workDuration) }}</p>
+      @if (effective.adjusted) {
+        <h4>Linha do tempo efetiva após ajustes</h4>
+        <p>Esta visão combina os registros originais com as marcações aprovadas. Os originais acima permanecem preservados.</p>
+        <ol class="events effective-events">@for (event of effective.events; track event.originalEventId ?? event.adjustmentId) {
+          <li [class.adjusted-event]="event.source === 'ADJUSTMENT'"><strong>{{ eventLabels[event.type] }}</strong>
+            @if (event.source === 'ADJUSTMENT') { <span class="adjustment-badge">Ajuste aprovado</span> }
+            <br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time>
+          </li>
+        }</ol>
+      }
+    }
     @if (!targetEmployee()) {
       @if (adjustmentsVisible()) {
         <app-adjustment-panel [workSessionId]="d.session.id" [displayZone]="referenceZone()" />

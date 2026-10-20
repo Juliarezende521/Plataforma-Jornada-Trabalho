@@ -59,6 +59,7 @@ GET /api/me/work-sessions?from=2026-10-01&to=2026-10-31&page=0&size=20
 - `page` começa em zero.
 - `size` aceita valores de 1 a 100.
 - Uma jornada inexistente ou pertencente a outra pessoa não fica visível pela rota de detalhe.
+- O detalhe contém `events` com os registros originais e `effective` com a linha do tempo projetada e a duração recalculada.
 
 ### Solicitar uma marcação esquecida
 
@@ -86,7 +87,7 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
 
-As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor verifica se a marcação proposta forma uma sequência válida com os eventos originais. A permissão do RH não autoriza marcações online em nome de outra pessoa.
+As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor considera também ajustes já aprovados, verifica a sequência inteira e impede que a projeção mude o estado online persistido. A permissão do RH não autoriza marcações online em nome de outra pessoa.
 
 ## Erros
 

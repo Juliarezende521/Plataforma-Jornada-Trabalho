@@ -30,11 +30,13 @@ class WorkAdjustmentServiceTest {
     private WorkAdjustmentService service;
 
     @BeforeEach void setUp() {
-        service=new WorkAdjustmentService(identity,employees,sessions,requests,audits,clock);
+        service=new WorkAdjustmentService(identity,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
         when(identity.require()).thenReturn(new CurrentEmployeeIdentity.Identity(userId,employee.getId()));
         when(employees.lockOwnedActive(employee.getId(),userId)).thenReturn(Optional.of(employee));
         when(employees.lockActive(employee.getId())).thenReturn(Optional.of(employee));
         when(requests.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(requests.findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(any(),eq(AdjustmentStatus.APPROVED)))
+                .thenReturn(java.util.List.of());
     }
 
     @Test void createsOwnedPendingRequestAndAuditWithoutChangingOriginalSession() {
@@ -56,7 +58,8 @@ class WorkAdjustmentServiceTest {
 
     @Test void locksAndAuditsAnIrreversibleDecision() {
         var original=WorkSession.open(employee.getId(),userId,"America/Sao_Paulo",now.minus(Duration.ofHours(8)));
-        var request=new WorkAdjustmentRequest(employee,userId,original.getId(),WorkEventType.EXIT,now.minusSeconds(60),"Saída não registrada no horário.",now.minusSeconds(30));
+        original.record(WorkEventType.EXIT,now.minusSeconds(30));
+        var request=new WorkAdjustmentRequest(employee,userId,original.getId(),WorkEventType.PAUSE_START,now.minus(Duration.ofHours(4)),"Pausa não registrada no horário.",now.minusSeconds(20));
         when(requests.lockById(request.getId())).thenReturn(Optional.of(request));
         when(sessions.findOwned(original.getId(),employee.getId())).thenReturn(Optional.of(new JpaWorkSessionStore.StoredSession(original,0)));
         var result=service.decide(request.getId(),AdjustmentStatus.APPROVED,"Conferido com a liderança.");

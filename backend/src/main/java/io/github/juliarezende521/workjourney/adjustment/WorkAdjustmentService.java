@@ -2,7 +2,6 @@ package io.github.juliarezende521.workjourney.adjustment;
 
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
-import io.github.juliarezende521.workjourney.journey.WorkState;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
@@ -26,13 +25,14 @@ public class WorkAdjustmentService {
     private final JpaWorkSessionStore sessions;
     private final WorkAdjustmentRepository requests;
     private final AuditEntryRepository audits;
+    private final EffectiveTimelineService timelines;
     private final Clock clock;
 
     public WorkAdjustmentService(CurrentEmployeeIdentity identity, EmployeeRepository employees,
                                  JpaWorkSessionStore sessions, WorkAdjustmentRepository requests,
-                                 AuditEntryRepository audits, Clock clock) {
+                                 AuditEntryRepository audits, EffectiveTimelineService timelines, Clock clock) {
         this.identity=identity; this.employees=employees; this.sessions=sessions;
-        this.requests=requests; this.audits=audits; this.clock=clock;
+        this.requests=requests; this.audits=audits; this.timelines=timelines; this.clock=clock;
     }
 
     @Transactional(timeout = 15)
@@ -83,8 +83,13 @@ public class WorkAdjustmentService {
         var request=requests.lockById(id).orElseThrow(AdjustmentNotVisible::new);
         var employee=employees.lockActive(request.getEmployee().getId())
                 .orElseThrow(() -> new AccessDeniedException("Employee access denied"));
-        if (decision==AdjustmentStatus.APPROVED) validateEffectiveTimeline(request,
-                sessions.findOwned(request.getWorkSessionId(),employee.getId()).orElseThrow(AdjustmentNotVisible::new).session());
+        if (decision==AdjustmentStatus.APPROVED) {
+            var session=sessions.findOwned(request.getWorkSessionId(),employee.getId()).orElseThrow(AdjustmentNotVisible::new).session();
+            var effective=timelines.projectIncluding(session,request,now);
+            // Online checkpoints still use originals. Until correction-aware commands exist,
+            // an approval may change duration but not the persisted open/closed state.
+            if(effective.state()!=session.getState())throw new AdjustmentConflict();
+        }
         request.decide(decision, actor.userId(), now, validNote);
         audits.save(new AuditEntry(actor.userId(), decision==AdjustmentStatus.APPROVED
                 ? "ADJUSTMENT_APPROVED" : "ADJUSTMENT_REJECTED", request.getId(), now, validNote));
@@ -102,21 +107,6 @@ public class WorkAdjustmentService {
     }
     private static void validatePage(int page,int size) {
         if (page<0 || size<1 || size>MAX_PAGE_SIZE) throw new InvalidAdjustment();
-    }
-    /** Approved requests are an immutable overlay; originals keep their IDs and timestamps. */
-    private static void validateEffectiveTimeline(WorkAdjustmentRequest request,
-                                                  io.github.juliarezende521.workjourney.journey.WorkSession session) {
-        record Point(WorkEventType type, Instant at) { }
-        var points=new java.util.ArrayList<Point>();
-        session.getEvents().forEach(event -> points.add(new Point(event.type(),event.occurredAtUtc())));
-        if (points.stream().anyMatch(point -> point.at().equals(request.getProposedOccurredAtUtc()))) throw new AdjustmentConflict();
-        points.add(new Point(request.getRequestedEventType(),request.getProposedOccurredAtUtc()));
-        points.sort(java.util.Comparator.comparing(Point::at));
-        if (points.get(0).type()!=WorkEventType.ENTRY) throw new AdjustmentConflict();
-        WorkState state=WorkState.WORKING;
-        try {
-            for (int index=1;index<points.size();index++) state=state.nextFor(points.get(index).type());
-        } catch (IllegalStateException invalidSequence) { throw new AdjustmentConflict(); }
     }
     private Instant now() { return UtcInstants.normalize(clock.instant()); }
 

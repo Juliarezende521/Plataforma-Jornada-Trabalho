@@ -2,6 +2,7 @@ package io.github.juliarezende521.workjourney.adjustment;
 
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -27,4 +28,7 @@ interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRequest, 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT request FROM WorkAdjustmentRequest request JOIN FETCH request.employee WHERE request.id=:id")
     Optional<WorkAdjustmentRequest> lockById(@Param("id") UUID id);
+
+    List<WorkAdjustmentRequest> findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
+            UUID workSessionId, AdjustmentStatus status);
 }

@@ -38,6 +38,18 @@ describe('History and detail',()=>{
     expect(fixture.nativeElement.textContent).toContain('Modalidade: Viagem');
     expect(fixture.nativeElement.textContent).toContain('Modalidade: Não informado');
   });
+  it('separates original markings from the effective approved timeline',()=>{
+    consult();component().open(item.id);
+    http.expectOne('/api/me/work-sessions/session1').flush({...detail,effective:{state:'CLOSED',workDuration:'PT1H30M',adjusted:true,events:[
+      {source:'ORIGINAL',originalEventId:'event1',adjustmentId:null,type:'ENTRY',occurredAtUtc:item.openedAtUtc,recordedTimeZoneId:'America/Sao_Paulo'},
+      {source:'ADJUSTMENT',originalEventId:null,adjustmentId:'adjustment1',type:'PAUSE_START',occurredAtUtc:'2026-10-15T00:00:00Z',recordedTimeZoneId:null},
+      {source:'ORIGINAL',originalEventId:'event2',adjustmentId:null,type:'EXIT',occurredAtUtc:item.closedAtUtc!,recordedTimeZoneId:'America/Sao_Paulo'}
+    ]}});fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tempo efetivo: 1 h 30 min');
+    expect(fixture.nativeElement.textContent).toContain('Linha do tempo efetiva após ajustes');
+    expect(fixture.nativeElement.textContent).toContain('Ajuste aprovado');
+    expect(fixture.nativeElement.querySelectorAll('.adjusted-event').length).toBe(1);
+  });
   it('validates the inclusive range without querying and prevents duplicate queries',()=>{
     component().form.setValue({from:'2026-10-31',to:'2026-10-01'});component().consult();expect(component().fieldError()).toContain('366');http.expectNone('/api/me/work-sessions');
     component().form.setValue({from:'2026-10-01',to:'2026-10-31'});component().consult();component().consult();

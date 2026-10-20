@@ -1,6 +1,7 @@
 package io.github.juliarezende521.workjourney.journey.query;
 
 import io.github.juliarezende521.workjourney.account.*;
+import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
@@ -22,10 +23,11 @@ public class HrJourneyQueries {
     private final EmployeeRepository employees;
     private final JpaWorkSessionStore store;
     private final Clock clock;
+    private final EffectiveTimelineService timelines;
 
     public HrJourneyQueries(CurrentEmployeeIdentity identity, AppUserRepository users, EmployeeRepository employees,
-                            JpaWorkSessionStore store, Clock clock) {
-        this.identity = identity; this.users = users; this.employees = employees; this.store = store; this.clock = clock;
+                            JpaWorkSessionStore store, EffectiveTimelineService timelines, Clock clock) {
+        this.identity = identity; this.users = users; this.employees = employees; this.store = store; this.timelines=timelines; this.clock = clock;
     }
 
     private void requireHr() {
@@ -85,7 +87,8 @@ public class HrJourneyQueries {
         requireHr();
         employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
         var session = store.findOwned(sessionId, employeeId).orElseThrow(JourneyQueries.NotVisible::new).session();
-        return JourneyQueries.describe(session, UtcInstants.normalize(clock.instant()));
+        var observed=UtcInstants.normalize(clock.instant());
+        return JourneyQueries.describe(session,observed,timelines.project(session,observed));
     }
 
     public record Person(UUID id, String name, String referenceTimeZoneId) { }

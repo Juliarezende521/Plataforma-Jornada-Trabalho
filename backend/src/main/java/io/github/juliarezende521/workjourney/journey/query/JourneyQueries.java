@@ -1,6 +1,7 @@
 package io.github.juliarezende521.workjourney.journey.query;
 
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
+import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService;
 import io.github.juliarezende521.workjourney.journey.*;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
@@ -19,8 +20,10 @@ public class JourneyQueries {
     private final EmployeeRepository employees;
     private final JpaWorkSessionStore store;
     private final Clock clock;
-    public JourneyQueries(CurrentEmployeeIdentity identity, EmployeeRepository employees, JpaWorkSessionStore store, Clock clock) {
-        this.identity=identity; this.employees=employees; this.store=store; this.clock=clock;
+    private final EffectiveTimelineService timelines;
+    public JourneyQueries(CurrentEmployeeIdentity identity, EmployeeRepository employees, JpaWorkSessionStore store,
+                          EffectiveTimelineService timelines, Clock clock) {
+        this.identity=identity; this.employees=employees; this.store=store; this.timelines=timelines; this.clock=clock;
     }
     // Same employee lock as markings: page, events and Clock describe a consistent snapshot.
     @Transactional
@@ -36,7 +39,8 @@ public class JourneyQueries {
     @Transactional
     public Detail detail(UUID id) {
         var session=store.findOwned(id, lockActor()).orElseThrow(NotVisible::new).session();
-        return describe(session, UtcInstants.normalize(clock.instant()));
+        var observed=UtcInstants.normalize(clock.instant());
+        return describe(session,observed,timelines.project(session,observed));
     }
     private UUID lockActor() {
         var actor=identity.require();
@@ -48,9 +52,13 @@ public class JourneyQueries {
                 || page<0 || size<1 || size>100 || page>Integer.MAX_VALUE/100) throw new InvalidFilter();
     }
     public static Detail describe(WorkSession session, Instant observed) {
+        return describe(session,observed,EffectiveTimelineService.original(session,observed));
+    }
+    public static Detail describe(WorkSession session, Instant observed, EffectiveTimelineService.Timeline effective) {
         var events=session.getEvents();
         return new Detail(Item.from(session, observed), observed,
-                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId(), e.workMode())).toList());
+                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId(), e.workMode())).toList(),
+                new Effective(effective.state(),effective.workDuration().toString(),effective.adjusted(),effective.events()));
     }
 
     public record Item(UUID id, WorkState state, LocalDate workDate, String referenceTimeZoneId,
@@ -61,7 +69,8 @@ public class JourneyQueries {
     }
     public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc) { }
     public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode) { }
-    public record Detail(Item session, Instant observedAtUtc, List<Event> events) { }
+    public record Effective(WorkState state,String workDuration,boolean adjusted,List<EffectiveTimelineService.Event> events) { }
+    public record Detail(Item session, Instant observedAtUtc, List<Event> events,Effective effective) { }
     public static final class InvalidFilter extends RuntimeException { }
     public static final class NotVisible extends RuntimeException { }
 }

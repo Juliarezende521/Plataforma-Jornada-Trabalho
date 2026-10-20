@@ -15,6 +15,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Histórico próprio por período e detalhe das marcações.
 - Visão de RH com panorama dos colaboradores e consulta individual.
 - Solicitação de marcação esquecida e decisão auditável pelo RH.
+- Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.
 - Layout responsivo e navegação por teclado.
@@ -144,7 +145,8 @@ scripts/ci/            validação integrada com SQL Server e navegador
 ## Limitações conhecidas
 
 - Não há cadastro público nem recuperação de senha; as contas são provisionadas para avaliação.
-- Ajustes aprovados ficam como uma camada auditável e ainda não alteram os totais calculados da jornada.
+- Ajustes aprovados aparecem no detalhe e recalculam sua duração efetiva, mas ainda não alimentam um consolidado mensal.
+- Uma aprovação que mudaria o estado online da jornada (por exemplo, fechar uma jornada aberta) é bloqueada até o fluxo online também compreender correções.
 - Não há consolidado mensal, cálculo de horas extras ou integração com folha.
 - A localização é declarada pelo fuso e pela modalidade; a aplicação não usa geolocalização.
 - A execução local do SQL Server depende de host compatível com a imagem oficial. Em máquinas ARM pode ser necessário usar uma instância externa.
@@ -158,7 +160,7 @@ As escolhas de arquitetura, a definição das regras de negócio e a composiçã
 
 ## Próximos passos
 
-1. Incorporar os ajustes aprovados ao cálculo efetivo sem reescrever eventos originais.
+1. Permitir regularizar o encerramento de jornada aberta mantendo consistência com o registro online.
 2. Consolidado por período para apoiar o fechamento mensal.
 3. Integração com o provedor de identidade da empresa.
 4. Validação em dispositivos físicos com pessoas de RH e colaboradores.
