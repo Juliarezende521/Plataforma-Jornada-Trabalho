@@ -1,5 +1,3 @@
-ALTER TABLE dbo.work_session ADD CONSTRAINT uq_work_session_id_employee UNIQUE (id, employee_id);
-
 CREATE TABLE dbo.work_adjustment_request (
     id uniqueidentifier NOT NULL,
     work_session_id uniqueidentifier NOT NULL,
