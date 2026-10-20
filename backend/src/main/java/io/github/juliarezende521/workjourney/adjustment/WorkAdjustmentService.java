@@ -84,11 +84,19 @@ public class WorkAdjustmentService {
         var employee=employees.lockActive(request.getEmployee().getId())
                 .orElseThrow(() -> new AccessDeniedException("Employee access denied"));
         if (decision==AdjustmentStatus.APPROVED) {
-            var session=sessions.findOwned(request.getWorkSessionId(),employee.getId()).orElseThrow(AdjustmentNotVisible::new).session();
+            var stored=sessions.findOwned(request.getWorkSessionId(),employee.getId()).orElseThrow(AdjustmentNotVisible::new);
+            var session=stored.session();
             var effective=timelines.projectIncluding(session,request,now);
-            // Online checkpoints still use originals. Until correction-aware commands exist,
-            // an approval may change duration but not the persisted open/closed state.
-            if(effective.state()!=session.getState())throw new AdjustmentConflict();
+            if(effective.state()!=session.getState()) {
+                boolean closesOpen=session.getState()!=io.github.juliarezende521.workjourney.journey.WorkState.CLOSED
+                        && effective.state()==io.github.juliarezende521.workjourney.journey.WorkState.CLOSED
+                        && request.getRequestedEventType()==WorkEventType.EXIT
+                        && !request.getProposedOccurredAtUtc().isBefore(session.getLastEventAtUtc());
+                if(!closesOpen)throw new AdjustmentConflict();
+                var corrected=sessions.appendCorrection(session.getId(),employee.getId(),stored.version(),WorkEventType.EXIT,
+                        request.getProposedOccurredAtUtc(),now,session.getReferenceTimeZoneId()).session();
+                request.markApplied(corrected.getEvents().get(corrected.getEvents().size()-1).id());
+            }
         }
         request.decide(decision, actor.userId(), now, validNote);
         audits.save(new AuditEntry(actor.userId(), decision==AdjustmentStatus.APPROVED
@@ -113,12 +121,12 @@ public class WorkAdjustmentService {
     public record View(UUID id, UUID workSessionId, UUID employeeId, String employeeName,
                        WorkEventType requestedEventType, Instant proposedOccurredAtUtc,
                        String reason, AdjustmentStatus status, Instant requestedAtUtc,
-                       Instant decidedAtUtc, String decisionNote) {
+                       Instant decidedAtUtc, String decisionNote,UUID appliedEventId) {
         static View from(WorkAdjustmentRequest request) {
             return new View(request.getId(), request.getWorkSessionId(), request.getEmployee().getId(),
                     request.getEmployee().getName(), request.getRequestedEventType(), request.getProposedOccurredAtUtc(),
                     request.getReason(), request.getStatus(), request.getRequestedAtUtc(),
-                    request.getDecidedAtUtc(), request.getDecisionNote());
+                    request.getDecidedAtUtc(), request.getDecisionNote(),request.getAppliedEventId());
         }
     }
     public record Page(List<View> items, int page, int size, long totalElements) { }

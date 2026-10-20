@@ -33,6 +33,7 @@ public class WorkAdjustmentRequest {
     @Column(name = "decided_at_utc", columnDefinition = "datetimeoffset(7)", precision = 7) private OffsetDateTime decidedAtUtc;
     @Column(name = "decided_by_user_id") private UUID decidedByUserId;
     @Column(name = "decision_note", length = 500) private String decisionNote;
+    @Column(name = "applied_event_id") private UUID appliedEventId;
     @Version @Column(nullable = false) private Long version;
 
     protected WorkAdjustmentRequest() { }
@@ -58,6 +59,10 @@ public class WorkAdjustmentRequest {
         decidedAtUtc = decidedAt.atOffset(ZoneOffset.UTC);
         decisionNote = note;
     }
+    void markApplied(UUID eventId) {
+        if(status!=AdjustmentStatus.PENDING||appliedEventId!=null)throw new AdjustmentConflict();
+        appliedEventId=java.util.Objects.requireNonNull(eventId);
+    }
 
     public UUID getId() { return id; }
     public UUID getWorkSessionId() { return workSessionId; }
@@ -69,4 +74,5 @@ public class WorkAdjustmentRequest {
     public Instant getRequestedAtUtc() { return requestedAtUtc.toInstant(); }
     public Instant getDecidedAtUtc() { return decidedAtUtc == null ? null : decidedAtUtc.toInstant(); }
     public String getDecisionNote() { return decisionNote; }
+    public UUID getAppliedEventId() { return appliedEventId; }
 }

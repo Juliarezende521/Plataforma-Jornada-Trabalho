@@ -25,9 +25,9 @@
     <h3 #detailHeading tabindex="-1">Detalhes da jornada de {{ formatWorkDate(d.session.workDate) }}</h3>
     @if (targetEmployee(); as person) { <p class="history-person">Colaborador: <strong>{{ person.name }}</strong></p> }
     <p>{{ stateLabel(d.session.state) }} · Fuso de referência: {{ d.session.referenceTimeZoneId }}</p>
-    <h4>Marcações originais</h4>
+    <h4>Marcações registradas</h4>
     <ol class="events">@for (event of d.events; track event.id) {
-      <li><strong>{{ eventLabels[event.type] }}</strong><br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time>@if (event.recordedTimeZoneId !== d.session.referenceTimeZoneId) {<br /><small>Fuso no registro: {{ event.recordedTimeZoneId }}</small>}<p class="event-work-mode">Modalidade: {{ workModeLabel(event.workMode) }}</p></li>
+      <li [class.adjusted-event]="event.correction"><strong>{{ eventLabels[event.type] }}</strong>@if (event.correction) { <span class="adjustment-badge">Correção aprovada</span> }<br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time>@if (event.recordedTimeZoneId !== d.session.referenceTimeZoneId) {<br /><small>Fuso no registro: {{ event.recordedTimeZoneId }}</small>}<p class="event-work-mode">Modalidade: {{ workModeLabel(event.workMode) }}</p></li>
     }</ol>
     @if (d.effective; as effective) {
       <p><strong>Tempo efetivo:</strong> {{ formatDuration(effective.workDuration) }}</p>

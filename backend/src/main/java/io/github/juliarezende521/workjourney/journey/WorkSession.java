@@ -96,6 +96,14 @@ public final class WorkSession {
         apply(new WorkEvent(UUID.randomUUID(), id, actorUserId, events.size() + 1L, type, instant, instant, recordedZone, workMode));
     }
 
+    /** Appends an approved correction after the last original event, preserving both timestamps. */
+    public void recordCorrection(WorkEventType type,Instant occurredAt,Instant recordedAt,String recordedZone) {
+        Instant occurred=UtcInstants.normalize(occurredAt);
+        Instant recorded=UtcInstants.normalize(recordedAt);
+        if(recorded.isBefore(occurred))throw new IllegalArgumentException("Correction cannot be recorded before occurrence");
+        apply(new WorkEvent(UUID.randomUUID(),id,actorUserId,events.size()+1L,type,occurred,recorded,recordedZone,null));
+    }
+
     private void apply(WorkEvent event) {
         Instant instant = event.occurredAtUtc();
         if (instant.isBefore(lastInstant())) {

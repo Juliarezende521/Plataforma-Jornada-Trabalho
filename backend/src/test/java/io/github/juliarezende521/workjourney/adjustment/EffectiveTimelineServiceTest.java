@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class EffectiveTimelineServiceTest {
     @Test void approvedPauseChangesEffectiveDurationAndPreservesOriginals() {
@@ -42,5 +43,24 @@ class EffectiveTimelineServiceTest {
         var timeline=EffectiveTimelineService.original(session,instant);
         assertEquals(List.of(1L,2L,3L,4L),timeline.events().stream().map(EffectiveTimelineService.Event::originalSequence).toList());
         assertEquals(Duration.ZERO,timeline.workDuration());
+    }
+
+    @Test void materializedCorrectionIsLabeledAndNotProjectedTwice() {
+        var start=Instant.parse("2026-10-20T12:00:00Z"); var recorded=start.plusSeconds(7200);
+        var userId=UUID.randomUUID();
+        var account=new io.github.juliarezende521.workjourney.account.AppUser("worker@example.invalid","$2a$12$"+"A".repeat(53));
+        var employee=new io.github.juliarezende521.workjourney.account.Employee(account,"Worker","UTC");
+        var session=WorkSession.open(employee.getId(),userId,"UTC",start);
+        session.recordCorrection(WorkEventType.EXIT,start.plusSeconds(3600),recorded,"UTC");
+        var request=new WorkAdjustmentRequest(employee,userId,session.getId(),WorkEventType.EXIT,start.plusSeconds(3600),"Saída esquecida ao final do turno.",recorded.minusSeconds(60));
+        var eventId=session.getEvents().get(1).id(); request.markApplied(eventId);
+        request.decide(AdjustmentStatus.APPROVED,UUID.randomUUID(),recorded,"Conferido.");
+        var repository=mock(WorkAdjustmentRepository.class);
+        when(repository.findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(session.getId(),AdjustmentStatus.APPROVED))
+                .thenReturn(List.of(request));
+        var timeline=new EffectiveTimelineService(repository).project(session,recorded);
+        assertTrue(timeline.adjusted()); assertEquals(2,timeline.events().size());
+        assertEquals("ADJUSTMENT",timeline.events().get(1).source());
+        assertEquals(request.getId(),timeline.events().get(1).adjustmentId());
     }
 }

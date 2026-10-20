@@ -13,5 +13,6 @@ export interface WorkAdjustment {
   requestedAtUtc: string;
   decidedAtUtc: string | null;
   decisionNote: string | null;
+  appliedEventId?: string | null;
 }
 export interface AdjustmentPage { items: WorkAdjustment[]; page: number; size: number; totalElements: number; }

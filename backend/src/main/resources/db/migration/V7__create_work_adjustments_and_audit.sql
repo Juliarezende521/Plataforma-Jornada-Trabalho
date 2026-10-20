@@ -13,6 +13,7 @@ CREATE TABLE dbo.work_adjustment_request (
     decided_at_utc datetimeoffset(7) NULL,
     decided_by_user_id uniqueidentifier NULL,
     decision_note nvarchar(500) NULL,
+    applied_event_id uniqueidentifier NULL,
     version bigint NOT NULL CONSTRAINT df_work_adjustment_version DEFAULT (0),
     CONSTRAINT pk_work_adjustment_request PRIMARY KEY (id),
     CONSTRAINT fk_work_adjustment_session_employee FOREIGN KEY (work_session_id, employee_id)
@@ -20,6 +21,7 @@ CREATE TABLE dbo.work_adjustment_request (
     CONSTRAINT fk_work_adjustment_employee_requester FOREIGN KEY (employee_id, requested_by_user_id)
         REFERENCES dbo.employee(id, user_id),
     CONSTRAINT fk_work_adjustment_reviewer FOREIGN KEY (decided_by_user_id) REFERENCES dbo.app_user(id),
+    CONSTRAINT fk_work_adjustment_applied_event FOREIGN KEY (applied_event_id) REFERENCES dbo.work_event(id),
     CONSTRAINT ck_work_adjustment_event_type CHECK (requested_event_type IN ('ENTRY', 'PAUSE_START', 'PAUSE_END', 'EXIT')),
     CONSTRAINT ck_work_adjustment_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
     CONSTRAINT ck_work_adjustment_reason CHECK (LEN(LTRIM(RTRIM(reason))) BETWEEN 10 AND 500),

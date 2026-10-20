@@ -16,23 +16,31 @@ public class EffectiveTimelineService {
 
     public Timeline project(WorkSession session,Instant observed) {
         var approved=requests.findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
-                session.getId(),AdjustmentStatus.APPROVED).stream().map(Approved::from).toList();
-        return build(session,approved,observed);
+                session.getId(),AdjustmentStatus.APPROVED);
+        var overlays=approved.stream().filter(request -> request.getAppliedEventId()==null).map(Approved::from).toList();
+        var applied=approved.stream().filter(request -> request.getAppliedEventId()!=null)
+                .collect(java.util.stream.Collectors.toMap(WorkAdjustmentRequest::getAppliedEventId,WorkAdjustmentRequest::getId));
+        return build(session,overlays,applied,observed,!approved.isEmpty());
     }
 
     public Timeline projectIncluding(WorkSession session,WorkAdjustmentRequest candidate,Instant observed) {
-        var approved=new ArrayList<>(requests.findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
+        var approved=new ArrayList<>(requests.findByWorkSessionIdAndStatusAndAppliedEventIdIsNullOrderByProposedOccurredAtUtcAscIdAsc(
                 session.getId(),AdjustmentStatus.APPROVED).stream().map(Approved::from).toList());
         approved.add(Approved.from(candidate));
-        return build(session,approved,observed);
+        return build(session,approved,Map.of(),observed,true);
     }
 
-    public static Timeline original(WorkSession session,Instant observed) { return build(session,List.of(),observed); }
+    public static Timeline original(WorkSession session,Instant observed) { return build(session,List.of(),Map.of(),observed,false); }
 
     static Timeline build(WorkSession session,List<Approved> approved,Instant observed) {
+        return build(session,approved,Map.of(),observed,!approved.isEmpty());
+    }
+    private static Timeline build(WorkSession session,List<Approved> approved,Map<UUID,UUID> applied,
+                                  Instant observed,boolean adjusted) {
         Objects.requireNonNull(session); Objects.requireNonNull(observed);
         var events=new ArrayList<Event>();
-        session.getEvents().forEach(event -> events.add(new Event("ORIGINAL",event.id(),null,event.sequence(),event.type(),
+        session.getEvents().forEach(event -> events.add(new Event(applied.containsKey(event.id())?"ADJUSTMENT":"ORIGINAL",
+                event.id(),applied.get(event.id()),event.sequence(),event.type(),
                 event.occurredAtUtc(),event.recordedTimeZoneId(),event.workMode())));
         approved.forEach(adjustment -> events.add(new Event("ADJUSTMENT",null,adjustment.id(),null,adjustment.type(),
                 adjustment.occurredAt(),null,null)));
@@ -59,7 +67,7 @@ public class EffectiveTimelineService {
             if(observed.isBefore(workingSince))throw new AdjustmentConflict();
             completed=completed.plus(Duration.between(workingSince,observed));
         }
-        return new Timeline(state,completed,!approved.isEmpty(),List.copyOf(events));
+        return new Timeline(state,completed,adjusted,List.copyOf(events));
     }
 
     record Approved(UUID id,WorkEventType type,Instant occurredAt) {

@@ -94,6 +94,21 @@ public class JpaWorkSessionStore {
         return new StoredSession(session, row.version());
     }
 
+    @Transactional
+    public StoredSession appendCorrection(UUID id,UUID employeeId,long expectedVersion,WorkEventType type,
+                                          Instant occurredAt,Instant recordedAt,String recordedZone) {
+        var row=ownedRow(id,employeeId).orElseThrow(() -> new IllegalArgumentException("Session is not visible"));
+        if(expectedVersion<0||row.version()!=expectedVersion)throw new OptimisticLockException("Session version changed");
+        var session=restoreConsistent(row,id);
+        session.recordCorrection(type,occurredAt,recordedAt,recordedZone==null?session.getReferenceTimeZoneId():recordedZone);
+        row.updateCheckpoint(session);
+        entityManager.flush();
+        var originals=session.getEvents();
+        entityManager.persist(new WorkEventRow(originals.get(originals.size()-1)));
+        entityManager.flush();
+        return new StoredSession(session,row.version());
+    }
+
     /** Bounded parent page + one event query, avoiding one query per journey. */
     public List<WorkSession> history(UUID employee, java.time.LocalDate from, java.time.LocalDate to,
                                      int offset, int size) {

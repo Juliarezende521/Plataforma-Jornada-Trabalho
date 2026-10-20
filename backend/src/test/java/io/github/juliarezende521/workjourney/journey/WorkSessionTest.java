@@ -162,4 +162,17 @@ class WorkSessionTest {
         assertEquals("Europe/Lisbon", session.getEvents().get(0).recordedTimeZoneId());
         assertEquals(instant, session.getEvents().get(0).occurredAtUtc());
     }
+    @Test
+    void approvedCorrectionPreservesOccurrenceAndLaterRecordingTime() {
+        var session=open("2026-10-11T12:00:00Z");
+        var occurred=Instant.parse("2026-10-11T20:00:00Z");
+        var recorded=Instant.parse("2026-10-12T09:00:00Z");
+        session.recordCorrection(EXIT,occurred,recorded,"America/Sao_Paulo");
+        var correction=session.getEvents().get(1);
+        assertEquals(occurred,correction.occurredAtUtc());
+        assertEquals(recorded,correction.recordedAtUtc());
+        assertEquals(Duration.ofHours(8),session.closedDuration());
+        assertThrows(IllegalArgumentException.class,() -> open("2026-10-11T12:00:00Z")
+                .recordCorrection(EXIT,occurred,occurred.minusSeconds(1),"America/Sao_Paulo"));
+    }
 }

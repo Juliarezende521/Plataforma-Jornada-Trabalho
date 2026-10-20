@@ -50,7 +50,8 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 - Solicitações de ajuste não reescrevem os eventos originais.
 - Apenas o dono da jornada solicita um ajuste e somente o RH decide.
 - Uma decisão é terminal; novas alterações exigem uma nova solicitação.
-- Uma aprovação não pode mudar o estado online persistido da jornada nesta etapa.
+- Em regra, uma aprovação não muda o estado online persistido da jornada.
+- Exceção: uma saída esquecida aprovada é materializada como novo evento corretivo e encerra a jornada aberta na mesma transação.
 
 ## Tempo, viagens e localização
 
@@ -84,7 +85,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 ## Fora desta versão
 
 - Consolidado mensal e cálculo de horas extras.
-- Regularização que altere o estado online de uma jornada aberta.
+- Regularização que coloque uma jornada aberta em pausa; encerramento esquecido já é suportado.
 - Aprovação de ajustes por gestor; nesta etapa, a decisão é exclusiva do RH.
 - Integração com folha de pagamento.
 - Cadastro, recuperação de senha e gestão de usuários.

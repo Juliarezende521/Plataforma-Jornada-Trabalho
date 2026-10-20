@@ -64,7 +64,7 @@ describe('History and detail',()=>{
   });
   it('shows event detail and preserves the result when returning',()=>{
     consult();component().open(item.id);http.expectOne('/api/me/work-sessions/session1').flush(detail);fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Marcações originais');expect(fixture.nativeElement.textContent).not.toContain('Fuso no registro:');
+    expect(fixture.nativeElement.textContent).toContain('Marcações registradas');expect(fixture.nativeElement.textContent).not.toContain('Fuso no registro:');
     component().back();expect(component().result()?.totalElements).toBe(21);expect(component().applied()?.from).toBe('2026-10-01');
   });
   it('shows the recording zone of each differing event without changing reference date',()=>{

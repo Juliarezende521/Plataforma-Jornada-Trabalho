@@ -35,7 +35,7 @@ class WorkAdjustmentServiceTest {
         when(employees.lockOwnedActive(employee.getId(),userId)).thenReturn(Optional.of(employee));
         when(employees.lockActive(employee.getId())).thenReturn(Optional.of(employee));
         when(requests.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(requests.findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(any(),eq(AdjustmentStatus.APPROVED)))
+        when(requests.findByWorkSessionIdAndStatusAndAppliedEventIdIsNullOrderByProposedOccurredAtUtcAscIdAsc(any(),eq(AdjustmentStatus.APPROVED)))
                 .thenReturn(java.util.List.of());
     }
 
@@ -77,5 +77,24 @@ class WorkAdjustmentServiceTest {
         assertThrows(AdjustmentConflict.class,() -> service.decide(request.getId(),AdjustmentStatus.APPROVED,null));
         assertEquals(AdjustmentStatus.PENDING,request.getStatus());
         verifyNoInteractions(audits);
+    }
+
+    @Test void approvedForgottenExitClosesThePersistedJourneyAtomically() {
+        var original=WorkSession.open(employee.getId(),userId,"America/Sao_Paulo",now.minus(Duration.ofHours(9)));
+        var exitAt=now.minus(Duration.ofHours(1));
+        var request=new WorkAdjustmentRequest(employee,userId,original.getId(),WorkEventType.EXIT,exitAt,"Saída esquecida no fim do expediente.",now.minusSeconds(30));
+        when(requests.lockById(request.getId())).thenReturn(Optional.of(request));
+        when(sessions.findOwned(original.getId(),employee.getId())).thenReturn(Optional.of(new JpaWorkSessionStore.StoredSession(original,3)));
+        when(sessions.appendCorrection(original.getId(),employee.getId(),3,WorkEventType.EXIT,exitAt,now,"America/Sao_Paulo"))
+                .thenAnswer(invocation -> {
+                    original.recordCorrection(WorkEventType.EXIT,exitAt,now,"America/Sao_Paulo");
+                    return new JpaWorkSessionStore.StoredSession(original,4);
+                });
+        var result=service.decide(request.getId(),AdjustmentStatus.APPROVED,"Horário conferido.");
+        assertEquals(AdjustmentStatus.APPROVED,result.status());
+        assertNotNull(result.appliedEventId());
+        assertEquals(io.github.juliarezende521.workjourney.journey.WorkState.CLOSED,original.getState());
+        verify(sessions).appendCorrection(original.getId(),employee.getId(),3,WorkEventType.EXIT,exitAt,now,"America/Sao_Paulo");
+        verify(audits).save(any(AuditEntry.class));
     }
 }

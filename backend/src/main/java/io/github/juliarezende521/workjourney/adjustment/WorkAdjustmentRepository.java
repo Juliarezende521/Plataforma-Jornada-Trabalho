@@ -29,6 +29,9 @@ interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRequest, 
     @Query("SELECT request FROM WorkAdjustmentRequest request JOIN FETCH request.employee WHERE request.id=:id")
     Optional<WorkAdjustmentRequest> lockById(@Param("id") UUID id);
 
-    List<WorkAdjustmentRequest> findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
+    List<WorkAdjustmentRequest> findByWorkSessionIdAndStatusAndAppliedEventIdIsNullOrderByProposedOccurredAtUtcAscIdAsc(
             UUID workSessionId, AdjustmentStatus status);
+
+    List<WorkAdjustmentRequest> findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
+            UUID workSessionId,AdjustmentStatus status);
 }

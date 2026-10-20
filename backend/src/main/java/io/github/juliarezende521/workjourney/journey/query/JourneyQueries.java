@@ -56,8 +56,10 @@ public class JourneyQueries {
     }
     public static Detail describe(WorkSession session, Instant observed, EffectiveTimelineService.Timeline effective) {
         var events=session.getEvents();
+        var corrections=effective.events().stream().filter(event -> "ADJUSTMENT".equals(event.source())&&event.originalEventId()!=null)
+                .map(EffectiveTimelineService.Event::originalEventId).collect(java.util.stream.Collectors.toSet());
         return new Detail(Item.from(session, observed), observed,
-                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId(), e.workMode())).toList(),
+                events.stream().map(e -> new Event(e.id(), e.sequence(), e.type(), e.occurredAtUtc(), e.recordedAtUtc(), e.recordedTimeZoneId(), e.workMode(),corrections.contains(e.id()))).toList(),
                 new Effective(effective.state(),effective.workDuration().toString(),effective.adjusted(),effective.events()));
     }
 
@@ -68,7 +70,7 @@ public class JourneyQueries {
         }
     }
     public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc) { }
-    public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode) { }
+    public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode,boolean correction) { }
     public record Effective(WorkState state,String workDuration,boolean adjusted,List<EffectiveTimelineService.Event> events) { }
     public record Detail(Item session, Instant observedAtUtc, List<Event> events,Effective effective) { }
     public static final class InvalidFilter extends RuntimeException { }
