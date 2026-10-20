@@ -14,11 +14,12 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Jornada atual com estado, duração provisória e ações disponíveis.
 - Histórico próprio por período e detalhe das marcações.
 - Visão de RH com panorama dos colaboradores e consulta individual.
+- Solicitação de marcação esquecida e decisão auditável pelo RH.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.
 - Layout responsivo e navegação por teclado.
 
-O consolidado mensal e a regularização de marcações esquecidas ficaram fora desta primeira versão. Preferi entregar o fluxo principal com regras e integridade bem definidas, deixando essas extensões como próximos passos.
+O consolidado mensal e a aplicação dos ajustes aprovados aos cálculos ficaram fora da primeira versão. O fluxo de solicitação e decisão foi acrescentado depois da entrega, preservando sempre as marcações originais.
 
 ## Stack
 
@@ -143,7 +144,7 @@ scripts/ci/            validação integrada com SQL Server e navegador
 ## Limitações conhecidas
 
 - Não há cadastro público nem recuperação de senha; as contas são provisionadas para avaliação.
-- Não há correção retroativa ou aprovação de ajustes de jornada.
+- Ajustes aprovados ficam como uma camada auditável e ainda não alteram os totais calculados da jornada.
 - Não há consolidado mensal, cálculo de horas extras ou integração com folha.
 - A localização é declarada pelo fuso e pela modalidade; a aplicação não usa geolocalização.
 - A execução local do SQL Server depende de host compatível com a imagem oficial. Em máquinas ARM pode ser necessário usar uma instância externa.
@@ -157,7 +158,7 @@ As escolhas de arquitetura, a definição das regras de negócio e a composiçã
 
 ## Próximos passos
 
-1. Fluxo auditável para solicitar e aprovar correções.
+1. Incorporar os ajustes aprovados ao cálculo efetivo sem reescrever eventos originais.
 2. Consolidado por período para apoiar o fechamento mensal.
 3. Integração com o provedor de identidade da empresa.
 4. Validação em dispositivos físicos com pessoas de RH e colaboradores.

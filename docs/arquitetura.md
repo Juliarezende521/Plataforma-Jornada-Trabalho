@@ -44,9 +44,10 @@ erDiagram
 | work_session | id UUID, employee_id, work_date, reference_time_zone_id, state, closed_at_utc, version bigint | FK; version não nulo; estado e encerramento coerentes |
 | work_event | id UUID, work_session_id, event_type, occurred_at_utc, recorded_at_utc, sequence, author_user_id | FKs; tipo permitido; sequence positiva e única por jornada |
 | idempotency_request | id UUID, employee_id, request_key, payload_hash, result_event_id | FK; chave única por colaborador; resultado do comando confirmado |
-| audit_entry (planejada) | id UUID, actor_user_id opcional, action, entity_id, recorded_at_utc, correlation_id | Necessária para futuras regularizações auditáveis |
+| work_adjustment_request | id UUID, jornada, colaborador, evento proposto, instante, motivo, estado, decisão e version | Eventos originais permanecem imutáveis; decisão terminal |
+| audit_entry | id UUID, actor_user_id, action, entity_id, recorded_at_utc, details | Registro append-only das solicitações e decisões |
 
-As migrations V1–V6 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH e modalidade de trabalho. Auditoria de regularizações e vínculo de gestor continuam planejados.
+As migrations V1–V7 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade e solicitações auditáveis de ajuste. O vínculo de gestor continua planejado.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
@@ -82,6 +83,10 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | GET /api/me/work-sessions/current | Sessão | Jornada atual ou representação vazia documentada |
 | GET /api/me/work-sessions | from/to/page/size | Histórico próprio paginado; consolidado ainda não implementado |
 | GET /api/me/work-sessions/{id} | ID e sessão | Detalhe próprio; 404 se inexistente ou alheio |
+| POST /api/me/work-adjustments | Jornada, evento, instante proposto e justificativa | Solicitação pendente sem alterar o evento original |
+| GET /api/me/work-adjustments | Jornada/página | Solicitações próprias paginadas |
+| GET /api/hr/work-adjustments | Página | Fila paginada de solicitações pendentes |
+| POST /api/hr/work-adjustments/{id}/decision | Aprovar/rejeitar e observação | Decisão terminal e auditada, exclusiva do RH |
 
 Filtros `from` e `to` são datas de referência inclusivas, limitadas a 366 dias. A página inicial é 0; o tamanho padrão é 20 e o máximo é 100. A ordenação usa data e abertura decrescentes, com ID como desempate. Parâmetros inválidos retornam 400 e instantes usam ISO 8601 UTC.
 
@@ -99,4 +104,4 @@ As regras de negócio e prioridades são decisões propostas para o desafio, nã
 
 ## Estado atual
 
-POST de marcação, GET de recibo, jornada atual, histórico, detalhe e consultas do RH estão implementados com DTOs explícitos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500. O consolidado do período e a regularização auditável ainda não fazem parte desta versão.
+POST de marcação, GET de recibo, jornada atual, histórico, detalhe, consultas do RH e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500. O consolidado do período e a projeção dos ajustes aprovados nos totais ainda não fazem parte desta versão.

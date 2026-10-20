@@ -1,8 +1,11 @@
 <nav class="hr-navigation" aria-label="Navegação do RH">
   <button type="button" (click)="show('overview')" [class.secondary]="view() !== 'overview'" [attr.aria-current]="view() === 'overview' ? 'page' : null">Visão geral</button>
   <button type="button" (click)="show('individual')" [class.secondary]="view() === 'overview'" [attr.aria-current]="view() === 'individual' ? 'page' : null">Consulta individual</button>
+  <button type="button" (click)="show('adjustments')" [class.secondary]="view() !== 'adjustments'" [attr.aria-current]="view() === 'adjustments' ? 'page' : null">Ajustes pendentes</button>
 </nav>
-@if (view() === 'individual') {
+@if (view() === 'adjustments') {
+  <app-adjustment-review />
+} @else if (view() === 'individual') {
   <app-hr [user]="user()" />
 } @else if (view() === 'selected') {
   @if (selected(); as person) {

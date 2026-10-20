@@ -7,7 +7,8 @@ import { formatInstant, formatWorkDate } from '../journey/journey-format';
 import { workModeLabel } from '../journey/journey.types';
 import { HistoryApi } from './history-api.service';
 import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
-@Component({ selector: 'app-history', imports: [ReactiveFormsModule], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
+import { AdjustmentPanelComponent } from '../adjustment/adjustment-panel.component';
+@Component({ selector: 'app-history', imports: [ReactiveFormsModule, AdjustmentPanelComponent], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
 export class HistoryComponent {
   readonly user = input.required<Identity>();
   readonly targetEmployee = input<EmployeeSummary | null>(null);
@@ -21,6 +22,7 @@ export class HistoryComponent {
   readonly busy = signal(false);
   readonly result = signal<HistoryPage | null>(null);
   readonly detail = signal<JourneyDetail | null>(null);
+  readonly adjustmentsVisible = signal(false);
   readonly message = signal('Escolha o período para consultar suas jornadas.');
   readonly fieldError = signal('');
   readonly applied = signal<HistoryFilter | null>(null);
@@ -36,7 +38,7 @@ export class HistoryComponent {
     effect(() => { const user=this.user(); const target=this.targetEmployee(); const initialDate=this.initialWorkDate(); untracked(() => {
       const key=user.userId + ':' + user.employeeId + ':' + (target?.id ?? 'own') + ':' + (initialDate ?? 'default');
       if (key===this.identityKey) return;
-      this.identityKey=key; this.request?.unsubscribe(); this.result.set(null); this.detail.set(null); this.applied.set(null); this.busy.set(false);
+      this.identityKey=key; this.request?.unsubscribe(); this.result.set(null); this.detail.set(null); this.adjustmentsVisible.set(false); this.applied.set(null); this.busy.set(false);
       this.zone.setValue('reference'); this.fieldError.set(''); this.message.set('Escolha o período para consultar suas jornadas.');
       const today=new Intl.DateTimeFormat('en-CA', { timeZone: this.referenceZone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
       this.form.setValue({ from: initialDate ?? today.slice(0,8) + '01', to: initialDate ?? today });
@@ -58,18 +60,19 @@ export class HistoryComponent {
   }
   load(page: number): void {
     const filter=this.applied(); if (!filter || this.busy() || page<0) return;
-    this.busy.set(true); this.result.set(null); this.detail.set(null); this.message.set('Consultando jornadas do período…');
+    this.busy.set(true); this.result.set(null); this.detail.set(null); this.adjustmentsVisible.set(false); this.message.set('Consultando jornadas do período…');
     this.request=this.api.history(filter,page,this.targetEmployee()?.id).subscribe({ next: result => { this.result.set(result); this.busy.set(false);
       this.message.set(result.totalElements ? 'Consulta concluída. Seus registros estão disponíveis.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
       error: error => this.fail(error) });
   }
   open(id: string): void {
     if (this.busy()) return;
-    this.busy.set(true); this.detail.set(null); this.message.set('Consultando os detalhes…');
+    this.busy.set(true); this.detail.set(null); this.adjustmentsVisible.set(false); this.message.set('Consultando os detalhes…');
     this.request=this.api.detail(id,this.targetEmployee()?.id).subscribe({ next: detail => { this.detail.set(detail); this.busy.set(false); this.message.set('Detalhes consultados.');
       setTimeout(() => { if (!this.destroyRef.destroyed) this.detailHeading()?.nativeElement.focus(); }); }, error: error => this.fail(error) });
   }
-  back(): void { this.detail.set(null); this.message.set('Filtros e página preservados.'); this.heading()?.nativeElement.focus(); }
+  showAdjustments(): void { this.adjustmentsVisible.set(true); }
+  back(): void { this.detail.set(null); this.adjustmentsVisible.set(false); this.message.set('Filtros e página preservados.'); this.heading()?.nativeElement.focus(); }
   private fail(error: unknown): void {
     this.busy.set(false);
     const status=error instanceof HttpErrorResponse ? error.status : 0;

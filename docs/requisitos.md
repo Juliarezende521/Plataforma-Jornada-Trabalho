@@ -33,6 +33,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Modalidade | Guarda escritório, remoto ou viagem em cada marcação |
 | RH | Apresenta visão geral e consulta individual com permissão específica |
 | Recuperação | Reconcilia uma tentativa após timeout ou recarregamento sem duplicar o evento |
+| Ajustes | Colaborador solicita uma marcação esquecida; RH aprova ou rejeita com trilha de auditoria |
 
 ## Regras de jornada
 
@@ -45,6 +46,9 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 - A duração exclui todos os intervalos de pausa.
 - Jornada aberta tem duração provisória e não deve ser tratada como total fechado.
 - Eventos já confirmados não são editados ou apagados.
+- Solicitações de ajuste não reescrevem os eventos originais.
+- Apenas o dono da jornada solicita um ajuste e somente o RH decide.
+- Uma decisão é terminal; novas alterações exigem uma nova solicitação.
 
 ## Tempo, viagens e localização
 
@@ -78,8 +82,8 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 ## Fora desta versão
 
 - Consolidado mensal e cálculo de horas extras.
-- Regularização retroativa de marcações.
-- Aprovação de ajustes por gestor ou RH.
+- Aplicação dos ajustes aprovados ao cálculo efetivo da jornada.
+- Aprovação de ajustes por gestor; nesta etapa, a decisão é exclusiva do RH.
 - Integração com folha de pagamento.
 - Cadastro, recuperação de senha e gestão de usuários.
 - Single sign-on corporativo.

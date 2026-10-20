@@ -22,6 +22,8 @@ Login e logout bem-sucedidos retornam `204`. Credenciais inválidas retornam `40
 | GET | `/api/me/work-event-requests/{key}` | Consulta o recibo de uma tentativa idempotente |
 | GET | `/api/me/work-sessions` | Histórico próprio paginado |
 | GET | `/api/me/work-sessions/{id}` | Detalhe de uma jornada própria |
+| POST | `/api/me/work-adjustments` | Solicita inclusão auditável de uma marcação esquecida |
+| GET | `/api/me/work-adjustments?workSessionId={id}` | Lista as solicitações próprias da jornada |
 
 ### Registrar uma marcação
 
@@ -58,7 +60,20 @@ GET /api/me/work-sessions?from=2026-10-01&to=2026-10-31&page=0&size=20
 - `size` aceita valores de 1 a 100.
 - Uma jornada inexistente ou pertencente a outra pessoa não fica visível pela rota de detalhe.
 
-## Consulta do RH
+### Solicitar uma marcação esquecida
+
+```json
+{
+  "workSessionId": "5fd81cc7-bc67-4f71-8555-2e41331195ed",
+  "requestedEventType": "PAUSE_START",
+  "proposedOccurredAtUtc": "2026-10-20T15:00:00Z",
+  "reason": "A pausa não foi registrada por falta de conexão."
+}
+```
+
+O horário não pode estar no futuro, a justificativa aceita de 10 a 500 caracteres e o corpo é limitado a 4 KiB. A solicitação não modifica a linha do tempo original.
+
+## Consulta e decisão do RH
 
 Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 
@@ -68,8 +83,10 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/overview` | Estado mais recente de cada colaborador da página |
 | GET | `/api/hr/employees/{employeeId}/work-sessions` | Histórico individual |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
+| GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
+| POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
 
-Essas rotas são somente de leitura. A permissão do RH é revalidada no banco e não autoriza marcações em nome de outra pessoa.
+As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor verifica se a marcação proposta forma uma sequência válida com os eventos originais. A permissão do RH não autoriza marcações online em nome de outra pessoa.
 
 ## Erros
 

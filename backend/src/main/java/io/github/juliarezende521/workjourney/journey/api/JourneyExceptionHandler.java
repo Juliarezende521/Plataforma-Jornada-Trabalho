@@ -11,7 +11,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class, HrJourneyController.class})
+@RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class, HrJourneyController.class,
+        io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);
 
@@ -28,6 +29,17 @@ public class JourneyExceptionHandler {
 
     @ExceptionHandler(JourneyController.ReceiptNotFound.class)
     ResponseEntity<Problem> absent() { return problem(404, "Receipt not visible"); }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.adjustment.InvalidAdjustment.class)
+    ResponseEntity<Problem> invalidAdjustment(io.github.juliarezende521.workjourney.adjustment.InvalidAdjustment error) {
+        return problem(error.status(), error.status()==413 ? "Request body too large" : "Invalid adjustment request");
+    }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.adjustment.AdjustmentNotVisible.class)
+    ResponseEntity<Problem> hiddenAdjustment() { return problem(404, "Adjustment not visible"); }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.adjustment.AdjustmentConflict.class)
+    ResponseEntity<Problem> adjustmentConflict() { return problem(409, "Adjustment already decided"); }
 
     @ExceptionHandler(AuthenticationException.class)
     ResponseEntity<Problem> unauthenticated() { return problem(401, "Authentication required"); }

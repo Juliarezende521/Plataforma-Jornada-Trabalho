@@ -29,6 +29,13 @@
     <ol class="events">@for (event of d.events; track event.id) {
       <li><strong>{{ eventLabels[event.type] }}</strong><br /><time [attr.datetime]="event.occurredAtUtc">{{ formatInstant(event.occurredAtUtc, d.session.referenceTimeZoneId) }}</time>@if (event.recordedTimeZoneId !== d.session.referenceTimeZoneId) {<br /><small>Fuso no registro: {{ event.recordedTimeZoneId }}</small>}<p class="event-work-mode">Modalidade: {{ workModeLabel(event.workMode) }}</p></li>
     }</ol>
+    @if (!targetEmployee()) {
+      @if (adjustmentsVisible()) {
+        <app-adjustment-panel [workSessionId]="d.session.id" [displayZone]="referenceZone()" />
+      } @else {
+        <button class="secondary" type="button" (click)="showAdjustments()">Solicitar ou acompanhar correção</button>
+      }
+    }
   } @else if (result(); as page) {
     @if (applied(); as period) { <h3>Período consultado: {{ formatWorkDate(period.from) }} a {{ formatWorkDate(period.to) }}</h3> }
     <ul class="journeys">@for (item of page.items; track item.id) {

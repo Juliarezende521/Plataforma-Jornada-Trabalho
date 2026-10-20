@@ -1,0 +1,32 @@
+<section class="adjustments" aria-labelledby="adjustment-heading" [attr.aria-busy]="busy()">
+  <h4 id="adjustment-heading">Correções desta jornada</h4>
+  <p>Solicite uma correção sem apagar as marcações originais. O RH poderá aprovar ou rejeitar o pedido.</p>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <label for="adjustment-type">Marcação que ficou faltando</label>
+    <select id="adjustment-type" formControlName="requestedEventType">
+      @for (type of eventTypes; track type) { <option [value]="type">{{ labels[type] }}</option> }
+    </select>
+    <label for="adjustment-time">Horário correto no dispositivo</label>
+    <input id="adjustment-time" type="datetime-local" formControlName="proposedLocalTime"
+      [attr.aria-invalid]="form.controls.proposedLocalTime.touched && form.controls.proposedLocalTime.invalid" />
+    <label for="adjustment-reason">Justificativa</label>
+    <textarea id="adjustment-reason" formControlName="reason" maxlength="500" rows="4" aria-describedby="adjustment-reason-help adjustment-reason-error"
+      [attr.aria-invalid]="form.controls.reason.touched && form.controls.reason.invalid"></textarea>
+    <p id="adjustment-reason-help">Entre 10 e 500 caracteres. Não inclua senhas ou dados pessoais desnecessários.</p>
+    <p id="adjustment-reason-error" class="field-error">
+      @if (form.controls.reason.touched && form.controls.reason.invalid) { Escreva uma justificativa com pelo menos 10 caracteres. }
+    </p>
+    <button type="submit" [disabled]="busy() || form.invalid">{{ busy() ? 'Aguarde…' : 'Enviar solicitação' }}</button>
+  </form>
+  <p role="status" aria-live="polite">{{ message() }}</p>
+  @if (items().length) {
+    <ul>
+      @for (item of items(); track item.id) {
+        <li><strong>{{ labels[item.requestedEventType] }} · {{ status(item.status) }}</strong>
+          <p>Horário solicitado: {{ format(item.proposedOccurredAtUtc) }}</p><p>{{ item.reason }}</p>
+          @if (item.decisionNote) { <p>Resposta do RH: {{ item.decisionNote }}</p> }
+        </li>
+      }
+    </ul>
+  }
+</section>

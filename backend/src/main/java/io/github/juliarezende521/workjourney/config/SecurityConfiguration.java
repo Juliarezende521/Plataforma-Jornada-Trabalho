@@ -21,6 +21,7 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/status", "/api/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/hr/work-adjustments/*/decision").hasRole("HR")
                 .requestMatchers(HttpMethod.GET, "/api/hr/**").hasRole("HR")
                 .requestMatchers("/api/hr/**").denyAll()
                 .anyRequest().authenticated())

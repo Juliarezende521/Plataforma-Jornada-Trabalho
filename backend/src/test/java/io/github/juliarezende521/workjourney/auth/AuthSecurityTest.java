@@ -67,6 +67,19 @@ class AuthSecurityTest {
     }
 
     @Test
+    void employeeCannotUseHrAdjustmentDecisionEndpoint() throws Exception {
+        var identity = new AccountPrincipal.Identity(UUID.randomUUID(), UUID.randomUUID(),
+                "employee@example.invalid", "Employee", "America/Sao_Paulo", false);
+        mvc.perform(post("/api/hr/work-adjustments/00000000-0000-0000-0000-000000000001/decision")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                        .user(new AccountPrincipal(identity, encoder.encode("unused-password"), true)))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"decision\":\"APPROVED\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void rateLimitedLoginReturnsSharedProblemAndRetryAfter() throws Exception {
         var csrf = mvc.perform(get("/api/auth/csrf")).andReturn();
         var token = responseJson(csrf);
