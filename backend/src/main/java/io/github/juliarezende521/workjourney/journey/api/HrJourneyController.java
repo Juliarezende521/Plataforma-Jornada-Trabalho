@@ -46,4 +46,10 @@ public class HrJourneyController {
     public JourneyQueries.Detail detail(@PathVariable String employeeId, @PathVariable String id) {
         return queries.detail(reader.uuid(employeeId), reader.uuid(id));
     }
+
+    @GetMapping("/{employeeId}/work-sessions/summary")
+    public JourneyQueries.Summary summary(@PathVariable String employeeId,HttpServletRequest request) {
+        var filter=SummaryRequestFilter.read(request);
+        return queries.summary(reader.uuid(employeeId),filter.from(),filter.to());
+    }
 }

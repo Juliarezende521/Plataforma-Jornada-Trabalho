@@ -52,6 +52,21 @@ class JourneyHttpTest {
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("secret"))));
     }
 
+    @Test void summaryRequiresAnExactBoundedPeriod() throws Exception {
+        var from=java.time.LocalDate.of(2026,10,1);var to=java.time.LocalDate.of(2026,10,31);
+        var response=new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.Summary(
+                from,to,"PT40H",5,5,0,1,5,NOW);
+        when(queries.summary(from,to)).thenReturn(response);
+        mvc.perform(get("/api/me/work-sessions/summary?from=2026-10-01&to=2026-10-31").with(user(principal())))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalWorkDuration").value("PT40H"))
+                .andExpect(jsonPath("$.adjustedSessions").value(1));
+        mvc.perform(get("/api/me/work-sessions/summary?from=2026-10-01&to=2027-10-02").with(user(principal())))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/me/work-sessions/summary?from=2026-10-01&to=2026-10-31&extra=1").with(user(principal())))
+                .andExpect(status().isBadRequest());
+        verify(queries).summary(from,to);verifyNoMoreInteractions(queries);
+    }
+
     @Test void authenticationAndCsrfBlockBeforeServices() throws Exception {
         mvc.perform(get("/api/me/work-sessions/current")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/me/work-event-requests/" + UUID.randomUUID())).andExpect(status().isUnauthorized());

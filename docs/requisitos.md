@@ -28,6 +28,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Saída | Encerra a jornada a partir dos estados trabalhando ou em pausa |
 | Jornada atual | Mostra estado, última marcação, duração provisória e ações válidas |
 | Histórico | Filtra jornadas por período e apresenta resultados paginados |
+| Resumo | Consolida duração efetiva, dias, jornadas abertas, encerradas e ajustadas no período |
 | Detalhe | Lista as marcações originais na ordem em que aconteceram |
 | Fusos | Permite visualizar instantes em São Paulo, Lisboa ou UTC sem alterar o registro |
 | Modalidade | Guarda escritório, remoto ou viagem em cada marcação |

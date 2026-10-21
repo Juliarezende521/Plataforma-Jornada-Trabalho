@@ -91,6 +91,14 @@ public class HrJourneyQueries {
         return JourneyQueries.describe(session,observed,timelines.project(session,observed));
     }
 
+    @Transactional
+    public JourneyQueries.Summary summary(UUID employeeId,LocalDate from,LocalDate to) {
+        requireHr();
+        JourneyQueries.validateSummary(from,to);
+        employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
+        return JourneyQueries.summarize(store,timelines,employeeId,from,to,UtcInstants.normalize(clock.instant()));
+    }
+
     public record Person(UUID id, String name, String referenceTimeZoneId) { }
     public record Directory(List<Person> items, int page, int size, long totalElements) { }
 }

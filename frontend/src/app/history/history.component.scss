@@ -41,3 +41,9 @@ label { display: block; margin: 0 0 var(--space-2); font-size: .8rem; font-weigh
 .events li { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); border-radius: var(--radius-md); background: var(--color-surface); padding: var(--space-6); }
 .events time { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: clamp(1.35rem, 4vw, 1.8rem); }
 .journeys li { box-shadow: none; }
+.period-summary { border:1px solid #d8dfeb; border-radius:.75rem; padding:1rem; margin:1rem 0; }
+.period-summary h4 { margin-top:0; }
+.period-summary dl { display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); gap:.75rem; margin:0; }
+.period-summary dl div { background:#f5f7fb; border-radius:.5rem; padding:.75rem; }
+.period-summary dt { color:#4b5870; font-size:.875rem; }
+.period-summary dd { font-size:1.25rem; font-weight:700; margin:.25rem 0 0; }

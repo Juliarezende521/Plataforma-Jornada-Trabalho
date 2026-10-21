@@ -6,6 +6,10 @@ export interface HistoryItem {
 export interface HistoryPage {
   items: HistoryItem[]; page: number; size: number; totalElements: number; observedAtUtc: string;
 }
+export interface PeriodSummary {
+  from:string; to:string; totalWorkDuration:string; totalSessions:number; closedSessions:number;
+  openSessions:number; adjustedSessions:number; workedDays:number; observedAtUtc:string;
+}
 export interface JourneyDetail {
   session: HistoryItem; observedAtUtc: string;
   events: { id: string; sequence: number; type: EventType; occurredAtUtc: string; recordedAtUtc: string; recordedTimeZoneId: string; workMode?: WorkMode | null; correction?:boolean }[];

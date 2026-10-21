@@ -5,6 +5,7 @@ import { HrComponent } from './hr.component';
 const hr = { userId: 'hr', employeeId: 'hr-employee', name: 'RH', email: 'hr@example.invalid', referenceTimeZoneId: 'UTC', hrReader: true };
 const brazil = { id: 'brazil', name: 'Brasil', referenceTimeZoneId: 'America/Sao_Paulo' };
 const europe = { id: 'europe', name: 'Europa', referenceTimeZoneId: 'Europe/Amsterdam' };
+const emptySummary={from:'2026-10-01',to:'2026-10-14',totalWorkDuration:'PT0S',totalSessions:0,closedSessions:0,openSessions:0,adjustedSessions:0,workedDays:0,observedAtUtc:'2026-10-14T14:00:00Z'};
 describe('Read-only HR screen', () => {
   let fixture: ComponentFixture<HrComponent>; let http: HttpTestingController;
   beforeEach(async () => {
@@ -27,6 +28,7 @@ describe('Read-only HR screen', () => {
     const request = http.expectOne(r => r.url === '/api/hr/employees/brazil/work-sessions');
     expect(request.request.params.get('from')).toBe('2026-10-01');
     request.flush({ items: [], page: 0, size: 20, totalElements: 0, observedAtUtc: '2026-10-14T14:00:00Z' });
+    http.expectOne(r=>r.url==='/api/hr/employees/brazil/work-sessions/summary').flush(emptySummary);
     http.expectNone('/api/me/work-sessions');
     expect(fixture.componentInstance.user().userId).toBe('hr');
   });
@@ -34,8 +36,9 @@ describe('Read-only HR screen', () => {
     mount(); directory(); fixture.componentInstance.choice.setValue(brazil.id); fixture.detectChanges();
     fixture.nativeElement.querySelector('app-history form').dispatchEvent(new Event('submit'));
     const request = http.expectOne(r => r.url === '/api/hr/employees/brazil/work-sessions');
+    const summaryRequest=http.expectOne(r=>r.url==='/api/hr/employees/brazil/work-sessions/summary');
     fixture.componentInstance.choice.setValue(europe.id); fixture.detectChanges();
-    expect(request.cancelled).toBe(true); expect(fixture.nativeElement.textContent).toContain('Registros de Europa');
+    expect(request.cancelled).toBe(true);expect(summaryRequest.cancelled).toBe(true); expect(fixture.nativeElement.textContent).toContain('Registros de Europa');
     fixture.componentRef.setInput('user', { ...hr, hrReader: false }); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-history')).toBeNull(); expect(fixture.componentInstance.directory()).toBeNull();
     http.expectNone('/api/hr/employees');

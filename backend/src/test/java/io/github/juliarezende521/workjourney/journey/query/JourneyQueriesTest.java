@@ -2,8 +2,13 @@ package io.github.juliarezende521.workjourney.journey.query;
 import io.github.juliarezende521.workjourney.journey.*;
 import java.time.*;
 import java.util.UUID;
+import java.util.List;
+import java.util.Map;
+import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService;
+import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 class JourneyQueriesTest {
     @Test void closedDetailPreservesEventOrderTimeZoneAndUtcPrecision() {
         var start=Instant.parse("2026-10-25T00:30:00.0000001Z");
@@ -39,5 +44,27 @@ class JourneyQueriesTest {
         assertThrows(JourneyQueries.InvalidFilter.class, () -> JourneyQueries.validate(from,from,-1,20));
         assertThrows(JourneyQueries.InvalidFilter.class, () -> JourneyQueries.validate(from,from,0,101));
         assertThrows(JourneyQueries.InvalidFilter.class, () -> JourneyQueries.validate(from,from,Integer.MAX_VALUE,20));
+    }
+    @Test void summaryUsesEffectiveDurationsAndDistinguishesOpenAndAdjustedSessions() {
+        var employee=UUID.randomUUID();var day=LocalDate.of(2026,10,20);var observed=Instant.parse("2026-10-20T20:00:00Z");
+        var closed=WorkSession.open(employee,UUID.randomUUID(),"UTC",observed.minusSeconds(10_800));
+        closed.record(WorkEventType.EXIT,observed.minusSeconds(3_600));
+        var open=WorkSession.open(employee,UUID.randomUUID(),"UTC",observed.minusSeconds(1_800));
+        var store=mock(JpaWorkSessionStore.class);var timelines=mock(EffectiveTimelineService.class);
+        when(store.historyCount(employee,day,day)).thenReturn(2L);
+        when(store.history(employee,day,day,0,100)).thenReturn(List.of(closed,open));
+        when(timelines.projectAll(List.of(closed,open),observed)).thenReturn(Map.of(
+                closed.getId(),new EffectiveTimelineService.Timeline(WorkState.CLOSED,Duration.ofHours(7),true,List.of()),
+                open.getId(),new EffectiveTimelineService.Timeline(WorkState.WORKING,Duration.ofMinutes(30),false,List.of())));
+        var summary=JourneyQueries.summarize(store,timelines,employee,day,day,observed);
+        assertEquals("PT7H30M",summary.totalWorkDuration());assertEquals(2,summary.totalSessions());
+        assertEquals(1,summary.closedSessions());assertEquals(1,summary.openSessions());
+        assertEquals(1,summary.adjustedSessions());assertEquals(1,summary.workedDays());
+        verify(timelines).projectAll(List.of(closed,open),observed);
+    }
+    @Test void summaryRangeMatchesTheBoundedHistoryPeriod() {
+        var from=LocalDate.of(2026,10,1);
+        assertDoesNotThrow(() -> JourneyQueries.validateSummary(from,from.plusDays(365)));
+        assertThrows(JourneyQueries.InvalidFilter.class,() -> JourneyQueries.validateSummary(from,from.plusDays(366)));
     }
 }

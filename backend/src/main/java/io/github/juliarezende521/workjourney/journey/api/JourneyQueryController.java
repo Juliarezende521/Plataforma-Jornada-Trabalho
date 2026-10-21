@@ -18,6 +18,12 @@ public class JourneyQueryController {
         return queries.history(filter.from(), filter.to(), filter.page(), filter.size());
     }
 
+    @GetMapping("/summary")
+    public JourneyQueries.Summary summary(HttpServletRequest request) {
+        var filter=SummaryRequestFilter.read(request);
+        return queries.summary(filter.from(),filter.to());
+    }
+
     @GetMapping("/{id}")
     public JourneyQueries.Detail detail(@PathVariable String id) { return queries.detail(reader.uuid(id)); }
 }

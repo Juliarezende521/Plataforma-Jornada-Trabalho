@@ -63,4 +63,19 @@ class EffectiveTimelineServiceTest {
         assertEquals("ADJUSTMENT",timeline.events().get(1).source());
         assertEquals(request.getId(),timeline.events().get(1).adjustmentId());
     }
+
+    @Test void projectsSummaryBatchWithOneAdjustmentQuery() {
+        var observed=Instant.parse("2026-10-20T20:00:00Z");var employee=UUID.randomUUID();
+        var first=WorkSession.open(employee,UUID.randomUUID(),"UTC",observed.minusSeconds(7200));
+        first.record(WorkEventType.EXIT,observed.minusSeconds(3600));
+        var second=WorkSession.open(employee,UUID.randomUUID(),"UTC",observed.minusSeconds(1800));
+        var repository=mock(WorkAdjustmentRepository.class);var ids=List.of(first.getId(),second.getId());
+        when(repository.findByWorkSessionIdInAndStatusOrderByWorkSessionIdAscProposedOccurredAtUtcAscIdAsc(ids,AdjustmentStatus.APPROVED))
+                .thenReturn(List.of());
+        var timelines=new EffectiveTimelineService(repository).projectAll(List.of(first,second),observed);
+        assertEquals(2,timelines.size());assertEquals(Duration.ofHours(1),timelines.get(first.getId()).workDuration());
+        assertEquals(Duration.ofMinutes(30),timelines.get(second.getId()).workDuration());
+        verify(repository).findByWorkSessionIdInAndStatusOrderByWorkSessionIdAscProposedOccurredAtUtcAscIdAsc(ids,AdjustmentStatus.APPROVED);
+        verifyNoMoreInteractions(repository);
+    }
 }

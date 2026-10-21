@@ -51,6 +51,19 @@
     }
   } @else if (result(); as page) {
     @if (applied(); as period) { <h3>Período consultado: {{ formatWorkDate(period.from) }} a {{ formatWorkDate(period.to) }}</h3> }
+    @if (summary(); as totals) {
+      <section class="period-summary" aria-labelledby="period-summary-heading">
+        <h4 id="period-summary-heading">Resumo do período</h4>
+        <dl>
+          <div><dt>Tempo efetivo</dt><dd>{{ formatDuration(totals.totalWorkDuration) }}</dd></div>
+          <div><dt>Dias com jornada</dt><dd>{{ totals.workedDays }}</dd></div>
+          <div><dt>Jornadas encerradas</dt><dd>{{ totals.closedSessions }}</dd></div>
+          <div><dt>Jornadas pendentes</dt><dd>{{ totals.openSessions }}</dd></div>
+          <div><dt>Jornadas com ajuste</dt><dd>{{ totals.adjustedSessions }}</dd></div>
+        </dl>
+        @if (totals.openSessions) { <p>O tempo inclui jornadas ainda abertas até o momento da consulta e pode mudar.</p> }
+      </section>
+    }
     <ul class="journeys">@for (item of page.items; track item.id) {
       <li><h3>{{ formatWorkDate(item.workDate) }} · {{ stateLabel(item.state) }}</h3>
         @if (targetEmployee(); as person) { <p class="history-person">Colaborador: <strong>{{ person.name }}</strong></p> }

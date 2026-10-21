@@ -6,6 +6,7 @@ import { HistoryPage, JourneyDetail } from './history.types';
 const user={userId:'user1',employeeId:'employee1',email:'test@example.invalid',name:'Teste',referenceTimeZoneId:'America/Sao_Paulo'};
 const item={id:'session1',state:'CLOSED' as const,workDate:'2026-10-14',referenceTimeZoneId:'America/Sao_Paulo',openedAtUtc:'2026-10-14T23:30:00Z',closedAtUtc:'2026-10-15T01:30:00Z',workDuration:'PT2H',provisional:false};
 const page: HistoryPage={items:[item],page:0,size:20,totalElements:21,observedAtUtc:'2026-10-15T02:00:00Z'};
+const summary={from:'2026-10-01',to:'2026-10-31',totalWorkDuration:'PT8H',totalSessions:21,closedSessions:20,openSessions:1,adjustedSessions:2,workedDays:20,observedAtUtc:page.observedAtUtc};
 const detail: JourneyDetail={session:item,observedAtUtc:page.observedAtUtc,events:[{id:'event1',sequence:1,type:'ENTRY',occurredAtUtc:item.openedAtUtc,recordedAtUtc:item.openedAtUtc,recordedTimeZoneId:'America/Sao_Paulo'}]};
 describe('History and detail',()=>{
   let fixture: ComponentFixture<HistoryComponent>; let http: HttpTestingController;
@@ -16,11 +17,12 @@ describe('History and detail',()=>{
     component().form.setValue({from:'2026-10-01',to:'2026-10-31'});
   });
   afterEach(()=>{fixture.destroy();http.verify();});
-  function consult(){component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush(page);fixture.detectChanges();}
+  function consult(){component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush(page);http.expectOne('/api/me/work-sessions/summary?from=2026-10-01&to=2026-10-31').flush(summary);fixture.detectChanges();}
   it('identifies the selected HR employee in history cards and details and clears the old name on selection change',()=>{
     fixture.componentRef.setInput('targetEmployee',{id:'brasil',name:'Colaborador Brasil',referenceTimeZoneId:'America/Sao_Paulo'});fixture.detectChanges();
     component().form.setValue({from:'2026-10-01',to:'2026-10-31'});
-    component().consult();http.expectOne(r=>r.url==='/api/hr/employees/brasil/work-sessions').flush(page);fixture.detectChanges();
+    component().consult();http.expectOne(r=>r.url==='/api/hr/employees/brasil/work-sessions').flush(page);
+    http.expectOne('/api/hr/employees/brasil/work-sessions/summary?from=2026-10-01&to=2026-10-31').flush(summary);fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.journeys .history-person').textContent).toContain('Colaborador Brasil');
     component().open(item.id);http.expectOne('/api/hr/employees/brasil/work-sessions/session1').flush(detail);fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.history-person').length).toBe(2);
@@ -54,6 +56,7 @@ describe('History and detail',()=>{
     component().form.setValue({from:'2026-10-31',to:'2026-10-01'});component().consult();expect(component().fieldError()).toContain('366');http.expectNone('/api/me/work-sessions');
     component().form.setValue({from:'2026-10-01',to:'2026-10-31'});component().consult();component().consult();
     const request=http.expectOne(r=>r.url==='/api/me/work-sessions');expect(request.request.params.get('from')).toBe('2026-10-01');request.flush(page);
+    http.expectOne(r=>r.url==='/api/me/work-sessions/summary').flush(summary);
   });
   it('preserves filters and views the same event in Sao Paulo and Lisbon',()=>{
     consult();
@@ -79,15 +82,22 @@ describe('History and detail',()=>{
     expect(component().detail()?.session.referenceTimeZoneId).toBe('America/Sao_Paulo');
   });
   it('clears stale results on failed new consultation and offers a retry',()=>{
-    consult();component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush({}, {status:503,statusText:'Unavailable'});
+    consult();component().consult();const summaryRequest=http.expectOne(r=>r.url==='/api/me/work-sessions/summary');
+    http.expectOne(r=>r.url==='/api/me/work-sessions').flush({}, {status:503,statusText:'Unavailable'});expect(summaryRequest.cancelled).toBe(true);
     expect(component().result()).toBeNull();expect(component().message()).toContain('preservados');expect(component().busy()).toBe(false);
   });
   it('cancels an old identity request and removes its data on account change',()=>{
-    component().consult();const request=http.expectOne(r=>r.url==='/api/me/work-sessions');fixture.componentRef.setInput('user',{...user,userId:'other',employeeId:'other'});fixture.detectChanges();
-    expect(request.cancelled).toBe(true);expect(component().result()).toBeNull();expect(component().applied()).toBeNull();
+    component().consult();const request=http.expectOne(r=>r.url==='/api/me/work-sessions');const summaryRequest=http.expectOne(r=>r.url==='/api/me/work-sessions/summary');
+    fixture.componentRef.setInput('user',{...user,userId:'other',employeeId:'other'});fixture.detectChanges();
+    expect(request.cancelled).toBe(true);expect(summaryRequest.cancelled).toBe(true);expect(component().result()).toBeNull();expect(component().summary()).toBeNull();expect(component().applied()).toBeNull();
   });
   it('explains empty periods',()=>{
-    component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush({...page,items:[],totalElements:0});fixture.detectChanges();
+    component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush({...page,items:[],totalElements:0});
+    http.expectOne(r=>r.url==='/api/me/work-sessions/summary').flush({...summary,totalSessions:0,closedSessions:0,openSessions:0,adjustedSessions:0,workedDays:0,totalWorkDuration:'PT0S'});fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Nenhuma jornada');expect(fixture.nativeElement.textContent).not.toContain('Total de trabalho encerrado');
+  });
+  it('shows effective period totals and explains provisional open journeys',()=>{
+    consult();expect(fixture.nativeElement.textContent).toContain('Resumo do período');expect(fixture.nativeElement.textContent).toContain('8 h');
+    expect(fixture.nativeElement.textContent).toContain('Jornadas com ajuste');expect(fixture.nativeElement.textContent).toContain('ainda abertas');
   });
 });

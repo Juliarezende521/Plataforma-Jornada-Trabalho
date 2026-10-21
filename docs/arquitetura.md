@@ -81,7 +81,8 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | POST /api/me/work-events | Tipo, expectedWorkSessionId (null para entrada) e header Idempotency-Key | Evento confirmado; novo registro 201; repetição retorna resposta original |
 | GET /api/me/work-event-requests/{key} | Chave UUID e sessão autenticada | 200: recibo terminal próprio com resultado original; 404: sem recibo visível, não garante que a primeira requisição terminou; 401: reautenticar |
 | GET /api/me/work-sessions/current | Sessão | Jornada atual ou representação vazia documentada |
-| GET /api/me/work-sessions | from/to/page/size | Histórico próprio paginado; consolidado ainda não implementado |
+| GET /api/me/work-sessions | from/to/page/size | Histórico próprio paginado |
+| GET /api/me/work-sessions/summary | from/to | Resumo efetivo do período, processado em lotes |
 | GET /api/me/work-sessions/{id} | ID e sessão | Detalhe próprio; 404 se inexistente ou alheio |
 | POST /api/me/work-adjustments | Jornada, evento, instante proposto e justificativa | Solicitação pendente sem alterar o evento original |
 | GET /api/me/work-adjustments | Jornada/página | Solicitações próprias paginadas |
@@ -104,4 +105,4 @@ As regras de negócio e prioridades são decisões propostas para o desafio, nã
 
 ## Estado atual
 
-POST de marcação, GET de recibo, jornada atual, histórico, detalhe, consultas do RH e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. O detalhe expõe separadamente registros persistidos e a projeção efetiva, com duração recalculada. Uma saída esquecida aprovada é anexada como evento corretivo, atualiza o checkpoint e a versão e registra decisão/auditoria na mesma transação; eventos anteriores não são reescritos. Outras aprovações que mudariam o estado online são recusadas. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500. O consolidado do período ainda não faz parte desta versão.
+POST de marcação, GET de recibo, jornada atual, histórico, detalhe, resumo efetivo, consultas do RH e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. O detalhe expõe separadamente registros persistidos e a projeção efetiva, com duração recalculada. O resumo usa a mesma projeção, lê jornadas e ajustes em lotes e sinaliza jornadas ainda abertas. Uma saída esquecida aprovada é anexada como evento corretivo, atualiza o checkpoint e a versão e registra decisão/auditoria na mesma transação; eventos anteriores não são reescritos. Outras aprovações que mudariam o estado online são recusadas. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500.

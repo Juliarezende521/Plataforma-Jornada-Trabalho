@@ -17,6 +17,21 @@ public class EffectiveTimelineService {
     public Timeline project(WorkSession session,Instant observed) {
         var approved=requests.findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
                 session.getId(),AdjustmentStatus.APPROVED);
+        return project(session,approved,observed);
+    }
+
+    /** Loads all approved adjustments in one query, avoiding one query per session in summaries. */
+    public Map<UUID,Timeline> projectAll(List<WorkSession> sessions,Instant observed) {
+        if(sessions.isEmpty())return Map.of();
+        var grouped=requests.findByWorkSessionIdInAndStatusOrderByWorkSessionIdAscProposedOccurredAtUtcAscIdAsc(
+                        sessions.stream().map(WorkSession::getId).toList(),AdjustmentStatus.APPROVED).stream()
+                .collect(java.util.stream.Collectors.groupingBy(WorkAdjustmentRequest::getWorkSessionId));
+        var result=new LinkedHashMap<UUID,Timeline>();
+        sessions.forEach(session -> result.put(session.getId(),project(session,grouped.getOrDefault(session.getId(),List.of()),observed)));
+        return Map.copyOf(result);
+    }
+
+    private Timeline project(WorkSession session,List<WorkAdjustmentRequest> approved,Instant observed) {
         var overlays=approved.stream().filter(request -> request.getAppliedEventId()==null).map(Approved::from).toList();
         var applied=approved.stream().filter(request -> request.getAppliedEventId()!=null)
                 .collect(java.util.stream.Collectors.toMap(WorkAdjustmentRequest::getAppliedEventId,WorkAdjustmentRequest::getId));

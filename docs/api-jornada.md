@@ -21,6 +21,7 @@ Login e logout bem-sucedidos retornam `204`. Credenciais inválidas retornam `40
 | POST | `/api/me/work-events` | Registra uma transição de jornada |
 | GET | `/api/me/work-event-requests/{key}` | Consulta o recibo de uma tentativa idempotente |
 | GET | `/api/me/work-sessions` | Histórico próprio paginado |
+| GET | `/api/me/work-sessions/summary` | Resumo efetivo do período |
 | GET | `/api/me/work-sessions/{id}` | Detalhe de uma jornada própria |
 | POST | `/api/me/work-adjustments` | Solicita inclusão auditável de uma marcação esquecida |
 | GET | `/api/me/work-adjustments?workSessionId={id}` | Lista as solicitações próprias da jornada |
@@ -61,6 +62,8 @@ GET /api/me/work-sessions?from=2026-10-01&to=2026-10-31&page=0&size=20
 - Uma jornada inexistente ou pertencente a outra pessoa não fica visível pela rota de detalhe.
 - O detalhe contém `events` com os registros originais e `effective` com a linha do tempo projetada e a duração recalculada.
 
+O resumo recebe somente `from` e `to`, com o mesmo limite de 366 dias. Ele soma a duração efetiva, incluindo ajustes aprovados, e informa quantas jornadas ainda estão abertas. Totais abertos usam o instante da consulta e são provisórios.
+
 ### Solicitar uma marcação esquecida
 
 ```json
@@ -83,6 +86,7 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees` | Diretório paginado de colaboradores ativos |
 | GET | `/api/hr/employees/overview` | Estado mais recente de cada colaborador da página |
 | GET | `/api/hr/employees/{employeeId}/work-sessions` | Histórico individual |
+| GET | `/api/hr/employees/{employeeId}/work-sessions/summary` | Resumo efetivo individual |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |

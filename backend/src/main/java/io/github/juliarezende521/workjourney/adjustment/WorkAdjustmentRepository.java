@@ -34,4 +34,7 @@ interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRequest, 
 
     List<WorkAdjustmentRequest> findByWorkSessionIdAndStatusOrderByProposedOccurredAtUtcAscIdAsc(
             UUID workSessionId,AdjustmentStatus status);
+
+    List<WorkAdjustmentRequest> findByWorkSessionIdInAndStatusOrderByWorkSessionIdAscProposedOccurredAtUtcAscIdAsc(
+            List<UUID> workSessionIds, AdjustmentStatus status);
 }

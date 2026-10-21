@@ -1,12 +1,12 @@
 import { Component, computed, DestroyRef, ElementRef, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
 import { formatDuration, formatInstant, formatWorkDate } from '../journey/journey-format';
 import { workModeLabel } from '../journey/journey.types';
 import { HistoryApi } from './history-api.service';
-import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail } from './history.types';
+import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail, PeriodSummary } from './history.types';
 import { AdjustmentPanelComponent } from '../adjustment/adjustment-panel.component';
 @Component({ selector: 'app-history', imports: [ReactiveFormsModule, AdjustmentPanelComponent], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
 export class HistoryComponent {
@@ -21,6 +21,7 @@ export class HistoryComponent {
   private identityKey = '';
   readonly busy = signal(false);
   readonly result = signal<HistoryPage | null>(null);
+  readonly summary = signal<PeriodSummary | null>(null);
   readonly detail = signal<JourneyDetail | null>(null);
   readonly adjustmentsVisible = signal(false);
   readonly message = signal('Escolha o período para consultar suas jornadas.');
@@ -39,7 +40,7 @@ export class HistoryComponent {
     effect(() => { const user=this.user(); const target=this.targetEmployee(); const initialDate=this.initialWorkDate(); untracked(() => {
       const key=user.userId + ':' + user.employeeId + ':' + (target?.id ?? 'own') + ':' + (initialDate ?? 'default');
       if (key===this.identityKey) return;
-      this.identityKey=key; this.request?.unsubscribe(); this.result.set(null); this.detail.set(null); this.adjustmentsVisible.set(false); this.applied.set(null); this.busy.set(false);
+      this.identityKey=key; this.request?.unsubscribe(); this.result.set(null); this.summary.set(null); this.detail.set(null); this.adjustmentsVisible.set(false); this.applied.set(null); this.busy.set(false);
       this.zone.setValue('reference'); this.fieldError.set(''); this.message.set('Escolha o período para consultar suas jornadas.');
       const today=new Intl.DateTimeFormat('en-CA', { timeZone: this.referenceZone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
       this.form.setValue({ from: initialDate ?? today.slice(0,8) + '01', to: initialDate ?? today });
@@ -57,13 +58,15 @@ export class HistoryComponent {
     if (!day(filter.from) || !day(filter.to) || span<0 || span>365) {
       this.fieldError.set('Informe datas válidas, com o fim igual ou posterior ao início e no máximo 366 dias.'); return;
     }
-    this.fieldError.set(''); this.applied.set(filter); this.load(0);
+    this.fieldError.set(''); this.applied.set(filter); this.load(0,true);
   }
-  load(page: number): void {
+  load(page: number,refreshSummary=false): void {
     const filter=this.applied(); if (!filter || this.busy() || page<0) return;
     this.busy.set(true); this.result.set(null); this.detail.set(null); this.adjustmentsVisible.set(false); this.message.set('Consultando jornadas do período…');
-    this.request=this.api.history(filter,page,this.targetEmployee()?.id).subscribe({ next: result => { this.result.set(result); this.busy.set(false);
-      this.message.set(result.totalElements ? 'Consulta concluída. Seus registros estão disponíveis.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
+    const employeeId=this.targetEmployee()?.id;
+    const summaryRequest=refreshSummary ? this.api.summary(filter,employeeId) : of(this.summary());
+    this.request=forkJoin({result:this.api.history(filter,page,employeeId),summary:summaryRequest}).subscribe({ next: response => { this.result.set(response.result); if(response.summary)this.summary.set(response.summary); this.busy.set(false);
+      this.message.set(response.result.totalElements ? 'Consulta concluída. Seus registros estão disponíveis.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
       error: error => this.fail(error) });
   }
   open(id: string): void {
