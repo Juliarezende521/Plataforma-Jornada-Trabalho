@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
+import io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -50,14 +51,17 @@ class JourneyQueriesTest {
         var closed=WorkSession.open(employee,UUID.randomUUID(),"UTC",observed.minusSeconds(10_800));
         closed.record(WorkEventType.EXIT,observed.minusSeconds(3_600));
         var open=WorkSession.open(employee,UUID.randomUUID(),"UTC",observed.minusSeconds(1_800));
-        var store=mock(JpaWorkSessionStore.class);var timelines=mock(EffectiveTimelineService.class);
+        var store=mock(JpaWorkSessionStore.class);var timelines=mock(EffectiveTimelineService.class);var schedules=mock(WorkSchedulePlan.class);
         when(store.historyCount(employee,day,day)).thenReturn(2L);
         when(store.history(employee,day,day,0,100)).thenReturn(List.of(closed,open));
         when(timelines.projectAll(List.of(closed,open),observed)).thenReturn(Map.of(
                 closed.getId(),new EffectiveTimelineService.Timeline(WorkState.CLOSED,Duration.ofHours(7),true,List.of()),
                 open.getId(),new EffectiveTimelineService.Timeline(WorkState.WORKING,Duration.ofMinutes(30),false,List.of())));
-        var summary=JourneyQueries.summarize(store,timelines,employee,day,day,observed);
+        when(schedules.calculate(employee,day,day)).thenReturn(new WorkSchedulePlan.Plan(480,1));
+        var summary=JourneyQueries.summarize(store,timelines,schedules,employee,day,day,observed);
         assertEquals("PT7H30M",summary.totalWorkDuration());assertEquals(2,summary.totalSessions());
+        assertEquals("PT8H",summary.plannedWorkDuration());assertEquals(-1800,summary.balanceSeconds());
+        assertEquals(1,summary.scheduledDays());assertEquals(1,summary.periodDays());
         assertEquals(1,summary.closedSessions());assertEquals(1,summary.openSessions());
         assertEquals(1,summary.adjustedSessions());assertEquals(1,summary.workedDays());
         verify(timelines).projectAll(List.of(closed,open),observed);
@@ -66,5 +70,12 @@ class JourneyQueriesTest {
         var from=LocalDate.of(2026,10,1);
         assertDoesNotThrow(() -> JourneyQueries.validateSummary(from,from.plusDays(365)));
         assertThrows(JourneyQueries.InvalidFilter.class,() -> JourneyQueries.validateSummary(from,from.plusDays(366)));
+    }
+    @Test void summaryOmitsBalanceWhenScheduleDoesNotCoverTheWholePeriod() {
+        var employee=UUID.randomUUID();var from=LocalDate.of(2026,10,1);var to=from.plusDays(2);var observed=Instant.EPOCH;
+        var store=mock(JpaWorkSessionStore.class);var timelines=mock(EffectiveTimelineService.class);var schedules=mock(WorkSchedulePlan.class);
+        when(schedules.calculate(employee,from,to)).thenReturn(new WorkSchedulePlan.Plan(480,1));
+        var summary=JourneyQueries.summarize(store,timelines,schedules,employee,from,to,observed);
+        assertNull(summary.balanceSeconds());assertEquals(1,summary.scheduledDays());assertEquals(3,summary.periodDays());
     }
 }

@@ -44,7 +44,7 @@ describe('HR overview and separate individual consultation', () => {
     expect(request.request.params.get('from')).toBe('2026-09-30');
     expect(request.request.params.get('to')).toBe('2026-09-30');
     request.flush({ items: [], page: 0, size: 20, totalElements: 0, observedAtUtc: '2026-10-14T14:00:00Z' });
-    http.expectOne(r=>r.url==='/api/hr/employees/b/work-sessions/summary').flush({from:'2026-09-30',to:'2026-09-30',totalWorkDuration:'PT0S',totalSessions:0,closedSessions:0,openSessions:0,adjustedSessions:0,workedDays:0,observedAtUtc:'2026-10-14T14:00:00Z'});
+    http.expectOne(r=>r.url==='/api/hr/employees/b/work-sessions/summary').flush({from:'2026-09-30',to:'2026-09-30',totalWorkDuration:'PT0S',plannedWorkDuration:'PT0S',balanceSeconds:null,scheduledDays:0,periodDays:1,totalSessions:0,closedSessions:0,openSessions:0,adjustedSessions:0,workedDays:0,observedAtUtc:'2026-10-14T14:00:00Z'});
     http.expectNone('/api/me/work-sessions');
   });
   it('keeps the default period when the selected employee has no journey date', () => {

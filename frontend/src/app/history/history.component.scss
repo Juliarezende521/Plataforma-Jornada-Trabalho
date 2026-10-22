@@ -47,3 +47,5 @@ label { display: block; margin: 0 0 var(--space-2); font-size: .8rem; font-weigh
 .period-summary dl div { background:#f5f7fb; border-radius:.5rem; padding:.75rem; }
 .period-summary dt { color:#4b5870; font-size:.875rem; }
 .period-summary dd { font-size:1.25rem; font-weight:700; margin:.25rem 0 0; }
+.period-summary .positive-balance { color:var(--color-success); }
+.period-summary .negative-balance { color:var(--color-warning); }

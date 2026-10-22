@@ -96,6 +96,8 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 
 As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor considera também ajustes já aprovados e verifica a sequência inteira. Uma pausa, retorno ou saída esquecida pode ser materializada como evento corretivo quando muda o estado de uma jornada aberta; decisão, evento, checkpoint e auditoria pertencem à mesma transação. A permissão do RH não autoriza marcações online em nome de outra pessoa.
 
+Os resumos retornam `totalWorkDuration`, `plannedWorkDuration`, `scheduledDays`, `periodDays` e `balanceSeconds`. O saldo só é calculado quando uma escala vigente cobre todas as datas do período; caso contrário, `balanceSeconds` é `null`. Esse valor é um comparativo operacional e não representa cálculo legal de horas extras ou banco de horas.
+
 ## Erros
 
 Os erros são devolvidos como Problem Details sem stack trace ou mensagem de banco:

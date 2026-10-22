@@ -148,7 +148,7 @@ scripts/ci/            validação integrada com SQL Server e navegador
 ## Limitações conhecidas
 
 - Não há cadastro público nem recuperação de senha; as contas são provisionadas para avaliação.
-- O resumo ainda não compara a jornada com a escala para calcular saldo; regras de horas extras e banco de horas continuam fora do escopo.
+- O resumo compara tempo efetivo e planejado apenas quando existe escala para todo o período. A diferença é informativa; regras de tolerância, horas extras e banco de horas continuam fora do escopo.
 - A localização é declarada pelo fuso e pela modalidade; a aplicação não usa geolocalização.
 - A execução local do SQL Server depende de host compatível com a imagem oficial. Em máquinas ARM pode ser necessário usar uma instância externa.
 - O perfil de avaliação e as credenciais de exemplo não representam uma configuração de produção.

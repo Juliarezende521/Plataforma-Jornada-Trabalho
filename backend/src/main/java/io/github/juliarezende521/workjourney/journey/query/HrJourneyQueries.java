@@ -4,6 +4,7 @@ import io.github.juliarezende521.workjourney.account.*;
 import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
+import io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
 import java.time.*;
 import java.util.*;
@@ -24,10 +25,11 @@ public class HrJourneyQueries {
     private final JpaWorkSessionStore store;
     private final Clock clock;
     private final EffectiveTimelineService timelines;
+    private final WorkSchedulePlan schedules;
 
     public HrJourneyQueries(CurrentEmployeeIdentity identity, AppUserRepository users, EmployeeRepository employees,
-                            JpaWorkSessionStore store, EffectiveTimelineService timelines, Clock clock) {
-        this.identity = identity; this.users = users; this.employees = employees; this.store = store; this.timelines=timelines; this.clock = clock;
+                            JpaWorkSessionStore store, EffectiveTimelineService timelines, WorkSchedulePlan schedules, Clock clock) {
+        this.identity = identity; this.users = users; this.employees = employees; this.store = store; this.timelines=timelines; this.schedules=schedules; this.clock = clock;
     }
 
     private void requireHr() {
@@ -96,7 +98,7 @@ public class HrJourneyQueries {
         requireHr();
         JourneyQueries.validateSummary(from,to);
         employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
-        return JourneyQueries.summarize(store,timelines,employeeId,from,to,UtcInstants.normalize(clock.instant()));
+        return JourneyQueries.summarize(store,timelines,schedules,employeeId,from,to,UtcInstants.normalize(clock.instant()));
     }
 
     public record Person(UUID id, String name, String referenceTimeZoneId) { }

@@ -3,7 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
-import { formatDuration, formatInstant, formatWorkDate } from '../journey/journey-format';
+import { formatDuration, formatInstant, formatSignedSeconds, formatWorkDate } from '../journey/journey-format';
 import { workModeLabel } from '../journey/journey.types';
 import { HistoryApi } from './history-api.service';
 import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail, PeriodSummary } from './history.types';
@@ -34,6 +34,7 @@ export class HistoryComponent {
   readonly workModeLabel = workModeLabel;
   readonly formatWorkDate = formatWorkDate;
   readonly formatDuration = formatDuration;
+  readonly formatSignedSeconds = formatSignedSeconds;
   readonly eventLabels = { ENTRY: 'Entrada', PAUSE_START: 'Início de pausa', PAUSE_END: 'Retorno', EXIT: 'Saída' };
   constructor() {
     this.destroyRef.onDestroy(() => this.request?.unsubscribe());

@@ -5,6 +5,7 @@ import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService
 import io.github.juliarezende521.workjourney.journey.*;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
+import io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
 import java.time.*;
 import java.util.*;
@@ -21,9 +22,10 @@ public class JourneyQueries {
     private final JpaWorkSessionStore store;
     private final Clock clock;
     private final EffectiveTimelineService timelines;
+    private final WorkSchedulePlan schedules;
     public JourneyQueries(CurrentEmployeeIdentity identity, EmployeeRepository employees, JpaWorkSessionStore store,
-                          EffectiveTimelineService timelines, Clock clock) {
-        this.identity=identity; this.employees=employees; this.store=store; this.timelines=timelines; this.clock=clock;
+                          EffectiveTimelineService timelines, WorkSchedulePlan schedules, Clock clock) {
+        this.identity=identity; this.employees=employees; this.store=store; this.timelines=timelines; this.schedules=schedules; this.clock=clock;
     }
     // Same employee lock as markings: page, events and Clock describe a consistent snapshot.
     @Transactional
@@ -48,9 +50,9 @@ public class JourneyQueries {
         return summarize(lockActor(),from,to,UtcInstants.normalize(clock.instant()));
     }
     Summary summarize(UUID employee,LocalDate from,LocalDate to,Instant observed) {
-        return summarize(store,timelines,employee,from,to,observed);
+        return summarize(store,timelines,schedules,employee,from,to,observed);
     }
-    static Summary summarize(JpaWorkSessionStore store,EffectiveTimelineService timelines,UUID employee,
+    static Summary summarize(JpaWorkSessionStore store,EffectiveTimelineService timelines,WorkSchedulePlan schedules,UUID employee,
                              LocalDate from,LocalDate to,Instant observed) {
         long total=store.historyCount(employee,from,to);
         long closed=0,adjusted=0;
@@ -68,7 +70,11 @@ public class JourneyQueries {
                 days.add(session.getWorkDate());
             }
         }
-        return new Summary(from,to,duration.toString(),total,closed,total-closed,adjusted,days.size(),observed);
+        var plan=schedules.calculate(employee,from,to);
+        int periodDays=Math.toIntExact(java.time.temporal.ChronoUnit.DAYS.between(from,to)+1);
+        Long balanceSeconds=plan.coveredDays()==periodDays ? duration.minus(Duration.ofMinutes(plan.minutes())).getSeconds() : null;
+        return new Summary(from,to,duration.toString(),Duration.ofMinutes(plan.minutes()).toString(),balanceSeconds,plan.coveredDays(),periodDays,
+                total,closed,total-closed,adjusted,days.size(),observed);
     }
     private UUID lockActor() {
         var actor=identity.require();
@@ -102,7 +108,7 @@ public class JourneyQueries {
         }
     }
     public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc) { }
-    public record Summary(LocalDate from,LocalDate to,String totalWorkDuration,long totalSessions,long closedSessions,
+    public record Summary(LocalDate from,LocalDate to,String totalWorkDuration,String plannedWorkDuration,Long balanceSeconds,int scheduledDays,int periodDays,long totalSessions,long closedSessions,
                           long openSessions,long adjustedSessions,int workedDays,Instant observedAtUtc) { }
     public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode,boolean correction) { }
     public record Effective(WorkState state,String workDuration,boolean adjusted,List<EffectiveTimelineService.Event> events) { }

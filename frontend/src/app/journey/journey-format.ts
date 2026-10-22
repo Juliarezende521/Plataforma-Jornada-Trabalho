@@ -10,3 +10,9 @@ export function formatDuration(duration: string): string {
   const total = Number(match[1] ?? 0) * 3600 + Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0);
   return `${Math.floor(total / 3600)} h ${Math.floor(total % 3600 / 60).toString().padStart(2, '0')} min`;
 }
+export function formatSignedSeconds(seconds: number): string {
+  if (!Number.isSafeInteger(seconds)) return 'Duração indisponível';
+  const sign = seconds > 0 ? '+' : seconds < 0 ? '−' : '';
+  const absolute = Math.abs(seconds);
+  return `${sign}${Math.floor(absolute / 3600)} h ${Math.floor(absolute % 3600 / 60).toString().padStart(2, '0')} min`;
+}
