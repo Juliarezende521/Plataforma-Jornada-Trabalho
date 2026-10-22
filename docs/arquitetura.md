@@ -35,6 +35,7 @@ erDiagram
     WORK_SESSION ||--|{ WORK_EVENT : agrupa
     EMPLOYEE ||--o{ IDEMPOTENCY_REQUEST : utiliza
     APP_USER ||--o{ AUDIT_ENTRY : realiza
+    EMPLOYEE ||--o{ WORK_SCHEDULE : possui
 ```
 
 | Tabela | Campos principais | Restrições |
@@ -46,8 +47,9 @@ erDiagram
 | idempotency_request | id UUID, employee_id, request_key, payload_hash, result_event_id | FK; chave única por colaborador; resultado do comando confirmado |
 | work_adjustment_request | id UUID, jornada, colaborador, evento proposto, instante, motivo, estado, decisão e version | Eventos originais permanecem imutáveis; decisão terminal |
 | audit_entry | id UUID, actor_user_id, action, entity_id, recorded_at_utc, details | Registro append-only das solicitações e decisões |
+| work_schedule | id UUID, employee_id, effective_from, minutos por dia, autoria e criação | Uma versão por colaborador/data; registros imutáveis |
 
-As migrations V1–V7 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade e solicitações auditáveis de ajuste. O vínculo de gestor continua planejado.
+As migrations V1–V8 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste e escalas semanais versionadas. O vínculo de gestor continua planejado.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
@@ -83,6 +85,8 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | GET /api/me/work-sessions/current | Sessão | Jornada atual ou representação vazia documentada |
 | GET /api/me/work-sessions | from/to/page/size | Histórico próprio paginado |
 | GET /api/me/work-sessions/summary | from/to | Resumo efetivo do período, processado em lotes |
+| GET /api/me/work-schedule | on opcional | Escala própria vigente na data |
+| POST /api/hr/employees/{id}/work-schedules | Vigência e minutos dos sete dias | Nova versão imutável da escala |
 | GET /api/me/work-sessions/{id} | ID e sessão | Detalhe próprio; 404 se inexistente ou alheio |
 | POST /api/me/work-adjustments | Jornada, evento, instante proposto e justificativa | Solicitação pendente sem alterar o evento original |
 | GET /api/me/work-adjustments | Jornada/página | Solicitações próprias paginadas |

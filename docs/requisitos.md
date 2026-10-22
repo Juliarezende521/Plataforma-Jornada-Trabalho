@@ -36,6 +36,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Recuperação | Reconcilia uma tentativa após timeout ou recarregamento sem duplicar o evento |
 | Ajustes | Colaborador solicita uma marcação esquecida; RH aprova ou rejeita com trilha de auditoria |
 | Linha efetiva | Detalhe combina originais e ajustes aprovados e recalcula a duração sem alterar a origem |
+| Escala | RH configura minutos planejados por dia da semana e início de vigência para cada colaborador |
 
 ## Regras de jornada
 
@@ -85,7 +86,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 
 ## Fora desta versão
 
-- Cálculo de horas extras e banco de horas sem contrato ou escala cadastrados.
+- Cálculo de horas extras e banco de horas; a escala planejada ainda não representa todas as regras contratuais e legais.
 - Aprovação de ajustes por gestor; nesta etapa, a decisão é exclusiva do RH.
 - Integração com folha de pagamento.
 - Cadastro, recuperação de senha e gestão de usuários.

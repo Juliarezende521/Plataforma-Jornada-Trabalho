@@ -5,4 +5,4 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Profile("!bootstrap")
-interface AuditEntryRepository extends JpaRepository<AuditEntry, UUID> { }
+public interface AuditEntryRepository extends JpaRepository<AuditEntry, UUID> { }

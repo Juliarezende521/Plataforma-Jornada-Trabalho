@@ -10,7 +10,7 @@ import org.hibernate.annotations.TimeZoneStorageType;
 
 @Entity
 @Table(name = "audit_entry", schema = "dbo")
-class AuditEntry {
+public class AuditEntry {
     @Id private UUID id;
     @Column(name = "actor_user_id", nullable = false, updatable = false) private UUID actorUserId;
     @Column(nullable = false, length = 64, updatable = false) private String action;
@@ -22,7 +22,13 @@ class AuditEntry {
     @Column(length = 1000, updatable = false) private String details;
     protected AuditEntry() { }
     AuditEntry(UUID actor, String action, UUID entityId, Instant at, String details) {
-        this.id=UUID.randomUUID(); this.actorUserId=actor; this.action=action; this.entityType="WORK_ADJUSTMENT";
+        this(actor,action,"WORK_ADJUSTMENT",entityId,at,details);
+    }
+    public AuditEntry(UUID actor,String action,String entityType,UUID entityId,Instant at,String details) {
+        if(actor==null||entityId==null||at==null||action==null||action.isBlank()||action.length()>64
+                ||entityType==null||entityType.isBlank()||entityType.length()>64||details!=null&&details.length()>1000)
+            throw new IllegalArgumentException("Invalid audit entry");
+        this.id=UUID.randomUUID(); this.actorUserId=actor; this.action=action; this.entityType=entityType;
         this.entityId=entityId; this.recordedAtUtc=at.atOffset(ZoneOffset.UTC); this.details=details;
     }
 }

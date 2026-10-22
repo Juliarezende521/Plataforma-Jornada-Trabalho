@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class, HrJourneyController.class,
-        io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class})
+        io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class,
+        io.github.juliarezende521.workjourney.schedule.WorkScheduleController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);
 
@@ -40,6 +41,11 @@ public class JourneyExceptionHandler {
 
     @ExceptionHandler(io.github.juliarezende521.workjourney.adjustment.AdjustmentConflict.class)
     ResponseEntity<Problem> adjustmentConflict() { return problem(409, "Adjustment decision conflicts with current journey"); }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.schedule.InvalidSchedule.class)
+    ResponseEntity<Problem> invalidSchedule(io.github.juliarezende521.workjourney.schedule.InvalidSchedule error) {
+        return problem(error.status(),error.status()==413?"Request body too large":error.status()==409?"Schedule already exists for effective date":"Invalid work schedule");
+    }
 
     @ExceptionHandler(AuthenticationException.class)
     ResponseEntity<Problem> unauthenticated() { return problem(401, "Authentication required"); }

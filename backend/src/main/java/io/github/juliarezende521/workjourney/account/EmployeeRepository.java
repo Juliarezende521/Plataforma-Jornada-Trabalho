@@ -14,6 +14,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     @Query("SELECT e FROM Employee e JOIN e.user u WHERE u.active = true")
     org.springframework.data.domain.Page<Employee> findActive(org.springframework.data.domain.Pageable pageable);
 
+    @Query("SELECT e FROM Employee e JOIN e.user u WHERE e.id = :id AND u.active = true")
+    Optional<Employee> findActiveById(@Param("id") UUID id);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Employee e JOIN e.user u WHERE e.id = :id AND u.active = true")
     Optional<Employee> lockActive(@Param("id") UUID id);

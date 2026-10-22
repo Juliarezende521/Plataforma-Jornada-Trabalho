@@ -22,6 +22,7 @@ Login e logout bem-sucedidos retornam `204`. Credenciais inválidas retornam `40
 | GET | `/api/me/work-event-requests/{key}` | Consulta o recibo de uma tentativa idempotente |
 | GET | `/api/me/work-sessions` | Histórico próprio paginado |
 | GET | `/api/me/work-sessions/summary` | Resumo efetivo do período |
+| GET | `/api/me/work-schedule?on=2026-11-01` | Escala própria vigente na data |
 | GET | `/api/me/work-sessions/{id}` | Detalhe de uma jornada própria |
 | POST | `/api/me/work-adjustments` | Solicita inclusão auditável de uma marcação esquecida |
 | GET | `/api/me/work-adjustments?workSessionId={id}` | Lista as solicitações próprias da jornada |
@@ -87,6 +88,8 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/overview` | Estado mais recente de cada colaborador da página |
 | GET | `/api/hr/employees/{employeeId}/work-sessions` | Histórico individual |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/summary` | Resumo efetivo individual |
+| GET | `/api/hr/employees/{employeeId}/work-schedule?on=2026-11-01` | Escala vigente do colaborador |
+| POST | `/api/hr/employees/{employeeId}/work-schedules` | Cria nova versão auditável da escala |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
