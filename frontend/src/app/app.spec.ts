@@ -72,6 +72,7 @@ describe('Access screen', () => {
     http.expectOne('/api/auth/csrf').flush({ headerName: 'X-CSRF-TOKEN', token: 'after' });
     http.expectOne('/api/me').flush({ userId: 'u', employeeId: 'e', name: 'Colaborador Brasil', email: 'brasil@example.invalid', referenceTimeZoneId: 'America/Sao_Paulo' });
     fixture.detectChanges();
+    http.expectOne('/api/me/work-schedule').flush(null);
     expect(view.textContent).toContain('Olá, Colaborador Brasil');
     expect(view.textContent).toContain('Jornada atual');
     expect(view.querySelector('#login-form')).toBeNull();

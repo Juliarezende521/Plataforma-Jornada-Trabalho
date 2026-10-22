@@ -1,0 +1,28 @@
+<section class="schedule" aria-labelledby="schedule-heading" [attr.aria-busy]="busy()">
+  <h3 id="schedule-heading">Escala semanal</h3>
+  <p class="feedback" role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+  @if (schedule(); as current) {
+    <p>Vigente desde <strong>{{ formatWorkDate(current.effectiveFrom) }}</strong>.</p>
+    <dl>
+      @for (minutes of current.minutes; track $index) {
+        <div><dt>{{ days[$index] }}</dt><dd>{{ minutes ? format(minutes) : 'Folga' }}</dd></div>
+      }
+    </dl>
+  }
+  @if (editable()) {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <label for="schedule-from">Início da vigência</label>
+      <input id="schedule-from" type="date" formControlName="effectiveFrom" required aria-describedby="schedule-guidance" />
+      <div class="days">
+        @for (day of days; track day; let index = $index) {
+          <div>
+            <label [for]="'schedule-day-' + index">{{ day }}</label>
+            <input [id]="'schedule-day-' + index" type="time" [formControlName]="dayControls[index]" required />
+          </div>
+        }
+      </div>
+      <p id="schedule-guidance">O horário representa a carga total planejada. Uma nova vigência preserva as escalas anteriores. Use 00:00 para dias de folga.</p>
+      <button type="submit" [disabled]="busy()">{{ busy() ? 'Salvando…' : 'Cadastrar nova escala' }}</button>
+    </form>
+  }
+</section>

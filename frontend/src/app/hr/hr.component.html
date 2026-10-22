@@ -1,6 +1,6 @@
 <section class="hr" aria-labelledby="hr-heading" [attr.aria-busy]="busy()">
   <h2 id="hr-heading" #heading tabindex="-1">Visão do RH</h2>
-  <p>Consulta de jornadas por colaborador. Este acesso não permite alterar marcações ou aprovar regularizações.</p>
+  <p>Consulte jornadas e cadastre novas vigências de escala. As marcações continuam protegidas contra alterações por este acesso.</p>
   <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
   <button class="secondary" type="button" (click)="load(0)" [disabled]="busy()">Atualizar colaboradores</button>
   @if (directory(); as page) {
@@ -20,5 +20,6 @@
 </section>
 @if (selected(); as person) {
   <p class="selected">Registros de <strong>{{ person.name }}</strong> · {{ person.referenceTimeZoneId }}</p>
+  <app-work-schedule [employeeId]="person.id" [editable]="true" />
   <app-history [user]="user()" [targetEmployee]="person" />
 }

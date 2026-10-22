@@ -40,6 +40,7 @@ describe('Journey screen and recovery protocol', () => {
     fixture.componentRef.setInput('user', user);
     view = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
+    http.expectOne('/api/me/work-schedule').flush(null);
   }
   async function initial(current = empty) {
     mount();

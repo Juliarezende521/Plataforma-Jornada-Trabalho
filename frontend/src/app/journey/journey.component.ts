@@ -4,9 +4,10 @@ import { JourneyClockComponent } from './journey-clock.component';
 import { Identity } from '../auth/auth.service';
 import { JourneyState } from './journey-state';
 import { ACTION_LABELS, EventType, WorkMode, workModeLabel } from './journey.types';
+import { WorkScheduleComponent } from '../schedule/work-schedule.component';
 
 @Component({
-  selector: 'app-journey', imports: [JourneyClockComponent], providers: [JourneyState],
+  selector: 'app-journey', imports: [JourneyClockComponent, WorkScheduleComponent], providers: [JourneyState],
   templateUrl: './journey.component.html', styleUrl: './journey.component.scss',
 })
 export class JourneyComponent {

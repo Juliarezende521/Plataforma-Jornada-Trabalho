@@ -6,8 +6,9 @@ import { Subscription, timeout } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
 import { HistoryComponent } from '../history/history.component';
 import { EmployeePage, EmployeeSummary } from '../history/history.types';
+import { WorkScheduleComponent } from '../schedule/work-schedule.component';
 
-@Component({ selector: 'app-hr', imports: [ReactiveFormsModule, HistoryComponent],
+@Component({ selector: 'app-hr', imports: [ReactiveFormsModule, HistoryComponent, WorkScheduleComponent],
   templateUrl: './hr.component.html', styleUrl: './hr.component.scss' })
 export class HrComponent {
   readonly user = input.required<Identity>();

@@ -161,6 +161,6 @@ As escolhas de arquitetura, a definição das regras de negócio e a composiçã
 
 ## Próximos passos
 
-1. Cadastro de contrato e escala antes de calcular banco de horas ou horas extras.
+1. Cadastro de contrato e regras de tolerância antes de calcular banco de horas ou horas extras.
 2. Integração com o provedor de identidade da empresa.
 3. Validação em dispositivos físicos com pessoas de RH e colaboradores.
