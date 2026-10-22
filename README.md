@@ -17,7 +17,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Visão de RH com panorama dos colaboradores e consulta individual.
 - Solicitação de marcação esquecida e decisão auditável pelo RH.
 - Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.
-- Encerramento esquecido pode fechar a jornada aberta após aprovação, liberando a próxima entrada.
+- Correções aprovadas podem pausar, retomar ou encerrar uma jornada aberta de forma auditável.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.
 - Layout responsivo e navegação por teclado.
@@ -147,7 +147,6 @@ scripts/ci/            validação integrada com SQL Server e navegador
 ## Limitações conhecidas
 
 - Não há cadastro público nem recuperação de senha; as contas são provisionadas para avaliação.
-- Ajustes que mudariam uma jornada aberta para o estado de pausa continuam bloqueados; encerramento esquecido possui tratamento transacional específico.
 - O resumo não calcula horas extras, banco de horas nem folha porque ainda não existe cadastro de contrato ou escala.
 - A localização é declarada pelo fuso e pela modalidade; a aplicação não usa geolocalização.
 - A execução local do SQL Server depende de host compatível com a imagem oficial. Em máquinas ARM pode ser necessário usar uma instância externa.
@@ -161,6 +160,6 @@ As escolhas de arquitetura, a definição das regras de negócio e a composiçã
 
 ## Próximos passos
 
-1. Consolidado por período usando a linha do tempo efetiva.
+1. Cadastro de contrato e escala antes de calcular banco de horas ou horas extras.
 2. Integração com o provedor de identidade da empresa.
 3. Validação em dispositivos físicos com pessoas de RH e colaboradores.

@@ -2,6 +2,7 @@ package io.github.juliarezende521.workjourney.journey;
 
 import io.github.juliarezende521.workjourney.account.*;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
+import io.github.juliarezende521.workjourney.time.UtcInstants;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import java.time.Duration;
@@ -50,6 +51,26 @@ class JourneyPersistenceSqlServerIT {
         assertEquals("Europe/Amsterdam", reloaded.session().getReferenceTimeZoneId());
         assertEquals(fixture.session().getWorkDate(), reloaded.session().getWorkDate());
         assertEquals(3, reloaded.session().getEvents().size());
+    }
+
+    @Test
+    @Transactional
+    void approvedCorrectionsCanPauseAndResumeAnOpenCheckpoint() {
+        var fixture=create();var id=fixture.session().getId();
+        var pauseAt=ENTRY_TIME.plusSeconds(3600);var recordedAt=ENTRY_TIME.plusSeconds(7200);
+        var paused=store.appendCorrection(id,fixture.employeeId(),0,PAUSE_START,pauseAt,recordedAt,"Europe/Lisbon");
+        assertEquals(1,paused.version());assertEquals(WorkState.PAUSED,paused.session().getState());
+        var correction=paused.session().getEvents().get(1);
+        assertEquals(UtcInstants.normalize(pauseAt),correction.occurredAtUtc());
+        assertEquals(UtcInstants.normalize(recordedAt),correction.recordedAtUtc());
+        assertEquals("Europe/Lisbon",correction.recordedTimeZoneId());
+        var resumed=store.appendCorrection(id,fixture.employeeId(),1,PAUSE_END,ENTRY_TIME.plusSeconds(5400),
+                recordedAt.plusSeconds(1),"Europe/Amsterdam");
+        assertEquals(2,resumed.version());assertEquals(WorkState.WORKING,resumed.session().getState());
+        entityManager.clear();
+        var reloaded=store.findOwned(id,fixture.employeeId()).orElseThrow();
+        assertEquals(2,reloaded.version());assertEquals(3,reloaded.session().getEvents().size());
+        assertEquals(WorkState.WORKING,reloaded.session().getState());
     }
 
     @Test

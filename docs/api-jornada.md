@@ -91,7 +91,7 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
 
-As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor considera também ajustes já aprovados e verifica a sequência inteira. Uma saída esquecida pode ser materializada como evento corretivo para encerrar uma jornada aberta; decisão, evento, checkpoint e auditoria pertencem à mesma transação. A permissão do RH não autoriza marcações online em nome de outra pessoa.
+As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor considera também ajustes já aprovados e verifica a sequência inteira. Uma pausa, retorno ou saída esquecida pode ser materializada como evento corretivo quando muda o estado de uma jornada aberta; decisão, evento, checkpoint e auditoria pertencem à mesma transação. A permissão do RH não autoriza marcações online em nome de outra pessoa.
 
 ## Erros
 

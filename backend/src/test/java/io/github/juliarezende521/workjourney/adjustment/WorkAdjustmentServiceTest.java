@@ -97,4 +97,42 @@ class WorkAdjustmentServiceTest {
         verify(sessions).appendCorrection(original.getId(),employee.getId(),3,WorkEventType.EXIT,exitAt,now,"America/Sao_Paulo");
         verify(audits).save(any(AuditEntry.class));
     }
+
+    @Test void approvedForgottenPauseUpdatesTheOpenJourneyCheckpoint() {
+        var original=WorkSession.open(employee.getId(),userId,"America/Sao_Paulo",now.minus(Duration.ofHours(4)));
+        var pauseAt=now.minus(Duration.ofMinutes(30));
+        var request=new WorkAdjustmentRequest(employee,userId,original.getId(),WorkEventType.PAUSE_START,pauseAt,
+                "Pausa esquecida durante o atendimento.",now.minusSeconds(30));
+        when(requests.lockById(request.getId())).thenReturn(Optional.of(request));
+        when(sessions.findOwned(original.getId(),employee.getId())).thenReturn(Optional.of(new JpaWorkSessionStore.StoredSession(original,2)));
+        when(sessions.appendCorrection(original.getId(),employee.getId(),2,WorkEventType.PAUSE_START,pauseAt,now,"America/Sao_Paulo"))
+                .thenAnswer(invocation -> {
+                    original.recordCorrection(WorkEventType.PAUSE_START,pauseAt,now,"America/Sao_Paulo");
+                    return new JpaWorkSessionStore.StoredSession(original,3);
+                });
+        var result=service.decide(request.getId(),AdjustmentStatus.APPROVED,"Pausa confirmada.");
+        assertEquals(AdjustmentStatus.APPROVED,result.status());assertNotNull(result.appliedEventId());
+        assertEquals(io.github.juliarezende521.workjourney.journey.WorkState.PAUSED,original.getState());
+        verify(sessions).appendCorrection(original.getId(),employee.getId(),2,WorkEventType.PAUSE_START,pauseAt,now,"America/Sao_Paulo");
+        verify(audits).save(any(AuditEntry.class));
+    }
+
+    @Test void approvedForgottenReturnResumesThePersistedJourney() {
+        var original=WorkSession.open(employee.getId(),userId,"America/Sao_Paulo",now.minus(Duration.ofHours(4)));
+        original.record(WorkEventType.PAUSE_START,now.minus(Duration.ofHours(1)));
+        var returnAt=now.minus(Duration.ofMinutes(20));
+        var request=new WorkAdjustmentRequest(employee,userId,original.getId(),WorkEventType.PAUSE_END,returnAt,
+                "Retorno da pausa não foi registrado.",now.minusSeconds(30));
+        when(requests.lockById(request.getId())).thenReturn(Optional.of(request));
+        when(sessions.findOwned(original.getId(),employee.getId())).thenReturn(Optional.of(new JpaWorkSessionStore.StoredSession(original,4)));
+        when(sessions.appendCorrection(original.getId(),employee.getId(),4,WorkEventType.PAUSE_END,returnAt,now,"America/Sao_Paulo"))
+                .thenAnswer(invocation -> {
+                    original.recordCorrection(WorkEventType.PAUSE_END,returnAt,now,"America/Sao_Paulo");
+                    return new JpaWorkSessionStore.StoredSession(original,5);
+                });
+        var result=service.decide(request.getId(),AdjustmentStatus.APPROVED,"Retorno confirmado.");
+        assertEquals(AdjustmentStatus.APPROVED,result.status());assertNotNull(result.appliedEventId());
+        assertEquals(io.github.juliarezende521.workjourney.journey.WorkState.WORKING,original.getState());
+        verify(sessions).appendCorrection(original.getId(),employee.getId(),4,WorkEventType.PAUSE_END,returnAt,now,"America/Sao_Paulo");
+    }
 }

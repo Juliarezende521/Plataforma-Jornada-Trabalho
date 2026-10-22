@@ -2,6 +2,7 @@ package io.github.juliarezende521.workjourney.adjustment;
 
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
+import io.github.juliarezende521.workjourney.journey.WorkState;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
@@ -88,13 +89,13 @@ public class WorkAdjustmentService {
             var session=stored.session();
             var effective=timelines.projectIncluding(session,request,now);
             if(effective.state()!=session.getState()) {
-                boolean closesOpen=session.getState()!=io.github.juliarezende521.workjourney.journey.WorkState.CLOSED
-                        && effective.state()==io.github.juliarezende521.workjourney.journey.WorkState.CLOSED
-                        && request.getRequestedEventType()==WorkEventType.EXIT
+                boolean updatesOpenCheckpoint=session.getState()!=WorkState.CLOSED
+                        && request.getRequestedEventType()!=WorkEventType.ENTRY
                         && !request.getProposedOccurredAtUtc().isBefore(session.getLastEventAtUtc());
-                if(!closesOpen)throw new AdjustmentConflict();
-                var corrected=sessions.appendCorrection(session.getId(),employee.getId(),stored.version(),WorkEventType.EXIT,
+                if(!updatesOpenCheckpoint)throw new AdjustmentConflict();
+                var corrected=sessions.appendCorrection(session.getId(),employee.getId(),stored.version(),request.getRequestedEventType(),
                         request.getProposedOccurredAtUtc(),now,session.getReferenceTimeZoneId()).session();
+                if(corrected.getState()!=effective.state())throw new AdjustmentConflict();
                 request.markApplied(corrected.getEvents().get(corrected.getEvents().size()-1).id());
             }
         }
