@@ -71,3 +71,39 @@ test('HR reads another employee history and detail while an employee remains iso
   await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
   expect((await page.request.get('/api/hr/employees')).status()).toBe(401);
 });
+
+test('HR manages contract, schedule exception and reads their audit trail', async ({ page }) => {
+  await login(page, 'rh@example.invalid');
+  const directory = await (await page.request.get('/api/hr/employees?size=20&page=0')).json();
+  const employee = directory.items.find((item: { name: string }) => item.name === 'Colaborador Brasil');
+  expect(employee).toBeTruthy();
+  const csrf = await (await page.request.get('/api/auth/csrf')).json();
+  const headers = { [csrf.headerName]: csrf.token };
+
+  const contract = await page.request.post(`/api/hr/employees/${employee.id}/employment-contracts`, {
+    headers,
+    data: { effectiveFrom: '2027-01-01', countryCode: 'BR', employmentType: 'FULL_TIME', weeklyMinutes: 2400 },
+  });
+  expect(contract.status()).toBe(201);
+  const exception = await page.request.post(`/api/hr/employees/${employee.id}/work-schedule-exceptions`, {
+    headers,
+    data: { workDate: '2027-01-25', plannedMinutes: 0, toleranceMinutes: 0, category: 'HOLIDAY', reason: 'Feriado local' },
+  });
+  expect(exception.status()).toBe(201);
+  expect((await page.request.get(`/api/hr/employees/${employee.id}/employment-contract?on=2027-01-02`)).status()).toBe(200);
+  expect((await page.request.get(`/api/hr/employees/${employee.id}/work-schedule-exceptions?page=0&size=20`)).status()).toBe(200);
+
+  await page.getByRole('button', { name: 'Auditoria', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Auditoria', exact: true })).toBeVisible();
+  await expect(page.getByText('Contrato cadastrado', { exact: true })).toBeVisible();
+  await expect(page.getByText('Exceção de escala cadastrada', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await login(page, 'brasil@example.invalid');
+  const employeeCsrf = await (await page.request.get('/api/auth/csrf')).json();
+  const denied = await page.request.post(`/api/hr/employees/${employee.id}/employment-contracts`, {
+    headers: { [employeeCsrf.headerName]: employeeCsrf.token },
+    data: { effectiveFrom: '2027-02-01', countryCode: 'BR', employmentType: 'FULL_TIME', weeklyMinutes: 2400 },
+  });
+  expect(denied.status()).toBe(403);
+});

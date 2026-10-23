@@ -105,4 +105,5 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 - Autorização cruzada testada com pelo menos duas contas.
 - Transições, pausas, madrugada e fusos cobertos por testes.
 - Build e testes de backend e frontend aprovados.
+- Fluxos de contrato, exceção de escala e auditoria validados em navegador com SQL Server real.
 - Limitações visíveis no README, sem anunciar prontidão de produção.
