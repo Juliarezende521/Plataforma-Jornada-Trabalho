@@ -87,7 +87,8 @@ class AuthSecurityTest {
                 "hr@example.invalid", "HR", "America/Sao_Paulo", true);
         for (String path : new String[]{
                 "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedules",
-                "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedule-exceptions"}) {
+                "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedule-exceptions",
+                "/api/hr/employees/00000000-0000-0000-0000-000000000001/employment-contracts"}) {
             mvc.perform(post(path)
                     .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
                             .user(new AccountPrincipal(employee, encoder.encode("unused-password"), true)))

@@ -49,7 +49,7 @@ erDiagram
 | audit_entry | id UUID, actor_user_id, action, entity_id, recorded_at_utc, details | Registro append-only das solicitações e decisões |
 | work_schedule | id UUID, employee_id, effective_from, minutos por dia, autoria e criação | Uma versão por colaborador/data; registros imutáveis |
 
-As migrations V1–V11 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas semanais versionadas, exceções por data e índice de consulta da auditoria. O vínculo de gestor continua planejado.
+As migrations V1–V12 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas semanais versionadas, exceções por data, consulta da auditoria e contratos versionados. O vínculo de gestor continua planejado.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
@@ -92,6 +92,7 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | GET /api/me/work-adjustments | Jornada/página | Solicitações próprias paginadas |
 | GET /api/hr/work-adjustments | Página | Fila paginada de solicitações pendentes |
 | GET /api/hr/audit-entries | Página | Trilha cronológica das ações sensíveis, restrita ao RH |
+| GET/POST /api/hr/employees/{id}/employment-contracts | Página ou versão | Histórico e criação auditável de contratos |
 | POST /api/hr/work-adjustments/{id}/decision | Aprovar/rejeitar e observação | Decisão terminal e auditada, exclusiva do RH |
 
 Filtros `from` e `to` são datas de referência inclusivas, limitadas a 366 dias. A página inicial é 0; o tamanho padrão é 20 e o máximo é 100. A ordenação usa data e abertura decrescentes, com ID como desempate. Parâmetros inválidos retornam 400 e instantes usam ISO 8601 UTC.

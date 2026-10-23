@@ -1,0 +1,78 @@
+<section class="contract" aria-labelledby="contract-heading" [attr.aria-busy]="busy()">
+  <h3 id="contract-heading">Contrato</h3>
+  <p role="status" aria-live="polite">{{ message() }}</p>
+  @if (current(); as item) {
+    <p>
+      Vigente desde <strong>{{ formatWorkDate(item.effectiveFrom) }}</strong> ·
+      {{ country(item.countryCode) }} · {{ type(item.employmentType) }} ·
+      {{ hours(item.weeklyMinutes) }} por semana.
+    </p>
+  }
+  <button class="secondary" type="button" (click)="loadCurrent()" [disabled]="busy()">
+    Consultar contrato vigente
+  </button>
+  <button class="secondary" type="button" (click)="loadHistory()" [disabled]="busy()">
+    Consultar histórico de contratos
+  </button>
+  @if (history(); as page) {
+    <ul>
+      @for (item of page.items; track item.id) {
+        <li>
+          <strong>{{ formatWorkDate(item.effectiveFrom) }} · {{ country(item.countryCode) }}</strong
+          ><span>{{ type(item.employmentType) }} · {{ hours(item.weeklyMinutes) }} semanais</span>
+        </li>
+      }
+    </ul>
+    @if (page.totalElements > page.size) {
+      <nav aria-label="Páginas dos contratos">
+        <button
+          class="secondary"
+          type="button"
+          (click)="loadHistory(page.page - 1)"
+          [disabled]="page.page === 0 || busy()"
+        >
+          Anterior</button
+        ><span>Página {{ page.page + 1 }}</span
+        ><button
+          class="secondary"
+          type="button"
+          (click)="loadHistory(page.page + 1)"
+          [disabled]="(page.page + 1) * page.size >= page.totalElements || busy()"
+        >
+          Próxima
+        </button>
+      </nav>
+    }
+  }
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <label for="contract-from">Início da vigência</label
+    ><input id="contract-from" type="date" formControlName="effectiveFrom" required /><label
+      for="contract-country"
+      >País do contrato</label
+    ><select id="contract-country" formControlName="countryCode">
+      <option value="BR">Brasil</option>
+      <option value="PT">Portugal</option>
+      <option value="ES">Espanha</option>
+      <option value="FR">França</option>
+      <option value="DE">Alemanha</option>
+      <option value="NL">Países Baixos</option></select
+    ><label for="contract-type">Tipo</label
+    ><select id="contract-type" formControlName="employmentType">
+      <option value="FULL_TIME">Tempo integral</option>
+      <option value="PART_TIME">Tempo parcial</option></select
+    ><label for="contract-minutes">Carga semanal em minutos</label
+    ><input
+      id="contract-minutes"
+      type="number"
+      min="1"
+      max="10080"
+      formControlName="weeklyMinutes"
+      required
+    />
+    <p>
+      O contrato é versionado e informativo. Ele ainda não calcula horas extras nem aplica regras
+      legais do país.
+    </p>
+    <button type="submit" [disabled]="busy()">Cadastrar nova versão</button>
+  </form>
+</section>

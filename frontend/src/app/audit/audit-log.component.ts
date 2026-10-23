@@ -18,11 +18,13 @@ export class AuditLogComponent {
     ADJUSTMENT_REJECTED: 'Ajuste rejeitado',
     WORK_SCHEDULE_CREATED: 'Escala cadastrada',
     WORK_SCHEDULE_EXCEPTION_CREATED: 'Exceção de escala cadastrada',
+    EMPLOYMENT_CONTRACT_CREATED: 'Contrato cadastrado',
   };
   readonly entities: Record<string, string> = {
     WORK_ADJUSTMENT: 'Ajuste de jornada',
     WORK_SCHEDULE: 'Escala',
     WORK_SCHEDULE_EXCEPTION: 'Exceção de escala',
+    EMPLOYMENT_CONTRACT: 'Contrato',
   };
   private readonly api = inject(AuditApi);
   private readonly auth = inject(AuthService);

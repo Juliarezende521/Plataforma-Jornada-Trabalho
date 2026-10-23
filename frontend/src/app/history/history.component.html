@@ -11,6 +11,7 @@
     <p id="period-help">Inclui as duas datas. Limite de 366 dias.</p>
     <p id="period-error" class="error" role="alert">{{ fieldError() }}</p>
   </form>
+  @if (targetEmployee(); as person) { <app-employment-contract [employeeId]="person.id" /> }
   <label for="history-zone">Fuso de visualização</label>
   <select id="history-zone" [formControl]="zone" aria-describedby="zone-help">
     <option value="reference">{{ targetEmployee() ? 'Fuso do colaborador' : 'Meu fuso' }}: {{ referenceZone() }}</option>

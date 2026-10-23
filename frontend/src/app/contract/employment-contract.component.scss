@@ -1,0 +1,59 @@
+:host {
+  display: block;
+}
+.contract {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin: var(--space-6) 0;
+}
+.contract h3 {
+  margin-top: 0;
+}
+.contract p,
+span {
+  color: var(--color-muted);
+}
+ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-soft);
+  border-radius: var(--radius-md);
+}
+form {
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+}
+label {
+  display: block;
+  font-weight: 700;
+  margin: var(--space-3) 0 var(--space-2);
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+@media (min-width: 640px) {
+  .contract {
+    padding: var(--space-6);
+  }
+}
+@media (max-width: 420px) {
+  form button,
+  nav button {
+    width: 100%;
+  }
+}

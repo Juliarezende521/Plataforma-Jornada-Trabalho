@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class, HrJourneyController.class,
         io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class,
         io.github.juliarezende521.workjourney.adjustment.AuditController.class,
+        io.github.juliarezende521.workjourney.contract.EmploymentContractController.class,
         io.github.juliarezende521.workjourney.schedule.WorkScheduleController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);
@@ -46,6 +47,10 @@ public class JourneyExceptionHandler {
     @ExceptionHandler(io.github.juliarezende521.workjourney.schedule.InvalidSchedule.class)
     ResponseEntity<Problem> invalidSchedule(io.github.juliarezende521.workjourney.schedule.InvalidSchedule error) {
         return problem(error.status(),error.status()==413?"Request body too large":error.status()==409?"Schedule already exists for effective date":"Invalid work schedule");
+    }
+    @ExceptionHandler(io.github.juliarezende521.workjourney.contract.InvalidContract.class)
+    ResponseEntity<Problem> invalidContract(io.github.juliarezende521.workjourney.contract.InvalidContract error) {
+        return problem(error.status(),error.status()==413?"Request body too large":error.status()==409?"Contract already exists for effective date":"Invalid employment contract");
     }
 
     @ExceptionHandler(AuthenticationException.class)

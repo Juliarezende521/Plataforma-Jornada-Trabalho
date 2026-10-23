@@ -41,6 +41,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Tolerância | RH define por vigência uma tolerância operacional diária, aplicada apenas em dias planejados |
 | Exceções de escala | RH substitui carga e tolerância em uma data para feriado, folga, treinamento ou jornada especial |
 | Auditoria | RH consulta em ordem cronológica as ações sensíveis, seus responsáveis e recursos afetados |
+| Contrato | RH registra versões de país, tipo de vínculo e carga semanal por colaborador |
 
 ## Regras de jornada
 
@@ -90,7 +91,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 
 ## Fora desta versão
 
-- Cálculo legal de horas extras e banco de horas; a diferença e a tolerância operacional são apenas informativas e não contemplam contrato ou regras por país.
+- Cálculo legal de horas extras e banco de horas; a diferença e a tolerância operacional são apenas informativas e ainda não aplicam regras legais por país.
 - Aprovação de ajustes por gestor; nesta etapa, a decisão é exclusiva do RH.
 - Integração com folha de pagamento.
 - Cadastro, recuperação de senha e gestão de usuários.

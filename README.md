@@ -16,6 +16,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Resumo do período com tempo efetivo, dias trabalhados, pendências e jornadas ajustadas.
 - Escala semanal configurável por colaborador, com versões por data de vigência.
 - Exceções de escala por data para feriados, folgas, treinamentos e jornadas especiais.
+- Contrato versionado por colaborador, com país, tipo e carga semanal.
 - Visão de RH com panorama dos colaboradores e consulta individual.
 - Solicitação de marcação esquecida e decisão auditável pelo RH.
 - Consulta paginada da trilha de auditoria pelo RH.
@@ -163,6 +164,6 @@ As escolhas de arquitetura, a definição das regras de negócio e a composiçã
 
 ## Próximos passos
 
-1. Cadastro de contrato e regras legais por país antes de calcular banco de horas ou horas extras.
+1. Cadastro das regras legais por país antes de calcular banco de horas ou horas extras.
 2. Integração com o provedor de identidade da empresa.
 3. Validação em dispositivos físicos com pessoas de RH e colaboradores.

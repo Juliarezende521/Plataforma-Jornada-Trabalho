@@ -8,7 +8,8 @@ import { workModeLabel } from '../journey/journey.types';
 import { HistoryApi } from './history-api.service';
 import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail, PeriodSummary } from './history.types';
 import { AdjustmentPanelComponent } from '../adjustment/adjustment-panel.component';
-@Component({ selector: 'app-history', imports: [ReactiveFormsModule, AdjustmentPanelComponent], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
+import { EmploymentContractComponent } from '../contract/employment-contract.component';
+@Component({ selector: 'app-history', imports: [ReactiveFormsModule, AdjustmentPanelComponent, EmploymentContractComponent], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
 export class HistoryComponent {
   readonly user = input.required<Identity>();
   readonly targetEmployee = input<EmployeeSummary | null>(null);
