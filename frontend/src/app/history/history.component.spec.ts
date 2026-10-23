@@ -6,7 +6,7 @@ import { HistoryPage, JourneyDetail } from './history.types';
 const user={userId:'user1',employeeId:'employee1',email:'test@example.invalid',name:'Teste',referenceTimeZoneId:'America/Sao_Paulo'};
 const item={id:'session1',state:'CLOSED' as const,workDate:'2026-10-14',referenceTimeZoneId:'America/Sao_Paulo',openedAtUtc:'2026-10-14T23:30:00Z',closedAtUtc:'2026-10-15T01:30:00Z',workDuration:'PT2H',provisional:false};
 const page: HistoryPage={items:[item],page:0,size:20,totalElements:21,observedAtUtc:'2026-10-15T02:00:00Z'};
-const summary={from:'2026-10-01',to:'2026-10-31',totalWorkDuration:'PT8H',plannedWorkDuration:'PT7H30M',balanceSeconds:1800,scheduledDays:31,periodDays:31,totalSessions:21,closedSessions:20,openSessions:1,adjustedSessions:2,workedDays:20,observedAtUtc:page.observedAtUtc};
+const summary={from:'2026-10-01',to:'2026-10-31',totalWorkDuration:'PT8H',plannedWorkDuration:'PT7H30M',balanceSeconds:1800,toleranceSeconds:3600,withinTolerance:true,scheduledDays:31,periodDays:31,totalSessions:21,closedSessions:20,openSessions:1,adjustedSessions:2,workedDays:20,observedAtUtc:page.observedAtUtc};
 const detail: JourneyDetail={session:item,observedAtUtc:page.observedAtUtc,events:[{id:'event1',sequence:1,type:'ENTRY',occurredAtUtc:item.openedAtUtc,recordedAtUtc:item.openedAtUtc,recordedTimeZoneId:'America/Sao_Paulo'}]};
 describe('History and detail',()=>{
   let fixture: ComponentFixture<HistoryComponent>; let http: HttpTestingController;
@@ -104,7 +104,7 @@ describe('History and detail',()=>{
   });
   it('does not show a misleading difference when the schedule covers only part of the period',()=>{
     component().consult();http.expectOne(r=>r.url==='/api/me/work-sessions').flush(page);
-    http.expectOne(r=>r.url==='/api/me/work-sessions/summary').flush({...summary,balanceSeconds:null,scheduledDays:10});fixture.detectChanges();
+    http.expectOne(r=>r.url==='/api/me/work-sessions/summary').flush({...summary,balanceSeconds:null,toleranceSeconds:null,withinTolerance:null,scheduledDays:10});fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Não disponível');
     expect(fixture.nativeElement.textContent).toContain('10 de 31 dias');
   });

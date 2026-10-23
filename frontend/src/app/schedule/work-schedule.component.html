@@ -14,7 +14,7 @@
     @if (history(); as versions) {
       <ul class="versions">
         @for (version of versions.items; track version.id) {
-          <li><strong>{{ versionStatus(version) }} · {{ formatWorkDate(version.effectiveFrom) }}</strong><span>Carga semanal: {{ format(version.minutes[0] + version.minutes[1] + version.minutes[2] + version.minutes[3] + version.minutes[4] + version.minutes[5] + version.minutes[6]) }}</span></li>
+          <li><strong>{{ versionStatus(version) }} · {{ formatWorkDate(version.effectiveFrom) }}</strong><span>Carga semanal: {{ format(version.minutes[0] + version.minutes[1] + version.minutes[2] + version.minutes[3] + version.minutes[4] + version.minutes[5] + version.minutes[6]) }} · Tolerância diária: {{ version.toleranceMinutes }} min</span></li>
         }
       </ul>
       @if (versions.totalElements > versions.size) {
@@ -24,6 +24,8 @@
     <form [formGroup]="form" (ngSubmit)="save()" novalidate>
       <label for="schedule-from">Início da vigência</label>
       <input id="schedule-from" type="date" formControlName="effectiveFrom" required aria-describedby="schedule-guidance" />
+      <label for="schedule-tolerance">Tolerância diária em minutos</label>
+      <input id="schedule-tolerance" type="number" min="0" max="120" formControlName="toleranceMinutes" required aria-describedby="schedule-guidance" />
       <div class="days">
         @for (day of days; track day; let index = $index) {
           <div>
@@ -32,7 +34,7 @@
           </div>
         }
       </div>
-      <p id="schedule-guidance">O horário representa a carga total planejada. Uma nova vigência preserva as escalas anteriores. Use 00:00 para dias de folga.</p>
+      <p id="schedule-guidance">A tolerância é aplicada a cada dia com carga planejada e serve apenas para relatórios internos. Uma nova vigência preserva as escalas anteriores. Use 00:00 para dias de folga.</p>
       <button type="submit" [disabled]="busy()">{{ busy() ? 'Salvando…' : 'Cadastrar nova escala' }}</button>
     </form>
   }

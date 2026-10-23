@@ -58,6 +58,7 @@
           <div><dt>Tempo efetivo</dt><dd>{{ formatDuration(totals.totalWorkDuration) }}</dd></div>
           <div><dt>Tempo planejado</dt><dd>{{ formatDuration(totals.plannedWorkDuration) }}</dd></div>
           <div><dt>Diferença do período</dt><dd [class.positive-balance]="totals.balanceSeconds !== null && totals.balanceSeconds > 0" [class.negative-balance]="totals.balanceSeconds !== null && totals.balanceSeconds < 0">{{ totals.balanceSeconds === null ? 'Não disponível' : formatSignedSeconds(totals.balanceSeconds) }}</dd></div>
+          <div><dt>Tolerância do período</dt><dd>{{ totals.toleranceSeconds === null ? 'Não disponível' : formatSignedSeconds(totals.toleranceSeconds).replace('+','') }}</dd></div>
           <div><dt>Dias com jornada</dt><dd>{{ totals.workedDays }}</dd></div>
           <div><dt>Jornadas encerradas</dt><dd>{{ totals.closedSessions }}</dd></div>
           <div><dt>Jornadas pendentes</dt><dd>{{ totals.openSessions }}</dd></div>
@@ -66,7 +67,7 @@
         @if (totals.scheduledDays < totals.periodDays) {
           <p>A escala cobria {{ totals.scheduledDays }} de {{ totals.periodDays }} dias do período. A diferença não é exibida porque o planejamento está incompleto.</p>
         } @else {
-          <p>O planejamento considera {{ totals.scheduledDays }} dias com uma escala vigente. A diferença é informativa e não representa, por si só, horas extras ou banco de horas.</p>
+          <p><strong>{{ totals.withinTolerance ? 'Diferença dentro da tolerância.' : 'Diferença fora da tolerância.' }}</strong> O planejamento considera {{ totals.scheduledDays }} dias com uma escala vigente. Este indicador é informativo e não representa, por si só, horas extras ou banco de horas.</p>
         }
         @if (totals.openSessions) { <p>O tempo inclui jornadas ainda abertas até o momento da consulta e pode mudar.</p> }
       </section>

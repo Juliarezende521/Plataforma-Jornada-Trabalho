@@ -57,10 +57,11 @@ class JourneyQueriesTest {
         when(timelines.projectAll(List.of(closed,open),observed)).thenReturn(Map.of(
                 closed.getId(),new EffectiveTimelineService.Timeline(WorkState.CLOSED,Duration.ofHours(7),true,List.of()),
                 open.getId(),new EffectiveTimelineService.Timeline(WorkState.WORKING,Duration.ofMinutes(30),false,List.of())));
-        when(schedules.calculate(employee,day,day)).thenReturn(new WorkSchedulePlan.Plan(480,1));
+        when(schedules.calculate(employee,day,day)).thenReturn(new WorkSchedulePlan.Plan(480,15,1));
         var summary=JourneyQueries.summarize(store,timelines,schedules,employee,day,day,observed);
         assertEquals("PT7H30M",summary.totalWorkDuration());assertEquals(2,summary.totalSessions());
         assertEquals("PT8H",summary.plannedWorkDuration());assertEquals(-1800,summary.balanceSeconds());
+        assertEquals(900,summary.toleranceSeconds());assertFalse(summary.withinTolerance());
         assertEquals(1,summary.scheduledDays());assertEquals(1,summary.periodDays());
         assertEquals(1,summary.closedSessions());assertEquals(1,summary.openSessions());
         assertEquals(1,summary.adjustedSessions());assertEquals(1,summary.workedDays());
@@ -74,8 +75,9 @@ class JourneyQueriesTest {
     @Test void summaryOmitsBalanceWhenScheduleDoesNotCoverTheWholePeriod() {
         var employee=UUID.randomUUID();var from=LocalDate.of(2026,10,1);var to=from.plusDays(2);var observed=Instant.EPOCH;
         var store=mock(JpaWorkSessionStore.class);var timelines=mock(EffectiveTimelineService.class);var schedules=mock(WorkSchedulePlan.class);
-        when(schedules.calculate(employee,from,to)).thenReturn(new WorkSchedulePlan.Plan(480,1));
+        when(schedules.calculate(employee,from,to)).thenReturn(new WorkSchedulePlan.Plan(480,15,1));
         var summary=JourneyQueries.summarize(store,timelines,schedules,employee,from,to,observed);
-        assertNull(summary.balanceSeconds());assertEquals(1,summary.scheduledDays());assertEquals(3,summary.periodDays());
+        assertNull(summary.balanceSeconds());assertNull(summary.toleranceSeconds());assertNull(summary.withinTolerance());
+        assertEquals(1,summary.scheduledDays());assertEquals(3,summary.periodDays());
     }
 }

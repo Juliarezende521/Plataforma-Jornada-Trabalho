@@ -37,14 +37,14 @@ class WorkScheduleService {
         return new Page(result.map(View::from).getContent(),page,size,result.getTotalElements());
     }
     @Transactional(timeout=15)
-    public View create(UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes){
+    public View create(UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes,int toleranceMinutes){
         var actor=requireHr();var employee=employees.lockActive(employeeId)
                 .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
         if(schedules.existsByEmployee_IdAndEffectiveFrom(employeeId,effectiveFrom))throw new InvalidSchedule(409);
         var now=UtcInstants.normalize(clock.instant());
-        var schedule=schedules.save(new WorkSchedule(employee,effectiveFrom,minutes,actor.userId(),now));
+        var schedule=schedules.save(new WorkSchedule(employee,effectiveFrom,minutes,toleranceMinutes,actor.userId(),now));
         audits.save(new AuditEntry(actor.userId(),"WORK_SCHEDULE_CREATED","WORK_SCHEDULE",schedule.id(),
-                now,"effectiveFrom="+effectiveFrom));
+                now,"effectiveFrom="+effectiveFrom+",toleranceMinutes="+toleranceMinutes));
         return View.from(schedule);
     }
     private CurrentEmployeeIdentity.Identity requireHr(){var actor=identity.require();
@@ -57,8 +57,8 @@ class WorkScheduleService {
         return schedules.findFirstByEmployee_IdAndEffectiveFromLessThanEqualOrderByEffectiveFromDesc(employee.getId(),date)
                 .map(View::from).orElse(null);
     }
-    public record View(UUID id,UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes,Instant createdAtUtc){
-        static View from(WorkSchedule value){return new View(value.id(),value.employee().getId(),value.effectiveFrom(),value.minutes(),value.createdAt());}
+    public record View(UUID id,UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes,int toleranceMinutes,Instant createdAtUtc){
+        static View from(WorkSchedule value){return new View(value.id(),value.employee().getId(),value.effectiveFrom(),value.minutes(),value.toleranceMinutes(),value.createdAt());}
     }
     public record Page(List<View> items,int page,int size,long totalElements){}
 }

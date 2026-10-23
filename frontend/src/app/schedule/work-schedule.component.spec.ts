@@ -6,7 +6,7 @@ import { WorkSchedule } from './work-schedule.types';
 
 const schedule: WorkSchedule = {
   id: 'schedule-1', employeeId: 'employee-1', effectiveFrom: '2026-10-20',
-  minutes: [480, 480, 480, 480, 420, 0, 0], createdAtUtc: '2026-10-20T12:00:00Z',
+  minutes: [480, 480, 480, 480, 420, 0, 0], toleranceMinutes:10, createdAtUtc: '2026-10-20T12:00:00Z',
 };
 
 describe('Work schedule', () => {
@@ -54,7 +54,7 @@ describe('Work schedule', () => {
     expect(request.request.body).toEqual({
       effectiveFrom: '2026-11-01', mondayMinutes: 480, tuesdayMinutes: 480,
       wednesdayMinutes: 480, thursdayMinutes: 480, fridayMinutes: 450,
-      saturdayMinutes: 0, sundayMinutes: 0,
+      saturdayMinutes: 0, sundayMinutes: 0, toleranceMinutes:10,
     });
     request.flush(schedule);
     fixture.detectChanges();
@@ -65,12 +65,18 @@ describe('Work schedule', () => {
     mount('employee-1', true);
     http.expectOne('/api/hr/employees/employee-1/work-schedule').flush(null);
     fixture.componentInstance.form.setValue({
-      effectiveFrom: '2026-11-01', monday: '00:00', tuesday: '00:00', wednesday: '00:00',
+      effectiveFrom: '2026-11-01', toleranceMinutes:10, monday: '00:00', tuesday: '00:00', wednesday: '00:00',
       thursday: '00:00', friday: '00:00', saturday: '00:00', sunday: '00:00',
     });
     fixture.componentInstance.save();
     expect(fixture.componentInstance.message()).toContain('pelo menos um dia');
     http.expectNone('/api/auth/csrf');
+  });
+  it('rejects tolerance outside the documented range before sending',()=>{
+    mount('employee-1',true);http.expectOne('/api/hr/employees/employee-1/work-schedule').flush(null);
+    fixture.componentInstance.form.patchValue({effectiveFrom:'2026-11-01',toleranceMinutes:121});
+    fixture.componentInstance.save();
+    expect(fixture.componentInstance.message()).toContain('Preencha');http.expectNone('/api/auth/csrf');
   });
 
   it('cancels the previous read when the selected employee changes', () => {

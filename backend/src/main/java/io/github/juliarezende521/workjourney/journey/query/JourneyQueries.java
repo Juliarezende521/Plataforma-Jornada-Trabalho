@@ -73,7 +73,9 @@ public class JourneyQueries {
         var plan=schedules.calculate(employee,from,to);
         int periodDays=Math.toIntExact(java.time.temporal.ChronoUnit.DAYS.between(from,to)+1);
         Long balanceSeconds=plan.coveredDays()==periodDays ? duration.minus(Duration.ofMinutes(plan.minutes())).getSeconds() : null;
-        return new Summary(from,to,duration.toString(),Duration.ofMinutes(plan.minutes()).toString(),balanceSeconds,plan.coveredDays(),periodDays,
+        Long toleranceSeconds=balanceSeconds==null?null:Math.multiplyExact(plan.toleranceMinutes(),60);
+        Boolean withinTolerance=balanceSeconds==null?null:Math.abs(balanceSeconds)<=toleranceSeconds;
+        return new Summary(from,to,duration.toString(),Duration.ofMinutes(plan.minutes()).toString(),balanceSeconds,toleranceSeconds,withinTolerance,plan.coveredDays(),periodDays,
                 total,closed,total-closed,adjusted,days.size(),observed);
     }
     private UUID lockActor() {
@@ -108,7 +110,7 @@ public class JourneyQueries {
         }
     }
     public record History(List<Item> items, int page, int size, long totalElements, Instant observedAtUtc) { }
-    public record Summary(LocalDate from,LocalDate to,String totalWorkDuration,String plannedWorkDuration,Long balanceSeconds,int scheduledDays,int periodDays,long totalSessions,long closedSessions,
+    public record Summary(LocalDate from,LocalDate to,String totalWorkDuration,String plannedWorkDuration,Long balanceSeconds,Long toleranceSeconds,Boolean withinTolerance,int scheduledDays,int periodDays,long totalSessions,long closedSessions,
                           long openSessions,long adjustedSessions,int workedDays,Instant observedAtUtc) { }
     public record Event(UUID id, long sequence, WorkEventType type, Instant occurredAtUtc, Instant recordedAtUtc, String recordedTimeZoneId, WorkMode workMode,boolean correction) { }
     public record Effective(WorkState state,String workDuration,boolean adjusted,List<EffectiveTimelineService.Event> events) { }

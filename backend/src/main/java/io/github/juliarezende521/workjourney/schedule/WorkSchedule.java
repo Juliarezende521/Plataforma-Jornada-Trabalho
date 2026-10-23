@@ -21,21 +21,24 @@ class WorkSchedule {
     @Column(name="friday_minutes",nullable=false,updatable=false) private short fridayMinutes;
     @Column(name="saturday_minutes",nullable=false,updatable=false) private short saturdayMinutes;
     @Column(name="sunday_minutes",nullable=false,updatable=false) private short sundayMinutes;
+    @Column(name="tolerance_minutes",nullable=false,updatable=false) private short toleranceMinutes;
     @Column(name="created_by_user_id",nullable=false,updatable=false) private UUID createdByUserId;
     @TimeZoneStorage(TimeZoneStorageType.NATIVE) @Column(name="created_at_utc",nullable=false,updatable=false,columnDefinition="datetimeoffset(7)",precision=7)
     private OffsetDateTime createdAtUtc;
     protected WorkSchedule(){}
-    WorkSchedule(Employee employee,LocalDate effectiveFrom,List<Integer> minutes,UUID creator,Instant createdAt){
+    WorkSchedule(Employee employee,LocalDate effectiveFrom,List<Integer> minutes,int toleranceMinutes,UUID creator,Instant createdAt){
         if(employee==null||effectiveFrom==null||creator==null||createdAt==null||minutes==null||minutes.size()!=7
                 ||minutes.stream().anyMatch(value->value==null||value<0||value>1440)
-                ||minutes.stream().mapToInt(Integer::intValue).sum()==0)throw new InvalidSchedule();
+                ||minutes.stream().mapToInt(Integer::intValue).sum()==0||toleranceMinutes<0||toleranceMinutes>120)throw new InvalidSchedule();
         id=UUID.randomUUID();this.employee=employee;this.effectiveFrom=effectiveFrom;createdByUserId=creator;
         createdAtUtc=UtcInstants.normalize(createdAt).atOffset(ZoneOffset.UTC);
         mondayMinutes=minutes.get(0).shortValue();tuesdayMinutes=minutes.get(1).shortValue();wednesdayMinutes=minutes.get(2).shortValue();
         thursdayMinutes=minutes.get(3).shortValue();fridayMinutes=minutes.get(4).shortValue();saturdayMinutes=minutes.get(5).shortValue();sundayMinutes=minutes.get(6).shortValue();
+        this.toleranceMinutes=(short)toleranceMinutes;
     }
     UUID id(){return id;} Employee employee(){return employee;} LocalDate effectiveFrom(){return effectiveFrom;}
     Instant createdAt(){return createdAtUtc.toInstant();}
     List<Integer> minutes(){return List.of((int)mondayMinutes,(int)tuesdayMinutes,(int)wednesdayMinutes,(int)thursdayMinutes,
             (int)fridayMinutes,(int)saturdayMinutes,(int)sundayMinutes);}
+    int toleranceMinutes(){return toleranceMinutes;}
 }

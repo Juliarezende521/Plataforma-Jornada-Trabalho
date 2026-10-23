@@ -38,6 +38,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Linha efetiva | Detalhe combina originais e ajustes aprovados e recalcula a duração sem alterar a origem |
 | Escala | RH configura minutos planejados por dia da semana e início de vigência para cada colaborador |
 | Comparativo | Resumo confronta tempo efetivo e planejado quando a escala cobre todo o período consultado |
+| Tolerância | RH define por vigência uma tolerância operacional diária, aplicada apenas em dias planejados |
 
 ## Regras de jornada
 
@@ -87,7 +88,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 
 ## Fora desta versão
 
-- Cálculo legal de horas extras e banco de horas; a diferença entre realizado e planejado é apenas informativa e não contempla contrato, tolerâncias ou regras por país.
+- Cálculo legal de horas extras e banco de horas; a diferença e a tolerância operacional são apenas informativas e não contemplam contrato ou regras por país.
 - Aprovação de ajustes por gestor; nesta etapa, a decisão é exclusiva do RH.
 - Integração com folha de pagamento.
 - Cadastro, recuperação de senha e gestão de usuários.

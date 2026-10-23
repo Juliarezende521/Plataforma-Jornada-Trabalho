@@ -5,7 +5,7 @@ import { HrComponent } from './hr.component';
 const hr = { userId: 'hr', employeeId: 'hr-employee', name: 'RH', email: 'hr@example.invalid', referenceTimeZoneId: 'UTC', hrReader: true };
 const brazil = { id: 'brazil', name: 'Brasil', referenceTimeZoneId: 'America/Sao_Paulo' };
 const europe = { id: 'europe', name: 'Europa', referenceTimeZoneId: 'Europe/Amsterdam' };
-const emptySummary={from:'2026-10-01',to:'2026-10-14',totalWorkDuration:'PT0S',plannedWorkDuration:'PT0S',balanceSeconds:null,scheduledDays:0,periodDays:14,totalSessions:0,closedSessions:0,openSessions:0,adjustedSessions:0,workedDays:0,observedAtUtc:'2026-10-14T14:00:00Z'};
+const emptySummary={from:'2026-10-01',to:'2026-10-14',totalWorkDuration:'PT0S',plannedWorkDuration:'PT0S',balanceSeconds:null,toleranceSeconds:null,withinTolerance:null,scheduledDays:0,periodDays:14,totalSessions:0,closedSessions:0,openSessions:0,adjustedSessions:0,workedDays:0,observedAtUtc:'2026-10-14T14:00:00Z'};
 describe('Read-only HR screen', () => {
   let fixture: ComponentFixture<HrComponent>; let http: HttpTestingController;
   beforeEach(async () => {

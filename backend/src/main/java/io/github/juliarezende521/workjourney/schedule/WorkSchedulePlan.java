@@ -22,6 +22,7 @@ public class WorkSchedulePlan {
         versions.addAll(schedules.findByEmployee_IdAndEffectiveFromGreaterThanAndEffectiveFromLessThanEqualOrderByEffectiveFromAsc(
                 employeeId, from, to));
         long total = 0;
+        long tolerance = 0;
         int coveredDays = 0;
         int next = 0;
         WorkSchedule current = null;
@@ -30,12 +31,14 @@ public class WorkSchedulePlan {
                 current = versions.get(next++);
             }
             if (current != null) {
-                total += current.minutes().get(date.getDayOfWeek().getValue() - 1);
+                int planned=current.minutes().get(date.getDayOfWeek().getValue() - 1);
+                total += planned;
+                if(planned>0)tolerance+=current.toleranceMinutes();
                 coveredDays++;
             }
         }
-        return new Plan(total, coveredDays);
+        return new Plan(total, tolerance, coveredDays);
     }
 
-    public record Plan(long minutes, int coveredDays) { }
+    public record Plan(long minutes, long toleranceMinutes, int coveredDays) { }
 }

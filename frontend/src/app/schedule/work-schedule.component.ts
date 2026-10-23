@@ -28,6 +28,7 @@ export class WorkScheduleComponent {
   readonly formatWorkDate = formatWorkDate;
   readonly form = new FormGroup({
     effectiveFrom: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    toleranceMinutes: new FormControl(10, { nonNullable: true, validators: [Validators.required,Validators.min(0),Validators.max(120)] }),
     monday: new FormControl('08:00', { nonNullable: true, validators: [Validators.required] }),
     tuesday: new FormControl('08:00', { nonNullable: true, validators: [Validators.required] }),
     wednesday: new FormControl('08:00', { nonNullable: true, validators: [Validators.required] }),
@@ -93,6 +94,7 @@ export class WorkScheduleComponent {
     }
     const input: WorkScheduleInput = {
       effectiveFrom: value.effectiveFrom,
+      toleranceMinutes:value.toleranceMinutes,
       mondayMinutes: minutes[0]!, tuesdayMinutes: minutes[1]!, wednesdayMinutes: minutes[2]!,
       thursdayMinutes: minutes[3]!, fridayMinutes: minutes[4]!, saturdayMinutes: minutes[5]!, sundayMinutes: minutes[6]!,
     };

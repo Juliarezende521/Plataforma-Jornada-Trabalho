@@ -23,7 +23,7 @@ public class WorkScheduleController {
     }
     @PostMapping(value="/api/hr/employees/{employeeId}/work-schedules",consumes="application/json") @ResponseStatus(HttpStatus.CREATED)
     public WorkScheduleService.View create(@PathVariable String employeeId,HttpServletRequest request)throws IOException{
-        var command=reader.read(request);return service.create(uuids.uuid(employeeId),command.effectiveFrom(),command.minutes());
+        var command=reader.read(request);return service.create(uuids.uuid(employeeId),command.effectiveFrom(),command.minutes(),command.toleranceMinutes());
     }
     private LocalDate on(HttpServletRequest request){var parameters=request.getParameterMap();
         if(!Set.of("on").containsAll(parameters.keySet())||parameters.values().stream().anyMatch(values->values.length!=1))throw new InvalidSchedule();

@@ -7,7 +7,7 @@ export interface HistoryPage {
   items: HistoryItem[]; page: number; size: number; totalElements: number; observedAtUtc: string;
 }
 export interface PeriodSummary {
-  from:string; to:string; totalWorkDuration:string; plannedWorkDuration:string; balanceSeconds:number|null; scheduledDays:number; periodDays:number; totalSessions:number; closedSessions:number;
+  from:string; to:string; totalWorkDuration:string; plannedWorkDuration:string; balanceSeconds:number|null; toleranceSeconds:number|null; withinTolerance:boolean|null; scheduledDays:number; periodDays:number; totalSessions:number; closedSessions:number;
   openSessions:number; adjustedSessions:number; workedDays:number; observedAtUtc:string;
 }
 export interface JourneyDetail {

@@ -55,7 +55,7 @@ class JourneyHttpTest {
     @Test void summaryRequiresAnExactBoundedPeriod() throws Exception {
         var from=java.time.LocalDate.of(2026,10,1);var to=java.time.LocalDate.of(2026,10,31);
         var response=new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.Summary(
-                from,to,"PT40H","PT40H",0L,31,31,5,5,0,1,5,NOW);
+                from,to,"PT40H","PT40H",0L,1800L,true,31,31,5,5,0,1,5,NOW);
         when(queries.summary(from,to)).thenReturn(response);
         mvc.perform(get("/api/me/work-sessions/summary?from=2026-10-01&to=2026-10-31").with(user(principal())))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.totalWorkDuration").value("PT40H"))

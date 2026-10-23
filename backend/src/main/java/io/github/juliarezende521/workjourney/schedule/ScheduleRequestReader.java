@@ -18,10 +18,10 @@ class ScheduleRequestReader {
         var body=request.getInputStream().readNBytes(MAX_BYTES+1);if(body.length>MAX_BYTES)throw new InvalidSchedule(413);
         try{var input=mapper.readValue(body,Input.class);return new Command(LocalDate.parse(input.effectiveFrom()),
                 List.of(input.mondayMinutes(),input.tuesdayMinutes(),input.wednesdayMinutes(),input.thursdayMinutes(),
-                        input.fridayMinutes(),input.saturdayMinutes(),input.sundayMinutes()));}
+                        input.fridayMinutes(),input.saturdayMinutes(),input.sundayMinutes()),input.toleranceMinutes());}
         catch(com.fasterxml.jackson.core.JsonProcessingException|IllegalArgumentException|NullPointerException invalid){throw new InvalidSchedule();}
     }
     private record Input(String effectiveFrom,Integer mondayMinutes,Integer tuesdayMinutes,Integer wednesdayMinutes,
-                         Integer thursdayMinutes,Integer fridayMinutes,Integer saturdayMinutes,Integer sundayMinutes){}
-    record Command(LocalDate effectiveFrom,List<Integer> minutes){}
+                         Integer thursdayMinutes,Integer fridayMinutes,Integer saturdayMinutes,Integer sundayMinutes,Integer toleranceMinutes){}
+    record Command(LocalDate effectiveFrom,List<Integer> minutes,int toleranceMinutes){}
 }

@@ -21,9 +21,9 @@ class WorkScheduleServiceTest {
         when(schedules.save(any())).thenAnswer(call->call.getArgument(0));
         var service=new WorkScheduleService(identity,employees,users,schedules,audits,Clock.fixed(Instant.parse("2026-10-22T12:00:00Z"),ZoneOffset.UTC));
         var date=LocalDate.of(2026,11,1);var minutes=List.of(480,480,480,480,480,0,0);
-        var result=service.create(target.getId(),date,minutes);assertEquals(minutes,result.minutes());verify(audits).save(any(AuditEntry.class));
+        var result=service.create(target.getId(),date,minutes,10);assertEquals(minutes,result.minutes());assertEquals(10,result.toleranceMinutes());verify(audits).save(any(AuditEntry.class));
         when(schedules.existsByEmployee_IdAndEffectiveFrom(target.getId(),date)).thenReturn(true);
-        assertEquals(409,assertThrows(InvalidSchedule.class,()->service.create(target.getId(),date,minutes)).status());
+        assertEquals(409,assertThrows(InvalidSchedule.class,()->service.create(target.getId(),date,minutes,10)).status());
     }
     @Test void hrHistoryIsBoundedAndSortedWithoutExposingInactiveEmployees(){
         var identity=mock(CurrentEmployeeIdentity.class);var employees=mock(EmployeeRepository.class);var users=mock(AppUserRepository.class);
