@@ -40,6 +40,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Comparativo | Resumo confronta tempo efetivo e planejado quando a escala cobre todo o período consultado |
 | Tolerância | RH define por vigência uma tolerância operacional diária, aplicada apenas em dias planejados |
 | Exceções de escala | RH substitui carga e tolerância em uma data para feriado, folga, treinamento ou jornada especial |
+| Auditoria | RH consulta em ordem cronológica as ações sensíveis, seus responsáveis e recursos afetados |
 
 ## Regras de jornada
 

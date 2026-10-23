@@ -61,4 +61,12 @@ describe('HR overview and separate individual consultation', () => {
     fixture.detectChanges(); expect(fixture.nativeElement.textContent).toContain('Seu acesso de RH não está disponível');
     expect(fixture.componentInstance.page()).toBeNull();
   });
+  it('opens the audit screen only when requested', () => {
+    loaded(); http.expectNone('/api/hr/audit-entries');
+    fixture.componentInstance.show('audit'); fixture.detectChanges();
+    http.expectOne('/api/hr/audit-entries?page=0&size=20').flush({ items: [], page: 0, size: 20, totalElements: 0 });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-audit-log')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.overview')).toBeNull();
+  });
 });

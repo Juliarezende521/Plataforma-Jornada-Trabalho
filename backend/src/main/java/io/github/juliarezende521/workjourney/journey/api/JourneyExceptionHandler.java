@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice(assignableTypes = {JourneyController.class, JourneyQueryController.class, HrJourneyController.class,
         io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class,
+        io.github.juliarezende521.workjourney.adjustment.AuditController.class,
         io.github.juliarezende521.workjourney.schedule.WorkScheduleController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);

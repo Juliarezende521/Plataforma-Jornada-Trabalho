@@ -93,6 +93,7 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/{employeeId}/work-schedules` | Lista versões da escala com paginação |
 | GET | `/api/hr/employees/{employeeId}/work-schedule-exceptions` | Lista exceções de escala auditáveis |
 | POST | `/api/hr/employees/{employeeId}/work-schedule-exceptions` | Cria nova versão de exceção para uma data |
+| GET | `/api/hr/audit-entries` | Lista a trilha de auditoria com paginação, restrita ao RH |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |

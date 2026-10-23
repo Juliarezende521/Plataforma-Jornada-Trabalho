@@ -31,4 +31,11 @@ public class AuditEntry {
         this.id=UUID.randomUUID(); this.actorUserId=actor; this.action=action; this.entityType=entityType;
         this.entityId=entityId; this.recordedAtUtc=at.atOffset(ZoneOffset.UTC); this.details=details;
     }
+    public UUID id() { return id; }
+    public UUID actorUserId() { return actorUserId; }
+    public String action() { return action; }
+    public String entityType() { return entityType; }
+    public UUID entityId() { return entityId; }
+    public Instant recordedAt() { return recordedAtUtc.toInstant(); }
+    public String details() { return details; }
 }

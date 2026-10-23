@@ -7,15 +7,16 @@ import { EmployeeSummary } from '../history/history.types';
 import { formatInstant, formatWorkDate } from '../journey/journey-format';
 import { HrComponent } from './hr.component';
 import { AdjustmentReviewComponent } from '../adjustment/adjustment-review.component';
+import { AuditLogComponent } from '../audit/audit-log.component';
 
 export interface OverviewPerson extends EmployeeSummary { state: 'WORKING' | 'PAUSED' | 'CLOSED' | 'NOT_STARTED'; workDate: string | null; }
 export interface OverviewPage { items: OverviewPerson[]; page: number; size: number; totalElements: number; observedAtUtc: string; }
 
-@Component({ selector: 'app-hr-dashboard', imports: [HrComponent, HistoryComponent, AdjustmentReviewComponent],
+@Component({ selector: 'app-hr-dashboard', imports: [HrComponent, HistoryComponent, AdjustmentReviewComponent, AuditLogComponent],
   templateUrl: './hr-dashboard.component.html', styleUrl: './hr-dashboard.component.scss' })
 export class HrDashboardComponent {
   readonly user = input.required<Identity>();
-  readonly view = signal<'overview' | 'individual' | 'selected' | 'adjustments'>('overview');
+  readonly view = signal<'overview' | 'individual' | 'selected' | 'adjustments' | 'audit'>('overview');
   readonly page = signal<OverviewPage | null>(null);
   readonly selected = signal<OverviewPerson | null>(null);
   readonly busy = signal(false);
@@ -28,6 +29,7 @@ export class HrDashboardComponent {
   private readonly individual = viewChild(HrComponent);
   private readonly history = viewChild(HistoryComponent);
   private readonly adjustments = viewChild(AdjustmentReviewComponent);
+  private readonly audit = viewChild(AuditLogComponent);
   private request?: Subscription;
   readonly formatWorkDate = formatWorkDate;
   constructor() {
@@ -47,12 +49,13 @@ export class HrDashboardComponent {
         this.message.set(error instanceof HttpErrorResponse && error.status === 403 ? 'Seu acesso de RH não está disponível. Verifique seu acesso.' : 'Não foi possível consultar as jornadas. Tente novamente.'); },
     });
   }
-  show(view: 'overview' | 'individual' | 'adjustments'): void { this.selected.set(null); this.view.set(view); this.focus(); }
+  show(view: 'overview' | 'individual' | 'adjustments' | 'audit'): void { this.selected.set(null); this.view.set(view); this.focus(); }
   open(person: OverviewPerson): void { this.selected.set(person); this.view.set('selected'); this.focus(); }
   private focus(): void { setTimeout(() => {
     if (this.destroy.destroyed) return;
     if (this.view() === 'individual') this.individual()?.focusHeading();
     else if (this.view() === 'adjustments') this.adjustments()?.focusHeading();
+    else if (this.view() === 'audit') this.audit()?.focusHeading();
     else if (this.view() === 'selected') this.history()?.focusHeading();
     else this.heading()?.nativeElement.focus();
   }); }

@@ -1,0 +1,25 @@
+<section class="audit" aria-labelledby="audit-heading" [attr.aria-busy]="busy()">
+  <h2 id="audit-heading" #heading tabindex="-1">Auditoria</h2>
+  <p>Histórico somente de leitura das ações sensíveis registradas pelo sistema.</p>
+  <button class="secondary" type="button" (click)="load(page()?.page ?? 0)" [disabled]="busy()">Atualizar auditoria</button>
+  <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+  @if (page(); as result) {
+    <ol>
+      @for (item of result.items; track item.id) {
+        <li>
+          <div><strong>{{ action(item.action) }}</strong><span>{{ date(item.recordedAtUtc) }}</span></div>
+          <dl>
+            <div><dt>Responsável</dt><dd>{{ item.actorEmail || item.actorUserId }}</dd></div>
+            <div><dt>Recurso</dt><dd>{{ entity(item.entityType) }} · {{ item.entityId }}</dd></div>
+            @if (item.details) { <div><dt>Detalhes</dt><dd>{{ item.details }}</dd></div> }
+          </dl>
+        </li>
+      }
+    </ol>
+    <nav aria-label="Páginas da auditoria">
+      <button class="secondary" type="button" (click)="load(result.page - 1)" [disabled]="busy() || result.page === 0">Página anterior</button>
+      <span>Página {{ result.page + 1 }} · {{ result.totalElements }} registros</span>
+      <button class="secondary" type="button" (click)="load(result.page + 1)" [disabled]="busy() || (result.page + 1) * result.size >= result.totalElements">Próxima página</button>
+    </nav>
+  }
+</section>
