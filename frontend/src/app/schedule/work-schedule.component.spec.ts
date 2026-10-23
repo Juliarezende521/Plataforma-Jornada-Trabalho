@@ -109,4 +109,29 @@ describe('Work schedule', () => {
     expect(fixture.nativeElement.textContent).toContain('Vigente · 20/10/2026');
     expect(fixture.nativeElement.textContent).toContain('Carga semanal: 39 h');
   });
+  it('creates an audited schedule exception through the protected API',()=>{
+    mount('employee-1',true);http.expectOne('/api/hr/employees/employee-1/work-schedule').flush(schedule);
+    fixture.componentInstance.exceptionForm.setValue({workDate:'2026-12-25',plannedMinutes:0,toleranceMinutes:0,category:'HOLIDAY',reason:'Feriado local'});
+    fixture.componentInstance.saveException();http.expectOne('/api/auth/csrf').flush({headerName:'X-CSRF-TOKEN',token:'csrf'});
+    const request=http.expectOne('/api/hr/employees/employee-1/work-schedule-exceptions');expect(request.request.body.category).toBe('HOLIDAY');expect(request.request.headers.get('X-CSRF-TOKEN')).toBe('csrf');request.flush({});
+    expect(fixture.componentInstance.message()).toContain('cadastrada com sucesso');
+  });
+
+  it('loads and paginates schedule exceptions only when HR requests them', () => {
+    mount('employee-1', true);
+    http.expectOne('/api/hr/employees/employee-1/work-schedule').flush(schedule);
+    http.expectNone(request => request.url.endsWith('/work-schedule-exceptions'));
+    fixture.componentInstance.loadExceptions();
+    const first = http.expectOne(request => request.url === '/api/hr/employees/employee-1/work-schedule-exceptions');
+    expect(first.request.params.get('page')).toBe('0');
+    expect(first.request.params.get('size')).toBe('20');
+    first.flush({ items: [{ id: 'exception-1', employeeId: 'employee-1', workDate: '2026-12-25', plannedMinutes: 0, toleranceMinutes: 0, category: 'HOLIDAY', reason: 'Feriado local', createdBy: 'hr-1', createdAtUtc: '2026-10-23T12:00:00Z' }], page: 0, size: 20, totalElements: 21 });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('25/12/2026 · Feriado');
+    expect(fixture.nativeElement.textContent).toContain('Página 1');
+    fixture.componentInstance.loadExceptions(1);
+    const second = http.expectOne(request => request.url === '/api/hr/employees/employee-1/work-schedule-exceptions');
+    expect(second.request.params.get('page')).toBe('1');
+    second.flush({ items: [], page: 1, size: 20, totalElements: 21 });
+  });
 });

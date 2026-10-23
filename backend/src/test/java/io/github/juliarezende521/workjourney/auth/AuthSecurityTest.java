@@ -80,6 +80,30 @@ class AuthSecurityTest {
     }
 
     @Test
+    void onlyHrCanReachScheduleWriteEndpoints() throws Exception {
+        var employee = new AccountPrincipal.Identity(UUID.randomUUID(), UUID.randomUUID(),
+                "employee@example.invalid", "Employee", "America/Sao_Paulo", false);
+        var hr = new AccountPrincipal.Identity(UUID.randomUUID(), UUID.randomUUID(),
+                "hr@example.invalid", "HR", "America/Sao_Paulo", true);
+        for (String path : new String[]{
+                "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedules",
+                "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedule-exceptions"}) {
+            mvc.perform(post(path)
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                            .user(new AccountPrincipal(employee, encoder.encode("unused-password"), true)))
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{}"))
+                    .andExpect(status().isForbidden());
+            mvc.perform(post(path)
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                            .user(new AccountPrincipal(hr, encoder.encode("unused-password"), true)))
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{}"))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
     void rateLimitedLoginReturnsSharedProblemAndRetryAfter() throws Exception {
         var csrf = mvc.perform(get("/api/auth/csrf")).andReturn();
         var token = responseJson(csrf);

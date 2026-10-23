@@ -108,6 +108,32 @@ class JourneySchemaSqlServerIT {
     }
 
     @Test
+    void scheduleExceptionConstraintsPreserveAnAuditableOverride() throws Exception {
+        try (var connection = transaction()) {
+            var owner = owner(connection);
+            execute(connection, """
+                    INSERT INTO dbo.work_schedule_exception
+                    (id, employee_id, work_date, planned_minutes, tolerance_minutes, category,
+                     reason, created_by_user_id, created_at_utc)
+                    VALUES (?, ?, '2026-12-25', 0, 0, 'HOLIDAY', N'Feriado local', ?, ?)
+                    """, UUID.randomUUID(), owner.employeeId(), owner.userId(), NOW);
+            assertSqlError(547, () -> execute(connection, """
+                    INSERT INTO dbo.work_schedule_exception
+                    (id, employee_id, work_date, planned_minutes, tolerance_minutes, category,
+                     reason, created_by_user_id, created_at_utc)
+                    VALUES (?, ?, '2026-12-26', 1441, 0, 'HOLIDAY', N'Valor inválido', ?, ?)
+                    """, UUID.randomUUID(), owner.employeeId(), owner.userId(), NOW));
+            assertSqlError(547, () -> execute(connection, """
+                    INSERT INTO dbo.work_schedule_exception
+                    (id, employee_id, work_date, planned_minutes, tolerance_minutes, category,
+                     reason, created_by_user_id, created_at_utc)
+                    VALUES (?, ?, '2026-12-27', 0, 0, 'OTHER', N'Categoria inválida', ?, ?)
+                    """, UUID.randomUUID(), owner.employeeId(), owner.userId(), NOW));
+            connection.rollback();
+        }
+    }
+
+    @Test
     void rollbackRemovesEventAndRestoresSessionStateAndVersion() throws Exception {
         try (var connection = transaction()) {
             var owner = owner(connection);

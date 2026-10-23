@@ -16,3 +16,5 @@ form > label, .days label { display: block; font-weight: 700; margin-bottom: var
 .versions li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--space-2); padding:var(--space-3); background:var(--color-soft); border-radius:var(--radius-md); }
 .versions span, nav span { color:var(--color-muted); }
 nav { display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:center; margin:var(--space-3) 0; }
+.exceptions { border-top:1px solid var(--color-border);margin-top:var(--space-6);padding-top:var(--space-6); }
+.exceptions textarea { width:100%;min-height:6rem; }

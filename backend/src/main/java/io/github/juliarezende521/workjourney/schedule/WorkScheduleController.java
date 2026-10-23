@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController @Profile("!bootstrap")
 public class WorkScheduleController {
-    private final WorkScheduleService service;private final ScheduleRequestReader reader;private final MarkingRequestReader uuids;
-    WorkScheduleController(WorkScheduleService service,ScheduleRequestReader reader,MarkingRequestReader uuids){this.service=service;this.reader=reader;this.uuids=uuids;}
+    private final WorkScheduleService service;private final ScheduleRequestReader reader;private final ScheduleExceptionRequestReader exceptionReader;private final MarkingRequestReader uuids;
+    WorkScheduleController(WorkScheduleService service,ScheduleRequestReader reader,ScheduleExceptionRequestReader exceptionReader,MarkingRequestReader uuids){this.service=service;this.reader=reader;this.exceptionReader=exceptionReader;this.uuids=uuids;}
     @GetMapping("/api/me/work-schedule") public WorkScheduleService.View mine(HttpServletRequest request){return service.mine(on(request));}
     @GetMapping("/api/hr/employees/{employeeId}/work-schedule") public WorkScheduleService.View forHr(@PathVariable String employeeId,HttpServletRequest request){return service.forHr(uuids.uuid(employeeId),on(request));}
     @GetMapping("/api/hr/employees/{employeeId}/work-schedules") public WorkScheduleService.Page history(
@@ -25,6 +25,14 @@ public class WorkScheduleController {
     public WorkScheduleService.View create(@PathVariable String employeeId,HttpServletRequest request)throws IOException{
         var command=reader.read(request);return service.create(uuids.uuid(employeeId),command.effectiveFrom(),command.minutes(),command.toleranceMinutes());
     }
+    @GetMapping("/api/hr/employees/{employeeId}/work-schedule-exceptions") public WorkScheduleService.ExceptionPage exceptions(@PathVariable String employeeId,HttpServletRequest request){
+        exactPageParameters(request);return service.exceptionHistoryForHr(uuids.uuid(employeeId),integer(request,"page",0),integer(request,"size",20));
+    }
+    @PostMapping(value="/api/hr/employees/{employeeId}/work-schedule-exceptions",consumes="application/json") @ResponseStatus(HttpStatus.CREATED)
+    public WorkScheduleService.ExceptionView createException(@PathVariable String employeeId,HttpServletRequest request)throws IOException{
+        var value=exceptionReader.read(request);return service.createException(uuids.uuid(employeeId),value.workDate(),value.plannedMinutes(),value.toleranceMinutes(),value.category(),value.reason());
+    }
+    private void exactPageParameters(HttpServletRequest request){var parameters=request.getParameterMap();if(!Set.of("page","size").containsAll(parameters.keySet())||parameters.values().stream().anyMatch(values->values.length!=1))throw new InvalidSchedule();}
     private LocalDate on(HttpServletRequest request){var parameters=request.getParameterMap();
         if(!Set.of("on").containsAll(parameters.keySet())||parameters.values().stream().anyMatch(values->values.length!=1))throw new InvalidSchedule();
         try{return request.getParameter("on")==null?null:LocalDate.parse(request.getParameter("on"));}

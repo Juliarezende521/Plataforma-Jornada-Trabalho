@@ -49,7 +49,7 @@ erDiagram
 | audit_entry | id UUID, actor_user_id, action, entity_id, recorded_at_utc, details | Registro append-only das solicitações e decisões |
 | work_schedule | id UUID, employee_id, effective_from, minutos por dia, autoria e criação | Uma versão por colaborador/data; registros imutáveis |
 
-As migrations V1–V9 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste e escalas semanais versionadas com tolerância operacional. O vínculo de gestor continua planejado.
+As migrations V1–V10 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas semanais versionadas e exceções por data. O vínculo de gestor continua planejado.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 

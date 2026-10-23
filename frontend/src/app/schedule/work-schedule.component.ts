@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { formatWorkDate } from '../journey/journey-format';
 import { WorkScheduleApi } from './work-schedule-api.service';
-import { WorkSchedule, WorkScheduleInput, WorkSchedulePage } from './work-schedule.types';
+import { ScheduleExceptionPage, WorkSchedule, WorkScheduleInput, WorkSchedulePage } from './work-schedule.types';
 
 @Component({
   selector: 'app-work-schedule', imports: [ReactiveFormsModule],
@@ -21,6 +21,7 @@ export class WorkScheduleComponent {
   private key = '';
   readonly schedule = signal<WorkSchedule | null>(null);
   readonly history = signal<WorkSchedulePage | null>(null);
+  readonly exceptions = signal<ScheduleExceptionPage | null>(null);
   readonly busy = signal(false);
   readonly message = signal('Consultando escala…');
   readonly days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -37,6 +38,13 @@ export class WorkScheduleComponent {
     saturday: new FormControl('00:00', { nonNullable: true, validators: [Validators.required] }),
     sunday: new FormControl('00:00', { nonNullable: true, validators: [Validators.required] }),
   });
+  readonly exceptionForm = new FormGroup({
+    workDate: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    plannedMinutes: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0), Validators.max(1440)] }),
+    toleranceMinutes: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0), Validators.max(120)] }),
+    category: new FormControl<'HOLIDAY' | 'TIME_OFF' | 'TRAINING' | 'SPECIAL'>('HOLIDAY', { nonNullable: true }),
+    reason: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(3), Validators.maxLength(200)] }),
+  });
 
   constructor() {
     this.destroy.onDestroy(() => this.request?.unsubscribe());
@@ -47,8 +55,44 @@ export class WorkScheduleComponent {
         if (key === this.key) return;
         this.key = key;
         this.history.set(null);
+        this.exceptions.set(null);
         this.load();
       });
+    });
+  }
+  loadExceptions(page = 0): void {
+    const employee = this.employeeId();
+    if (!this.editable() || !employee || this.busy() || page < 0) return;
+    this.request?.unsubscribe();
+    this.busy.set(true);
+    this.message.set('Consultando exceções de escala…');
+    this.request = this.api.exceptionHistory(employee, page).subscribe({
+      next: value => {
+        this.exceptions.set(value);
+        this.busy.set(false);
+        this.message.set(value.totalElements ? 'Exceções de escala carregadas.' : 'Nenhuma exceção cadastrada.');
+      },
+      error: error => this.fail(error),
+    });
+  }
+
+  saveException(): void {
+    const employee = this.employeeId();
+    if (!this.editable() || !employee || this.busy()) return;
+    this.exceptionForm.markAllAsTouched();
+    if (this.exceptionForm.invalid) {
+      this.message.set('Preencha corretamente a data, a categoria e a justificativa da exceção.');
+      return;
+    }
+    this.busy.set(true);
+    this.request = this.api.createException(employee, this.exceptionForm.getRawValue()).subscribe({
+      next: () => {
+        this.exceptions.set(null);
+        this.exceptionForm.reset({ workDate: '', plannedMinutes: 0, toleranceMinutes: 0, category: 'HOLIDAY', reason: '' });
+        this.busy.set(false);
+        this.message.set('Exceção de escala cadastrada com sucesso.');
+      },
+      error: error => this.fail(error),
     });
   }
 
@@ -117,6 +161,10 @@ export class WorkScheduleComponent {
     if (current?.id === version.id) return 'Vigente';
     if (!current || version.effectiveFrom > current.effectiveFrom) return 'Futura';
     return 'Anterior';
+  }
+
+  exceptionCategoryLabel(category: string): string {
+    return ({ HOLIDAY: 'Feriado', TIME_OFF: 'Folga', TRAINING: 'Treinamento', SPECIAL: 'Jornada especial' } as Record<string, string>)[category] ?? category;
   }
 
   private toMinutes(value: string): number | null {

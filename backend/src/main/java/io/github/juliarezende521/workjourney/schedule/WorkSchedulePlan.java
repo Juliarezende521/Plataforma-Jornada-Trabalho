@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 @Profile("!bootstrap")
 public class WorkSchedulePlan {
     private final WorkScheduleRepository schedules;
+    private final WorkScheduleExceptionRepository exceptions;
 
-    WorkSchedulePlan(WorkScheduleRepository schedules) {
+    WorkSchedulePlan(WorkScheduleRepository schedules,WorkScheduleExceptionRepository exceptions) {
         this.schedules = schedules;
+        this.exceptions=exceptions;
     }
 
     public Plan calculate(UUID employeeId, LocalDate from, LocalDate to) {
@@ -21,6 +23,9 @@ public class WorkSchedulePlan {
                 .ifPresent(versions::add);
         versions.addAll(schedules.findByEmployee_IdAndEffectiveFromGreaterThanAndEffectiveFromLessThanEqualOrderByEffectiveFromAsc(
                 employeeId, from, to));
+        var overrides=new java.util.HashMap<LocalDate,WorkScheduleException>();
+        for(var exception:exceptions.findByEmployee_IdAndWorkDateBetweenOrderByWorkDateAscCreatedAtUtcAsc(employeeId,from,to))
+            overrides.put(exception.workDate(),exception);
         long total = 0;
         long tolerance = 0;
         int coveredDays = 0;
@@ -30,10 +35,11 @@ public class WorkSchedulePlan {
             while (next < versions.size() && !versions.get(next).effectiveFrom().isAfter(date)) {
                 current = versions.get(next++);
             }
-            if (current != null) {
-                int planned=current.minutes().get(date.getDayOfWeek().getValue() - 1);
+            var override=overrides.get(date);
+            if (current != null||override!=null) {
+                int planned=override==null?current.minutes().get(date.getDayOfWeek().getValue() - 1):override.plannedMinutes();
                 total += planned;
-                if(planned>0)tolerance+=current.toleranceMinutes();
+                if(planned>0)tolerance+=override==null?current.toleranceMinutes():override.toleranceMinutes();
                 coveredDays++;
             }
         }

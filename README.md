@@ -15,6 +15,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Histórico próprio por período e detalhe das marcações.
 - Resumo do período com tempo efetivo, dias trabalhados, pendências e jornadas ajustadas.
 - Escala semanal configurável por colaborador, com versões por data de vigência.
+- Exceções de escala por data para feriados, folgas, treinamentos e jornadas especiais.
 - Visão de RH com panorama dos colaboradores e consulta individual.
 - Solicitação de marcação esquecida e decisão auditável pelo RH.
 - Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.

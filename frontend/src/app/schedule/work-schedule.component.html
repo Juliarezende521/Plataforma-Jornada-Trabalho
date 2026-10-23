@@ -37,5 +37,31 @@
       <p id="schedule-guidance">A tolerância é aplicada a cada dia com carga planejada e serve apenas para relatórios internos. Uma nova vigência preserva as escalas anteriores. Use 00:00 para dias de folga.</p>
       <button type="submit" [disabled]="busy()">{{ busy() ? 'Salvando…' : 'Cadastrar nova escala' }}</button>
     </form>
+    <section class="exceptions" aria-labelledby="exceptions-heading">
+      <h4 id="exceptions-heading">Exceções por data</h4><p>Cadastre feriados, folgas, treinamentos ou jornadas especiais sem alterar a escala semanal.</p>
+      <button class="secondary" type="button" (click)="loadExceptions()" [disabled]="busy()">Consultar exceções</button>
+      @if (exceptions(); as page) {
+        <ul class="versions">
+          @for (item of page.items; track item.id) {
+            <li><strong>{{ formatWorkDate(item.workDate) }} · {{ exceptionCategoryLabel(item.category) }}</strong><span>{{ item.reason }} · {{ format(item.plannedMinutes) }} · Tolerância: {{ item.toleranceMinutes }} min</span></li>
+          }
+        </ul>
+        @if (page.totalElements > page.size) {
+          <nav aria-label="Páginas das exceções de escala">
+            <button class="secondary" type="button" (click)="loadExceptions(page.page - 1)" [disabled]="page.page === 0 || busy()">Anterior</button>
+            <span>Página {{ page.page + 1 }}</span>
+            <button class="secondary" type="button" (click)="loadExceptions(page.page + 1)" [disabled]="(page.page + 1) * page.size >= page.totalElements || busy()">Próxima</button>
+          </nav>
+        }
+      }
+      <form [formGroup]="exceptionForm" (ngSubmit)="saveException()" novalidate>
+        <label for="exception-date">Data</label><input id="exception-date" type="date" formControlName="workDate" required />
+        <label for="exception-category">Categoria</label><select id="exception-category" formControlName="category"><option value="HOLIDAY">Feriado</option><option value="TIME_OFF">Folga</option><option value="TRAINING">Treinamento</option><option value="SPECIAL">Jornada especial</option></select>
+        <label for="exception-minutes">Carga planejada em minutos</label><input id="exception-minutes" type="number" min="0" max="1440" formControlName="plannedMinutes" />
+        <label for="exception-tolerance">Tolerância em minutos</label><input id="exception-tolerance" type="number" min="0" max="120" formControlName="toleranceMinutes" />
+        <label for="exception-reason">Justificativa</label><textarea id="exception-reason" maxlength="200" formControlName="reason"></textarea>
+        <button type="submit" [disabled]="busy()">Cadastrar exceção</button>
+      </form>
+    </section>
   }
 </section>

@@ -14,6 +14,8 @@ class WorkSchedulePlanTest {
         var employeeId = UUID.randomUUID();
         var employee = mock(Employee.class);
         var repository = mock(WorkScheduleRepository.class);
+        var exceptions=mock(WorkScheduleExceptionRepository.class);
+        when(exceptions.findByEmployee_IdAndWorkDateBetweenOrderByWorkDateAscCreatedAtUtcAsc(any(),any(),any())).thenReturn(List.of());
         var first = new WorkSchedule(employee, LocalDate.of(2026, 10, 1),
                 List.of(480, 480, 480, 480, 480, 0, 0), 10, UUID.randomUUID(), Instant.EPOCH);
         var second = new WorkSchedule(employee, LocalDate.of(2026, 10, 7),
@@ -23,7 +25,7 @@ class WorkSchedulePlanTest {
         when(repository.findByEmployee_IdAndEffectiveFromGreaterThanAndEffectiveFromLessThanEqualOrderByEffectiveFromAsc(
                 employeeId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 11))).thenReturn(List.of(second));
 
-        var plan = new WorkSchedulePlan(repository).calculate(
+        var plan = new WorkSchedulePlan(repository,exceptions).calculate(
                 employeeId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 11));
 
         assertEquals(2040, plan.minutes());
@@ -40,15 +42,43 @@ class WorkSchedulePlanTest {
         var employeeId = UUID.randomUUID();
         var employee = mock(Employee.class);
         var repository = mock(WorkScheduleRepository.class);
+        var exceptions=mock(WorkScheduleExceptionRepository.class);
+        when(exceptions.findByEmployee_IdAndWorkDateBetweenOrderByWorkDateAscCreatedAtUtcAsc(any(),any(),any())).thenReturn(List.of());
         var schedule = new WorkSchedule(employee, LocalDate.of(2026, 10, 7),
                 List.of(480, 480, 480, 480, 480, 0, 0), 10, UUID.randomUUID(), Instant.EPOCH);
         when(repository.findByEmployee_IdAndEffectiveFromGreaterThanAndEffectiveFromLessThanEqualOrderByEffectiveFromAsc(
                 employeeId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7))).thenReturn(List.of(schedule));
 
-        var plan = new WorkSchedulePlan(repository).calculate(
+        var plan = new WorkSchedulePlan(repository,exceptions).calculate(
                 employeeId, LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 7));
         assertEquals(480, plan.minutes());
         assertEquals(10,plan.toleranceMinutes());
+        assertEquals(1, plan.coveredDays());
+    }
+
+    @Test void latestExceptionOverridesTheWeeklyPlanForItsDate() {
+        var employeeId = UUID.randomUUID();
+        var employee = mock(Employee.class);
+        var schedules = mock(WorkScheduleRepository.class);
+        var exceptions = mock(WorkScheduleExceptionRepository.class);
+        var date = LocalDate.of(2026, 12, 25);
+        var schedule = new WorkSchedule(employee, date.minusDays(10),
+                List.of(480, 480, 480, 480, 480, 0, 0), 10, UUID.randomUUID(), Instant.EPOCH);
+        var earlier = new WorkScheduleException(employee, date, 0, 0,
+                WorkScheduleException.Category.HOLIDAY, "Feriado local", UUID.randomUUID(), Instant.EPOCH);
+        var latest = new WorkScheduleException(employee, date, 240, 5,
+                WorkScheduleException.Category.SPECIAL, "Plantão especial", UUID.randomUUID(), Instant.EPOCH.plusSeconds(1));
+        when(schedules.findFirstByEmployee_IdAndEffectiveFromLessThanEqualOrderByEffectiveFromDesc(employeeId, date))
+                .thenReturn(java.util.Optional.of(schedule));
+        when(schedules.findByEmployee_IdAndEffectiveFromGreaterThanAndEffectiveFromLessThanEqualOrderByEffectiveFromAsc(employeeId, date, date))
+                .thenReturn(List.of());
+        when(exceptions.findByEmployee_IdAndWorkDateBetweenOrderByWorkDateAscCreatedAtUtcAsc(employeeId, date, date))
+                .thenReturn(List.of(earlier, latest));
+
+        var plan = new WorkSchedulePlan(schedules, exceptions).calculate(employeeId, date, date);
+
+        assertEquals(240, plan.minutes());
+        assertEquals(5, plan.toleranceMinutes());
         assertEquals(1, plan.coveredDays());
     }
 }
