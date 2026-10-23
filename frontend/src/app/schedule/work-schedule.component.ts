@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { formatWorkDate } from '../journey/journey-format';
 import { WorkScheduleApi } from './work-schedule-api.service';
-import { WorkSchedule, WorkScheduleInput } from './work-schedule.types';
+import { WorkSchedule, WorkScheduleInput, WorkSchedulePage } from './work-schedule.types';
 
 @Component({
   selector: 'app-work-schedule', imports: [ReactiveFormsModule],
@@ -20,6 +20,7 @@ export class WorkScheduleComponent {
   private request?: Subscription;
   private key = '';
   readonly schedule = signal<WorkSchedule | null>(null);
+  readonly history = signal<WorkSchedulePage | null>(null);
   readonly busy = signal(false);
   readonly message = signal('Consultando escala…');
   readonly days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -44,9 +45,20 @@ export class WorkScheduleComponent {
         const key = id ?? 'mine';
         if (key === this.key) return;
         this.key = key;
+        this.history.set(null);
         this.load();
       });
     });
+  }
+
+  loadHistory(page = 0): void {
+    const employee = this.employeeId();
+    if (!this.editable() || !employee || this.busy() || page < 0) return;
+    this.request?.unsubscribe(); this.busy.set(true); this.message.set('Consultando versões da escala…');
+    this.request = this.api.history(employee, page).subscribe({next: result => {
+      this.history.set(result); this.busy.set(false);
+      this.message.set(result.totalElements ? 'Histórico de escalas carregado.' : 'Nenhuma escala cadastrada.');
+    }, error: error => this.fail(error)});
   }
 
   load(): void {
@@ -86,8 +98,8 @@ export class WorkScheduleComponent {
     };
     this.busy.set(true);
     this.request = this.api.create(employee, input).subscribe({
-      next: schedule => {
-        this.schedule.set(schedule);
+      next: () => {
+        this.history.set(null);
         this.busy.set(false);
         this.message.set('Nova escala cadastrada com sucesso.');
       },
@@ -97,6 +109,12 @@ export class WorkScheduleComponent {
 
   format(minutes: number): string {
     return `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ''}`;
+  }
+  versionStatus(version: WorkSchedule): string {
+    const current = this.schedule();
+    if (current?.id === version.id) return 'Vigente';
+    if (!current || version.effectiveFrom > current.effectiveFrom) return 'Futura';
+    return 'Anterior';
   }
 
   private toMinutes(value: string): number | null {

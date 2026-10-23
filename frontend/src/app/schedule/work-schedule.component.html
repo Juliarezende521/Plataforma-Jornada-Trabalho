@@ -10,6 +10,17 @@
     </dl>
   }
   @if (editable()) {
+    <button class="secondary" type="button" (click)="loadHistory()" [disabled]="busy()">Consultar histórico de escalas</button>
+    @if (history(); as versions) {
+      <ul class="versions">
+        @for (version of versions.items; track version.id) {
+          <li><strong>{{ versionStatus(version) }} · {{ formatWorkDate(version.effectiveFrom) }}</strong><span>Carga semanal: {{ format(version.minutes[0] + version.minutes[1] + version.minutes[2] + version.minutes[3] + version.minutes[4] + version.minutes[5] + version.minutes[6]) }}</span></li>
+        }
+      </ul>
+      @if (versions.totalElements > versions.size) {
+        <nav aria-label="Páginas do histórico de escalas"><button class="secondary" type="button" (click)="loadHistory(versions.page - 1)" [disabled]="versions.page === 0 || busy()">Anterior</button><span>Página {{ versions.page + 1 }}</span><button class="secondary" type="button" (click)="loadHistory(versions.page + 1)" [disabled]="(versions.page + 1) * versions.size >= versions.totalElements || busy()">Próxima</button></nav>
+      }
+    }
     <form [formGroup]="form" (ngSubmit)="save()" novalidate>
       <label for="schedule-from">Início da vigência</label>
       <input id="schedule-from" type="date" formControlName="effectiveFrom" required aria-describedby="schedule-guidance" />

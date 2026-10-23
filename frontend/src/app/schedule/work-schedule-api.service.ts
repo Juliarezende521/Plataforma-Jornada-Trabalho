@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { switchMap, timeout } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
-import { WorkSchedule, WorkScheduleInput } from './work-schedule.types';
+import { WorkSchedule, WorkScheduleInput, WorkSchedulePage } from './work-schedule.types';
 
 @Injectable({ providedIn: 'root' })
 export class WorkScheduleApi {
@@ -21,5 +21,9 @@ export class WorkScheduleApi {
       `/api/hr/employees/${encodeURIComponent(employeeId)}/work-schedules`, input,
       { headers: { [csrf.headerName]: csrf.token } },
     ).pipe(timeout(15000))));
+  }
+  history(employeeId: string, page = 0) {
+    return this.http.get<WorkSchedulePage>(`/api/hr/employees/${encodeURIComponent(employeeId)}/work-schedules`,
+      { params: { page, size: 20 } }).pipe(timeout(15000));
   }
 }

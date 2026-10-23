@@ -90,6 +90,7 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/{employeeId}/work-sessions/summary` | Resumo efetivo individual |
 | GET | `/api/hr/employees/{employeeId}/work-schedule?on=2026-11-01` | Escala vigente do colaborador |
 | POST | `/api/hr/employees/{employeeId}/work-schedules` | Cria nova versão auditável da escala |
+| GET | `/api/hr/employees/{employeeId}/work-schedules` | Lista versões da escala com paginação |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |

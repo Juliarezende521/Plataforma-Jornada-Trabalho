@@ -92,4 +92,15 @@ describe('Work schedule', () => {
     expect(fixture.componentInstance.message()).toContain('Já existe uma escala');
     expect(fixture.componentInstance.schedule()?.id).toBe(schedule.id);
   });
+  it('loads schedule versions only when HR requests the paginated history', () => {
+    mount('employee-1', true);
+    http.expectOne('/api/hr/employees/employee-1/work-schedule').flush(schedule);
+    http.expectNone(r => r.url.endsWith('/work-schedules'));
+    fixture.componentInstance.loadHistory();
+    const request = http.expectOne(r => r.url === '/api/hr/employees/employee-1/work-schedules');
+    expect(request.request.params.get('page')).toBe('0'); expect(request.request.params.get('size')).toBe('20');
+    request.flush({ items: [schedule], page: 0, size: 20, totalElements: 1 }); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Vigente · 20/10/2026');
+    expect(fixture.nativeElement.textContent).toContain('Carga semanal: 39 h');
+  });
 });

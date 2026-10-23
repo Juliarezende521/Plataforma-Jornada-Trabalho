@@ -12,3 +12,7 @@ form > label, .days label { display: block; font-weight: 700; margin-bottom: var
 .days input { width: 100%; }
 @media (min-width: 640px) { .schedule { padding: var(--space-6); } }
 @media (max-width: 420px) { form button { width: 100%; } }
+.versions { list-style:none; padding:0; display:grid; gap:var(--space-2); }
+.versions li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--space-2); padding:var(--space-3); background:var(--color-soft); border-radius:var(--radius-md); }
+.versions span, nav span { color:var(--color-muted); }
+nav { display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:center; margin:var(--space-3) 0; }

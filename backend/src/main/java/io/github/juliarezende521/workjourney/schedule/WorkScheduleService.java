@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.*;
 
 @Service @Profile("!bootstrap")
 class WorkScheduleService {
@@ -28,6 +29,13 @@ class WorkScheduleService {
     @Transactional(readOnly=true)
     public View forHr(UUID employeeId,LocalDate on){requireHr();return find(employees.findActiveById(employeeId)
             .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible()),on);}
+    @Transactional(readOnly=true)
+    public Page historyForHr(UUID employeeId,int page,int size){requireHr();
+        if(page<0||page>Integer.MAX_VALUE/100||size<1||size>100)throw new InvalidSchedule();
+        employees.findActiveById(employeeId).orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
+        var result=schedules.findByEmployee_Id(employeeId,PageRequest.of(page,size,Sort.by(Sort.Direction.DESC,"effectiveFrom","id")));
+        return new Page(result.map(View::from).getContent(),page,size,result.getTotalElements());
+    }
     @Transactional(timeout=15)
     public View create(UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes){
         var actor=requireHr();var employee=employees.lockActive(employeeId)
@@ -52,4 +60,5 @@ class WorkScheduleService {
     public record View(UUID id,UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes,Instant createdAtUtc){
         static View from(WorkSchedule value){return new View(value.id(),value.employee().getId(),value.effectiveFrom(),value.minutes(),value.createdAt());}
     }
+    public record Page(List<View> items,int page,int size,long totalElements){}
 }
