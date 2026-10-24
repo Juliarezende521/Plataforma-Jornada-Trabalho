@@ -9,7 +9,8 @@ import { HistoryApi } from './history-api.service';
 import { EmployeeSummary, HistoryFilter, HistoryPage, JourneyDetail, PeriodSummary } from './history.types';
 import { AdjustmentPanelComponent } from '../adjustment/adjustment-panel.component';
 import { EmploymentContractComponent } from '../contract/employment-contract.component';
-@Component({ selector: 'app-history', imports: [ReactiveFormsModule, AdjustmentPanelComponent, EmploymentContractComponent], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
+import { MonthlyClosureComponent } from '../closing/monthly-closure.component';
+@Component({ selector: 'app-history', imports: [ReactiveFormsModule, AdjustmentPanelComponent, EmploymentContractComponent, MonthlyClosureComponent], templateUrl: './history.component.html', styleUrl: './history.component.scss' })
 export class HistoryComponent {
   readonly user = input.required<Identity>();
   readonly targetEmployee = input<EmployeeSummary | null>(null);

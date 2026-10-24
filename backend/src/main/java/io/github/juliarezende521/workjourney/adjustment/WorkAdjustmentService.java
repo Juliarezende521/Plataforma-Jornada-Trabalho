@@ -2,6 +2,7 @@ package io.github.juliarezende521.workjourney.adjustment;
 
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
 import io.github.juliarezende521.workjourney.auth.HrAuthorization;
+import io.github.juliarezende521.workjourney.closing.MonthlyClosureGuard;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
 import io.github.juliarezende521.workjourney.journey.WorkState;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
@@ -24,6 +25,7 @@ public class WorkAdjustmentService {
     private static final int MAX_PAGE_SIZE = 50;
     private final CurrentEmployeeIdentity identity;
     private final HrAuthorization hrAuthorization;
+    private final MonthlyClosureGuard closureGuard;
     private final EmployeeRepository employees;
     private final JpaWorkSessionStore sessions;
     private final WorkAdjustmentRepository requests;
@@ -31,10 +33,12 @@ public class WorkAdjustmentService {
     private final EffectiveTimelineService timelines;
     private final Clock clock;
 
-    public WorkAdjustmentService(CurrentEmployeeIdentity identity, HrAuthorization hrAuthorization, EmployeeRepository employees,
+    public WorkAdjustmentService(CurrentEmployeeIdentity identity, HrAuthorization hrAuthorization,
+                                 MonthlyClosureGuard closureGuard, EmployeeRepository employees,
                                  JpaWorkSessionStore sessions, WorkAdjustmentRepository requests,
                                  AuditEntryRepository audits, EffectiveTimelineService timelines, Clock clock) {
-        this.identity=identity; this.hrAuthorization=hrAuthorization; this.employees=employees; this.sessions=sessions;
+        this.identity=identity; this.hrAuthorization=hrAuthorization; this.closureGuard=closureGuard;
+        this.employees=employees; this.sessions=sessions;
         this.requests=requests; this.audits=audits; this.timelines=timelines; this.clock=clock;
     }
 
@@ -44,6 +48,7 @@ public class WorkAdjustmentService {
         var employee=employees.lockOwnedActive(actor.employeeId(), actor.userId())
                 .orElseThrow(() -> new AccessDeniedException("Employee access denied"));
         var session=sessions.findOwned(sessionId, employee.getId()).orElseThrow(AdjustmentNotVisible::new).session();
+        closureGuard.requireOpen(employee.getId(), session.getWorkDate());
         Instant now=now();
         Instant proposed=UtcInstants.normalize(proposedAt);
         String validReason=text(reason, 10, 500, true);

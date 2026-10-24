@@ -10,5 +10,12 @@ Flyway é a fonte de evolução do schema. Migrations já aplicadas não devem s
 | V4 | Fuso IANA registrado no evento |
 | V5 | Permissão de leitura do RH |
 | V6 | Modalidade da marcação: escritório, remoto ou viagem |
+| V7 | Solicitações de ajuste e auditoria |
+| V8 | Escalas versionadas |
+| V9 | Tolerância da escala |
+| V10 | Exceções de escala por data |
+| V11 | Índice da consulta de auditoria |
+| V12 | Contratos versionados |
+| V13 | Fechamentos mensais imutáveis |
 
 O Hibernate usa `ddl-auto=validate`: ele confere o mapeamento, mas não cria nem atualiza o schema. O perfil de avaliação provisiona contas fictícias depois que as migrations foram aplicadas.

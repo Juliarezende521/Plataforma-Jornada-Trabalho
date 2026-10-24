@@ -25,6 +25,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/hr/employees/*/work-schedules").hasRole("HR")
                 .requestMatchers(HttpMethod.POST, "/api/hr/employees/*/work-schedule-exceptions").hasRole("HR")
                 .requestMatchers(HttpMethod.POST, "/api/hr/employees/*/employment-contracts").hasRole("HR")
+                .requestMatchers(HttpMethod.POST, "/api/hr/employees/*/monthly-closures/*").hasRole("HR")
                 .requestMatchers(HttpMethod.GET, "/api/hr/**").hasRole("HR")
                 .requestMatchers("/api/hr/**").denyAll()
                 .anyRequest().authenticated())

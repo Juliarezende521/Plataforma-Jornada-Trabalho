@@ -97,6 +97,9 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/{employeeId}/employment-contract` | Consulta o contrato vigente na data atual ou em `on` |
 | GET | `/api/hr/employees/{employeeId}/employment-contracts` | Lista versões do contrato com paginação |
 | POST | `/api/hr/employees/{employeeId}/employment-contracts` | Cria uma versão imutável e auditável do contrato |
+| GET | `/api/hr/employees/{employeeId}/monthly-closures/{YYYY-MM}` | Consulta o fechamento de uma competência |
+| GET | `/api/hr/employees/{employeeId}/monthly-closures` | Lista fechamentos com paginação |
+| POST | `/api/hr/employees/{employeeId}/monthly-closures/{YYYY-MM}` | Fecha e audita uma competência encerrada |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
@@ -104,6 +107,8 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 As consultas de jornada são somente de leitura. A decisão de ajuste é terminal, exige CSRF e gera uma entrada de auditoria. Antes da aprovação, o servidor considera também ajustes já aprovados e verifica a sequência inteira. Uma pausa, retorno ou saída esquecida pode ser materializada como evento corretivo quando muda o estado de uma jornada aberta; decisão, evento, checkpoint e auditoria pertencem à mesma transação. A permissão do RH não autoriza marcações online em nome de outra pessoa.
 
 Os resumos retornam `totalWorkDuration`, `plannedWorkDuration`, `scheduledDays`, `periodDays`, `balanceSeconds`, `toleranceSeconds` e `withinTolerance`. O saldo e a classificação só são calculados quando uma escala vigente cobre todas as datas do período; caso contrário, os campos derivados são `null`. A tolerância é somada apenas nos dias com carga planejada. Esses valores são comparativos operacionais e não representam cálculo legal de horas extras ou banco de horas.
+
+O fechamento mensal grava uma fotografia imutável do resumo. Ele exige mês já encerrado no fuso do colaborador, cobertura integral da escala, ausência de jornadas abertas e de ajustes pendentes. Depois do fechamento, solicitações de ajuste e alterações retroativas de escala que afetariam a competência são recusadas. A operação exige CSRF, permissão atual do RH e gera auditoria.
 
 ## Erros
 

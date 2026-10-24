@@ -14,7 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @Profile("!bootstrap")
-interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRequest, UUID> {
+public interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRequest, UUID> {
     @EntityGraph(attributePaths = "employee")
     Page<WorkAdjustmentRequest> findByEmployee_IdOrderByRequestedAtUtcDescIdDesc(UUID employeeId, Pageable pageable);
 
@@ -37,4 +37,14 @@ interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRequest, 
 
     List<WorkAdjustmentRequest> findByWorkSessionIdInAndStatusOrderByWorkSessionIdAscProposedOccurredAtUtcAscIdAsc(
             List<UUID> workSessionIds, AdjustmentStatus status);
+
+    @Query("""
+            SELECT COUNT(request) FROM WorkAdjustmentRequest request, WorkSessionRow session
+            WHERE request.workSessionId = session.id
+              AND request.employee.id = :employee
+              AND request.status = :status
+              AND session.workDate BETWEEN :from AND :to
+            """)
+    long countInPeriod(@Param("employee") UUID employeeId, @Param("status") AdjustmentStatus status,
+                       @Param("from") java.time.LocalDate from, @Param("to") java.time.LocalDate to);
 }

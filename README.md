@@ -21,6 +21,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Solicitação de marcação esquecida e decisão auditável pelo RH.
 - Consulta paginada da trilha de auditoria pelo RH.
 - Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.
+- Fechamento mensal auditável com fotografia de horas previstas, trabalhadas, saldo e tolerância.
 - Correções aprovadas podem pausar, retomar ou encerrar uma jornada aberta de forma auditável.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.
@@ -152,6 +153,7 @@ scripts/ci/            validação integrada com SQL Server e navegador
 
 - Não há cadastro público nem recuperação de senha; as contas são provisionadas para avaliação.
 - O resumo compara tempo efetivo e planejado apenas quando existe escala para todo o período e aplica a tolerância operacional cadastrada. Horas extras, banco de horas e regras legais continuam fora do escopo.
+- O fechamento mensal exige competência encerrada, escala completa, jornadas fechadas e ausência de ajustes pendentes. Após o fechamento, mudanças retroativas que alterariam o resultado são bloqueadas.
 - A localização é declarada pelo fuso e pela modalidade; a aplicação não usa geolocalização.
 - A execução local do SQL Server depende de host compatível com a imagem oficial. Em máquinas ARM pode ser necessário usar uma instância externa.
 - O perfil de avaliação e as credenciais de exemplo não representam uma configuração de produção.

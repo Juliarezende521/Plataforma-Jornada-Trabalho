@@ -93,6 +93,7 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | GET /api/hr/work-adjustments | Página | Fila paginada de solicitações pendentes |
 | GET /api/hr/audit-entries | Página | Trilha cronológica das ações sensíveis, restrita ao RH |
 | GET/POST /api/hr/employees/{id}/employment-contracts | Página ou versão | Histórico e criação auditável de contratos |
+| GET/POST /api/hr/employees/{id}/monthly-closures | Competência ou página | Consulta, histórico e fechamento mensal auditável |
 | POST /api/hr/work-adjustments/{id}/decision | Aprovar/rejeitar e observação | Decisão terminal e auditada, exclusiva do RH |
 
 Filtros `from` e `to` são datas de referência inclusivas, limitadas a 366 dias. A página inicial é 0; o tamanho padrão é 20 e o máximo é 100. A ordenação usa data e abertura decrescentes, com ID como desempate. Parâmetros inválidos retornam 400 e instantes usam ISO 8601 UTC.
@@ -111,4 +112,4 @@ As regras de negócio e prioridades são decisões propostas para o desafio, nã
 
 ## Estado atual
 
-POST de marcação, GET de recibo, jornada atual, histórico, detalhe, resumo efetivo, consultas do RH e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. O detalhe expõe separadamente registros persistidos e a projeção efetiva, com duração recalculada. O resumo usa a mesma projeção, lê jornadas e ajustes em lotes e sinaliza jornadas ainda abertas. Uma correção aprovada que pause, retome ou encerre uma jornada aberta é anexada como novo evento, atualiza checkpoint e versão e registra decisão/auditoria na mesma transação; eventos anteriores não são reescritos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500.
+POST de marcação, GET de recibo, jornada atual, histórico, detalhe, resumo efetivo, consultas do RH, fechamento mensal e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. O detalhe expõe separadamente registros persistidos e a projeção efetiva, com duração recalculada. O resumo usa a mesma projeção, lê jornadas e ajustes em lotes e sinaliza jornadas ainda abertas. O fechamento persiste uma fotografia do resumo somente após validar escala completa, jornadas encerradas e ausência de ajustes pendentes. Uma correção aprovada que pause, retome ou encerre uma jornada aberta é anexada como novo evento, atualiza checkpoint e versão e registra decisão/auditoria na mesma transação; eventos anteriores não são reescritos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500.

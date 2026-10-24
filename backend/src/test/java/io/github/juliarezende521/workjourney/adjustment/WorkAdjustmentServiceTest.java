@@ -4,6 +4,7 @@ import io.github.juliarezende521.workjourney.account.AppUser;
 import io.github.juliarezende521.workjourney.account.Employee;
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
 import io.github.juliarezende521.workjourney.auth.HrAuthorization;
+import io.github.juliarezende521.workjourney.closing.MonthlyClosureGuard;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
 import io.github.juliarezende521.workjourney.journey.WorkSession;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.*;
 class WorkAdjustmentServiceTest {
     private final CurrentEmployeeIdentity identity=mock(CurrentEmployeeIdentity.class);
     private final HrAuthorization hrAuthorization=mock(HrAuthorization.class);
+    private final MonthlyClosureGuard closureGuard=mock(MonthlyClosureGuard.class);
     private final EmployeeRepository employees=mock(EmployeeRepository.class);
     private final JpaWorkSessionStore sessions=mock(JpaWorkSessionStore.class);
     private final WorkAdjustmentRepository requests=mock(WorkAdjustmentRepository.class);
@@ -32,7 +34,7 @@ class WorkAdjustmentServiceTest {
     private WorkAdjustmentService service;
 
     @BeforeEach void setUp() {
-        service=new WorkAdjustmentService(identity,hrAuthorization,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
+        service=new WorkAdjustmentService(identity,hrAuthorization,closureGuard,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
         var actor=new CurrentEmployeeIdentity.Identity(userId,employee.getId());
         when(identity.require()).thenReturn(actor);
         when(hrAuthorization.require()).thenReturn(actor);

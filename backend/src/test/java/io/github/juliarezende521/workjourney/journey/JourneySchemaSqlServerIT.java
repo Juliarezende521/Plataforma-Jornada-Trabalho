@@ -134,6 +134,35 @@ class JourneySchemaSqlServerIT {
     }
 
     @Test
+    void monthlyClosureConstraintsPreserveOneImmutableSnapshotPerCompetence() throws Exception {
+        try (var connection = transaction()) {
+            var owner = owner(connection);
+            UUID closure = UUID.randomUUID();
+            execute(connection, """
+                    INSERT INTO dbo.monthly_closure
+                    (id, employee_id, competence_year, competence_month, period_from, period_to,
+                     total_work_seconds, planned_work_seconds, balance_seconds, tolerance_seconds,
+                     within_tolerance, total_sessions, adjusted_sessions, worked_days,
+                     closed_by_user_id, closed_at_utc)
+                    VALUES (?, ?, 2026, 9, '2026-09-01', '2026-09-30',
+                            576000, 576000, 0, 12000, 1, 20, 1, 20, ?, ?)
+                    """, closure, owner.employeeId(), owner.userId(), NOW);
+            assertSqlError(2627, () -> execute(connection, """
+                    INSERT INTO dbo.monthly_closure
+                    (id, employee_id, competence_year, competence_month, period_from, period_to,
+                     total_work_seconds, planned_work_seconds, balance_seconds, tolerance_seconds,
+                     within_tolerance, total_sessions, adjusted_sessions, worked_days,
+                     closed_by_user_id, closed_at_utc)
+                    VALUES (?, ?, 2026, 9, '2026-09-01', '2026-09-30',
+                            0, 0, 0, 0, 1, 0, 0, 0, ?, ?)
+                    """, UUID.randomUUID(), owner.employeeId(), owner.userId(), NOW));
+            assertSqlError(547, () -> execute(connection,
+                    "UPDATE dbo.monthly_closure SET tolerance_seconds = -1 WHERE id = ?", closure));
+            connection.rollback();
+        }
+    }
+
+    @Test
     void rollbackRemovesEventAndRestoresSessionStateAndVersion() throws Exception {
         try (var connection = transaction()) {
             var owner = owner(connection);

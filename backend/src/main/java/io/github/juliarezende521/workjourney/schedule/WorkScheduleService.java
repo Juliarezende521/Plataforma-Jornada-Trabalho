@@ -3,6 +3,7 @@ package io.github.juliarezende521.workjourney.schedule;
 import io.github.juliarezende521.workjourney.account.*;
 import io.github.juliarezende521.workjourney.adjustment.*;
 import io.github.juliarezende521.workjourney.auth.HrAuthorization;
+import io.github.juliarezende521.workjourney.closing.MonthlyClosureGuard;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
 import java.time.*;
@@ -15,12 +16,12 @@ import org.springframework.data.domain.*;
 
 @Service @Profile("!bootstrap")
 class WorkScheduleService {
-    private final CurrentEmployeeIdentity identity;private final HrAuthorization hrAuthorization;private final EmployeeRepository employees;
+    private final CurrentEmployeeIdentity identity;private final HrAuthorization hrAuthorization;private final MonthlyClosureGuard closureGuard;private final EmployeeRepository employees;
     private final WorkScheduleRepository schedules;private final AuditEntryRepository audits;private final Clock clock;
     private final WorkScheduleExceptionRepository exceptions;
-    WorkScheduleService(CurrentEmployeeIdentity identity,HrAuthorization hrAuthorization,EmployeeRepository employees,
+    WorkScheduleService(CurrentEmployeeIdentity identity,HrAuthorization hrAuthorization,MonthlyClosureGuard closureGuard,EmployeeRepository employees,
                         WorkScheduleRepository schedules,WorkScheduleExceptionRepository exceptions,AuditEntryRepository audits,Clock clock){
-        this.identity=identity;this.hrAuthorization=hrAuthorization;this.employees=employees;this.schedules=schedules;this.exceptions=exceptions;this.audits=audits;this.clock=clock;
+        this.identity=identity;this.hrAuthorization=hrAuthorization;this.closureGuard=closureGuard;this.employees=employees;this.schedules=schedules;this.exceptions=exceptions;this.audits=audits;this.clock=clock;
     }
     @Transactional(readOnly=true)
     public View mine(LocalDate on){
@@ -48,6 +49,7 @@ class WorkScheduleService {
     public ExceptionView createException(UUID employeeId,LocalDate date,int planned,int tolerance,WorkScheduleException.Category category,String reason){
         var actor=hrAuthorization.require();var employee=employees.lockActive(employeeId)
                 .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
+        closureGuard.requireOpen(employeeId,date);
         var now=UtcInstants.normalize(clock.instant());var value=exceptions.save(new WorkScheduleException(employee,date,planned,tolerance,category,reason,actor.userId(),now));
         audits.save(new AuditEntry(actor.userId(),"WORK_SCHEDULE_EXCEPTION_CREATED","WORK_SCHEDULE_EXCEPTION",value.id(),now,
                 "workDate="+date+",category="+category+",plannedMinutes="+planned+",toleranceMinutes="+tolerance));
@@ -57,6 +59,7 @@ class WorkScheduleService {
     public View create(UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes,int toleranceMinutes){
         var actor=hrAuthorization.require();var employee=employees.lockActive(employeeId)
                 .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
+        closureGuard.requireScheduleChangeAllowed(employeeId,effectiveFrom);
         if(schedules.existsByEmployee_IdAndEffectiveFrom(employeeId,effectiveFrom))throw new InvalidSchedule(409);
         var now=UtcInstants.normalize(clock.instant());
         var schedule=schedules.save(new WorkSchedule(employee,effectiveFrom,minutes,toleranceMinutes,actor.userId(),now));

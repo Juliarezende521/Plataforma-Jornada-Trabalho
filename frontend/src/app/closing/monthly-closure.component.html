@@ -1,0 +1,42 @@
+<section class="closure" aria-labelledby="monthly-closure-heading" [attr.aria-busy]="busy()">
+  <h3 id="monthly-closure-heading">Fechamento mensal</h3>
+  <p>Consolide uma competência encerrada. O resultado fica registrado como uma fotografia imutável.</p>
+  <p role="status" aria-live="polite">{{ message() }}</p>
+  <div class="controls">
+    <label for="closure-competence">Competência</label>
+    <input id="closure-competence" type="month" [formControl]="competence" required />
+    <div class="actions">
+      <button class="secondary" type="button" (click)="consult()" [disabled]="busy()">Consultar</button>
+      <button type="button" (click)="close()" [disabled]="busy()">Fechar competência</button>
+      <button class="secondary" type="button" (click)="loadHistory()" [disabled]="busy()">Ver histórico</button>
+    </div>
+  </div>
+  @if (selected(); as item) {
+    <article class="result">
+      <h4>{{ item.competence }} · Fechada</h4>
+      <dl>
+        <div><dt>Horas trabalhadas</dt><dd>{{ duration(item.totalWorkSeconds) }}</dd></div>
+        <div><dt>Horas previstas</dt><dd>{{ duration(item.plannedWorkSeconds) }}</dd></div>
+        <div><dt>Saldo</dt><dd [class.negative]="item.balanceSeconds < 0">{{ duration(item.balanceSeconds) }}</dd></div>
+        <div><dt>Dias trabalhados</dt><dd>{{ item.workedDays }}</dd></div>
+        <div><dt>Jornadas ajustadas</dt><dd>{{ item.adjustedSessions }}</dd></div>
+        <div><dt>Dentro da tolerância</dt><dd>{{ item.withinTolerance ? 'Sim' : 'Não' }}</dd></div>
+      </dl>
+      <p>Fechada em {{ closedAt(item.closedAtUtc) }}.</p>
+    </article>
+  }
+  @if (history(); as page) {
+    <ul class="history">
+      @for (item of page.items; track item.id) {
+        <li><strong>{{ item.competence }}</strong><span>Saldo: {{ duration(item.balanceSeconds) }} · {{ item.workedDays }} dias trabalhados</span></li>
+      }
+    </ul>
+    @if (page.totalElements > page.size) {
+      <nav aria-label="Páginas dos fechamentos mensais">
+        <button class="secondary" type="button" (click)="loadHistory(page.page - 1)" [disabled]="busy() || page.page === 0">Anterior</button>
+        <span>Página {{ page.page + 1 }}</span>
+        <button class="secondary" type="button" (click)="loadHistory(page.page + 1)" [disabled]="busy() || (page.page + 1) * page.size >= page.totalElements">Próxima</button>
+      </nav>
+    }
+  }
+</section>

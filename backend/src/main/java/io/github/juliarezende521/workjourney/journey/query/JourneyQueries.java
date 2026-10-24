@@ -52,7 +52,7 @@ public class JourneyQueries {
     Summary summarize(UUID employee,LocalDate from,LocalDate to,Instant observed) {
         return summarize(store,timelines,schedules,employee,from,to,observed);
     }
-    static Summary summarize(JpaWorkSessionStore store,EffectiveTimelineService timelines,WorkSchedulePlan schedules,UUID employee,
+    public static Summary summarize(JpaWorkSessionStore store,EffectiveTimelineService timelines,WorkSchedulePlan schedules,UUID employee,
                              LocalDate from,LocalDate to,Instant observed) {
         long total=store.historyCount(employee,from,to);
         long closed=0,adjusted=0;
