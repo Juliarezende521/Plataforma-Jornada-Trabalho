@@ -2,7 +2,7 @@ package io.github.juliarezende521.workjourney.journey.query;
 
 import io.github.juliarezende521.workjourney.account.*;
 import io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService;
-import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
@@ -11,7 +11,6 @@ import java.util.*;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,30 +18,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Profile("!bootstrap")
 public class HrJourneyQueries {
-    private final CurrentEmployeeIdentity identity;
-    private final AppUserRepository users;
+    private final HrAuthorization hrAuthorization;
     private final EmployeeRepository employees;
     private final JpaWorkSessionStore store;
     private final Clock clock;
     private final EffectiveTimelineService timelines;
     private final WorkSchedulePlan schedules;
 
-    public HrJourneyQueries(CurrentEmployeeIdentity identity, AppUserRepository users, EmployeeRepository employees,
+    public HrJourneyQueries(HrAuthorization hrAuthorization, EmployeeRepository employees,
                             JpaWorkSessionStore store, EffectiveTimelineService timelines, WorkSchedulePlan schedules, Clock clock) {
-        this.identity = identity; this.users = users; this.employees = employees; this.store = store; this.timelines=timelines; this.schedules=schedules; this.clock = clock;
-    }
-
-    private void requireHr() {
-        var actor = identity.require();
-        if (!users.existsByIdAndActiveTrueAndHrReaderTrue(actor.userId())
-                || employees.findOwnedActive(actor.employeeId(), actor.userId()).isEmpty()) {
-            throw new AccessDeniedException("HR read access denied");
-        }
+        this.hrAuthorization = hrAuthorization; this.employees = employees; this.store = store; this.timelines=timelines; this.schedules=schedules; this.clock = clock;
     }
 
     @Transactional(readOnly = true)
     public Directory employees(int page, int size) {
-        requireHr();
+        hrAuthorization.require();
         if (page < 0 || page > Integer.MAX_VALUE / 100 || size < 1 || size > 100) throw new JourneyQueries.InvalidFilter();
         var result = employees.findActive(PageRequest.of(page, size, Sort.by("name", "id")));
         return new Directory(result.map(e -> new Person(e.getId(), e.getName(), e.getReferenceTimeZoneId())).getContent(),
@@ -74,7 +64,7 @@ public class HrJourneyQueries {
     // Same target-employee lock as marking: records and page describe a consistent snapshot.
     @Transactional
     public JourneyQueries.History history(UUID employeeId, LocalDate from, LocalDate to, int page, int size) {
-        requireHr();
+        hrAuthorization.require();
         JourneyQueries.validate(from, to, page, size);
         employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
         var observed = UtcInstants.normalize(clock.instant());
@@ -86,7 +76,7 @@ public class HrJourneyQueries {
 
     @Transactional
     public JourneyQueries.Detail detail(UUID employeeId, UUID sessionId) {
-        requireHr();
+        hrAuthorization.require();
         employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
         var session = store.findOwned(sessionId, employeeId).orElseThrow(JourneyQueries.NotVisible::new).session();
         var observed=UtcInstants.normalize(clock.instant());
@@ -95,7 +85,7 @@ public class HrJourneyQueries {
 
     @Transactional
     public JourneyQueries.Summary summary(UUID employeeId,LocalDate from,LocalDate to) {
-        requireHr();
+        hrAuthorization.require();
         JourneyQueries.validateSummary(from,to);
         employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
         return JourneyQueries.summarize(store,timelines,schedules,employeeId,from,to,UtcInstants.normalize(clock.instant()));

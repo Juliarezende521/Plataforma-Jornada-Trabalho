@@ -3,6 +3,7 @@ package io.github.juliarezende521.workjourney.adjustment;
 import io.github.juliarezende521.workjourney.account.AppUser;
 import io.github.juliarezende521.workjourney.account.Employee;
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
 import io.github.juliarezende521.workjourney.journey.WorkSession;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 class WorkAdjustmentServiceTest {
     private final CurrentEmployeeIdentity identity=mock(CurrentEmployeeIdentity.class);
+    private final HrAuthorization hrAuthorization=mock(HrAuthorization.class);
     private final EmployeeRepository employees=mock(EmployeeRepository.class);
     private final JpaWorkSessionStore sessions=mock(JpaWorkSessionStore.class);
     private final WorkAdjustmentRepository requests=mock(WorkAdjustmentRepository.class);
@@ -30,8 +32,10 @@ class WorkAdjustmentServiceTest {
     private WorkAdjustmentService service;
 
     @BeforeEach void setUp() {
-        service=new WorkAdjustmentService(identity,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
-        when(identity.require()).thenReturn(new CurrentEmployeeIdentity.Identity(userId,employee.getId()));
+        service=new WorkAdjustmentService(identity,hrAuthorization,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
+        var actor=new CurrentEmployeeIdentity.Identity(userId,employee.getId());
+        when(identity.require()).thenReturn(actor);
+        when(hrAuthorization.require()).thenReturn(actor);
         when(employees.lockOwnedActive(employee.getId(),userId)).thenReturn(Optional.of(employee));
         when(employees.lockActive(employee.getId())).thenReturn(Optional.of(employee));
         when(requests.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

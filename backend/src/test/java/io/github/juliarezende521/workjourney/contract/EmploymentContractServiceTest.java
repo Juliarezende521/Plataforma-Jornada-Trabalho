@@ -1,2 +1,52 @@
-package io.github.juliarezende521.workjourney.contract;import io.github.juliarezende521.workjourney.account.*;import io.github.juliarezende521.workjourney.adjustment.*;import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;import java.time.*;import java.util.*;import org.junit.jupiter.api.Test;import static org.junit.jupiter.api.Assertions.*;import static org.mockito.ArgumentMatchers.any;import static org.mockito.Mockito.*;
-class EmploymentContractServiceTest{@Test void hrCreatesAnImmutableAuditedContract(){var identity=mock(CurrentEmployeeIdentity.class);var employees=mock(EmployeeRepository.class);var users=mock(AppUserRepository.class);var contracts=mock(EmploymentContractRepository.class);var audits=mock(AuditEntryRepository.class);var account=new AppUser("hr@example.invalid","$2a$12$"+"A".repeat(53),true);var hr=new Employee(account,"RH","UTC");var target=new Employee(new AppUser("worker@example.invalid","$2a$12$"+"B".repeat(53)),"Worker","Europe/Lisbon");when(identity.require()).thenReturn(new CurrentEmployeeIdentity.Identity(account.getId(),hr.getId()));when(users.existsByIdAndActiveTrueAndHrReaderTrue(account.getId())).thenReturn(true);when(employees.findOwnedActive(hr.getId(),account.getId())).thenReturn(Optional.of(hr));when(employees.lockActive(target.getId())).thenReturn(Optional.of(target));when(contracts.save(any())).thenAnswer(call->call.getArgument(0));var service=new EmploymentContractService(identity,employees,users,contracts,audits,Clock.fixed(Instant.EPOCH,ZoneOffset.UTC));var result=service.create(target.getId(),LocalDate.of(2026,11,1),"PT",EmploymentContract.Type.FULL_TIME,2400);assertEquals("PT",result.countryCode());assertEquals(2400,result.weeklyMinutes());verify(audits).save(any(AuditEntry.class));}}
+package io.github.juliarezende521.workjourney.contract;
+
+import io.github.juliarezende521.workjourney.account.AppUser;
+import io.github.juliarezende521.workjourney.account.AppUserRepository;
+import io.github.juliarezende521.workjourney.account.Employee;
+import io.github.juliarezende521.workjourney.account.EmployeeRepository;
+import io.github.juliarezende521.workjourney.adjustment.AuditEntry;
+import io.github.juliarezende521.workjourney.adjustment.AuditEntryRepository;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
+import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class EmploymentContractServiceTest {
+    @Test
+    void hrCreatesAnImmutableAuditedContract() {
+        var identity = mock(CurrentEmployeeIdentity.class);
+        var employees = mock(EmployeeRepository.class);
+        var users = mock(AppUserRepository.class);
+        var contracts = mock(EmploymentContractRepository.class);
+        var audits = mock(AuditEntryRepository.class);
+        var account = new AppUser("hr@example.invalid", "$2a$12$" + "A".repeat(53), true);
+        var hr = new Employee(account, "RH", "UTC");
+        var target = new Employee(
+                new AppUser("worker@example.invalid", "$2a$12$" + "B".repeat(53)),
+                "Worker",
+                "Europe/Lisbon");
+        when(identity.require()).thenReturn(new CurrentEmployeeIdentity.Identity(account.getId(), hr.getId()));
+        when(users.existsByIdAndActiveTrueAndHrReaderTrue(account.getId())).thenReturn(true);
+        when(employees.findOwnedActive(hr.getId(), account.getId())).thenReturn(Optional.of(hr));
+        when(employees.lockActive(target.getId())).thenReturn(Optional.of(target));
+        when(contracts.save(any())).thenAnswer(call -> call.getArgument(0));
+        var service = new EmploymentContractService(
+                new HrAuthorization(identity, users, employees), employees, contracts, audits,
+                Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
+
+        var result = service.create(target.getId(), LocalDate.of(2026, 11, 1), "PT",
+                EmploymentContract.Type.FULL_TIME, 2400);
+
+        assertEquals("PT", result.countryCode());
+        assertEquals(2400, result.weeklyMinutes());
+        verify(audits).save(any(AuditEntry.class));
+    }
+}

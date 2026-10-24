@@ -1,6 +1,7 @@
 package io.github.juliarezende521.workjourney.adjustment;
 
 import io.github.juliarezende521.workjourney.account.EmployeeRepository;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
 import io.github.juliarezende521.workjourney.journey.WorkEventType;
 import io.github.juliarezende521.workjourney.journey.WorkState;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkAdjustmentService {
     private static final int MAX_PAGE_SIZE = 50;
     private final CurrentEmployeeIdentity identity;
+    private final HrAuthorization hrAuthorization;
     private final EmployeeRepository employees;
     private final JpaWorkSessionStore sessions;
     private final WorkAdjustmentRepository requests;
@@ -29,10 +31,10 @@ public class WorkAdjustmentService {
     private final EffectiveTimelineService timelines;
     private final Clock clock;
 
-    public WorkAdjustmentService(CurrentEmployeeIdentity identity, EmployeeRepository employees,
+    public WorkAdjustmentService(CurrentEmployeeIdentity identity, HrAuthorization hrAuthorization, EmployeeRepository employees,
                                  JpaWorkSessionStore sessions, WorkAdjustmentRepository requests,
                                  AuditEntryRepository audits, EffectiveTimelineService timelines, Clock clock) {
-        this.identity=identity; this.employees=employees; this.sessions=sessions;
+        this.identity=identity; this.hrAuthorization=hrAuthorization; this.employees=employees; this.sessions=sessions;
         this.requests=requests; this.audits=audits; this.timelines=timelines; this.clock=clock;
     }
 
@@ -71,14 +73,14 @@ public class WorkAdjustmentService {
     @Transactional(readOnly = true)
     public Page pending(int page, int size) {
         validatePage(page,size);
-        identity.require();
+        hrAuthorization.require();
         var result=requests.findByStatusOrderByRequestedAtUtcAscIdAsc(AdjustmentStatus.PENDING, PageRequest.of(page,size));
         return new Page(result.getContent().stream().map(View::from).toList(), page, size, result.getTotalElements());
     }
 
     @Transactional(timeout = 15)
     public View decide(UUID id, AdjustmentStatus decision, String note) {
-        var actor=identity.require();
+        var actor=hrAuthorization.require();
         String validNote=text(note, 0, 500, false);
         Instant now=now();
         var request=requests.lockById(id).orElseThrow(AdjustmentNotVisible::new);

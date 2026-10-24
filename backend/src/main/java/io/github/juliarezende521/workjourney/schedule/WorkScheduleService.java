@@ -2,6 +2,7 @@ package io.github.juliarezende521.workjourney.schedule;
 
 import io.github.juliarezende521.workjourney.account.*;
 import io.github.juliarezende521.workjourney.adjustment.*;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
 import java.time.*;
@@ -14,12 +15,12 @@ import org.springframework.data.domain.*;
 
 @Service @Profile("!bootstrap")
 class WorkScheduleService {
-    private final CurrentEmployeeIdentity identity;private final EmployeeRepository employees;private final AppUserRepository users;
+    private final CurrentEmployeeIdentity identity;private final HrAuthorization hrAuthorization;private final EmployeeRepository employees;
     private final WorkScheduleRepository schedules;private final AuditEntryRepository audits;private final Clock clock;
     private final WorkScheduleExceptionRepository exceptions;
-    WorkScheduleService(CurrentEmployeeIdentity identity,EmployeeRepository employees,AppUserRepository users,
+    WorkScheduleService(CurrentEmployeeIdentity identity,HrAuthorization hrAuthorization,EmployeeRepository employees,
                         WorkScheduleRepository schedules,WorkScheduleExceptionRepository exceptions,AuditEntryRepository audits,Clock clock){
-        this.identity=identity;this.employees=employees;this.users=users;this.schedules=schedules;this.exceptions=exceptions;this.audits=audits;this.clock=clock;
+        this.identity=identity;this.hrAuthorization=hrAuthorization;this.employees=employees;this.schedules=schedules;this.exceptions=exceptions;this.audits=audits;this.clock=clock;
     }
     @Transactional(readOnly=true)
     public View mine(LocalDate on){
@@ -28,24 +29,24 @@ class WorkScheduleService {
         return find(employee,on);
     }
     @Transactional(readOnly=true)
-    public View forHr(UUID employeeId,LocalDate on){requireHr();return find(employees.findActiveById(employeeId)
+    public View forHr(UUID employeeId,LocalDate on){hrAuthorization.require();return find(employees.findActiveById(employeeId)
             .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible()),on);}
     @Transactional(readOnly=true)
-    public Page historyForHr(UUID employeeId,int page,int size){requireHr();
+    public Page historyForHr(UUID employeeId,int page,int size){hrAuthorization.require();
         if(page<0||page>Integer.MAX_VALUE/100||size<1||size>100)throw new InvalidSchedule();
         employees.findActiveById(employeeId).orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
         var result=schedules.findByEmployee_Id(employeeId,PageRequest.of(page,size,Sort.by(Sort.Direction.DESC,"effectiveFrom","id")));
         return new Page(result.map(View::from).getContent(),page,size,result.getTotalElements());
     }
     @Transactional(readOnly=true)
-    public ExceptionPage exceptionHistoryForHr(UUID employeeId,int page,int size){requireHr();validatePage(page,size);
+    public ExceptionPage exceptionHistoryForHr(UUID employeeId,int page,int size){hrAuthorization.require();validatePage(page,size);
         employees.findActiveById(employeeId).orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
         var result=exceptions.findByEmployee_Id(employeeId,PageRequest.of(page,size,Sort.by(Sort.Direction.DESC,"workDate","createdAtUtc","id")));
         return new ExceptionPage(result.map(ExceptionView::from).getContent(),page,size,result.getTotalElements());
     }
     @Transactional(timeout=15)
     public ExceptionView createException(UUID employeeId,LocalDate date,int planned,int tolerance,WorkScheduleException.Category category,String reason){
-        var actor=requireHr();var employee=employees.lockActive(employeeId)
+        var actor=hrAuthorization.require();var employee=employees.lockActive(employeeId)
                 .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
         var now=UtcInstants.normalize(clock.instant());var value=exceptions.save(new WorkScheduleException(employee,date,planned,tolerance,category,reason,actor.userId(),now));
         audits.save(new AuditEntry(actor.userId(),"WORK_SCHEDULE_EXCEPTION_CREATED","WORK_SCHEDULE_EXCEPTION",value.id(),now,
@@ -54,7 +55,7 @@ class WorkScheduleService {
     }
     @Transactional(timeout=15)
     public View create(UUID employeeId,LocalDate effectiveFrom,List<Integer> minutes,int toleranceMinutes){
-        var actor=requireHr();var employee=employees.lockActive(employeeId)
+        var actor=hrAuthorization.require();var employee=employees.lockActive(employeeId)
                 .orElseThrow(()->new io.github.juliarezende521.workjourney.journey.query.JourneyQueries.NotVisible());
         if(schedules.existsByEmployee_IdAndEffectiveFrom(employeeId,effectiveFrom))throw new InvalidSchedule(409);
         var now=UtcInstants.normalize(clock.instant());
@@ -62,11 +63,6 @@ class WorkScheduleService {
         audits.save(new AuditEntry(actor.userId(),"WORK_SCHEDULE_CREATED","WORK_SCHEDULE",schedule.id(),
                 now,"effectiveFrom="+effectiveFrom+",toleranceMinutes="+toleranceMinutes));
         return View.from(schedule);
-    }
-    private CurrentEmployeeIdentity.Identity requireHr(){var actor=identity.require();
-        if(!users.existsByIdAndActiveTrueAndHrReaderTrue(actor.userId())
-                ||employees.findOwnedActive(actor.employeeId(),actor.userId()).isEmpty())throw new AccessDeniedException("HR access denied");
-        return actor;
     }
     private View find(Employee employee,LocalDate on){
         LocalDate date=on==null?UtcInstants.normalize(clock.instant()).atZone(ZoneId.of(employee.getReferenceTimeZoneId())).toLocalDate():on;

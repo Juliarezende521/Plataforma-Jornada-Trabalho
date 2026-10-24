@@ -1,6 +1,7 @@
 package io.github.juliarezende521.workjourney.journey.query;
 
 import io.github.juliarezende521.workjourney.account.*;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import java.time.Clock;
@@ -32,7 +33,7 @@ class HrJourneyQueriesTest {
                 new JpaWorkSessionStore.LatestCheckpoint(brazilId, date, io.github.juliarezende521.workjourney.journey.WorkState.CLOSED),
                 new JpaWorkSessionStore.LatestCheckpoint(europeId, date, io.github.juliarezende521.workjourney.journey.WorkState.CLOSED)));
         var clock = Clock.fixed(java.time.Instant.parse("2026-10-15T02:00:00Z"), java.time.ZoneOffset.UTC);
-        var queries = new HrJourneyQueries(identity, users, employees, store,
+        var queries = new HrJourneyQueries(new HrAuthorization(identity, users, employees), employees, store,
                 mock(io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService.class),
                 mock(io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan.class), clock);
         var overview = queries.overview(0, 20);
@@ -50,7 +51,7 @@ class HrJourneyQueriesTest {
         var store = mock(JpaWorkSessionStore.class);
         var actor = new CurrentEmployeeIdentity.Identity(UUID.randomUUID(), UUID.randomUUID());
         when(identity.require()).thenReturn(actor);
-        var queries = new HrJourneyQueries(identity, users, employees, store,
+        var queries = new HrJourneyQueries(new HrAuthorization(identity, users, employees), employees, store,
                 mock(io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService.class),
                 mock(io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan.class), Clock.systemUTC());
         assertThrows(AccessDeniedException.class, () -> queries.employees(0, 20));

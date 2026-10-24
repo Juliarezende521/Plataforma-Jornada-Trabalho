@@ -1,6 +1,7 @@
 package io.github.juliarezende521.workjourney.adjustment;
 
 import io.github.juliarezende521.workjourney.account.*;
+import io.github.juliarezende521.workjourney.auth.HrAuthorization;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.query.JourneyQueries.InvalidFilter;
 import java.time.Instant;
@@ -27,7 +28,7 @@ class AuditQueryServiceTest {
                 UUID.randomUUID(), Instant.EPOCH, "effectiveFrom=2026-11-01");
         when(audits.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(new PageImpl<>(List.of(entry)));
         when(users.findAllById(any())).thenReturn(List.of(account));
-        var service = new AuditQueryService(identity, employees, users, audits);
+        var service = new AuditQueryService(new HrAuthorization(identity, users, employees), users, audits);
 
         var result = service.history(0, 20);
 
@@ -52,7 +53,7 @@ class AuditQueryServiceTest {
         when(identity.require()).thenReturn(new CurrentEmployeeIdentity.Identity(account.getId(), employee.getId()));
         when(users.existsByIdAndActiveTrueAndHrReaderTrue(account.getId())).thenReturn(true);
         when(employees.findOwnedActive(employee.getId(), account.getId())).thenReturn(Optional.of(employee));
-        var service = new AuditQueryService(identity, employees, users, audits);
+        var service = new AuditQueryService(new HrAuthorization(identity, users, employees), users, audits);
         assertThrows(InvalidFilter.class, () -> service.history(0, 101));
         verifyNoInteractions(audits);
     }
@@ -64,7 +65,7 @@ class AuditQueryServiceTest {
         var audits = mock(AuditEntryRepository.class);
         var userId = UUID.randomUUID();
         when(identity.require()).thenReturn(new CurrentEmployeeIdentity.Identity(userId, UUID.randomUUID()));
-        var service = new AuditQueryService(identity, employees, users, audits);
+        var service = new AuditQueryService(new HrAuthorization(identity, users, employees), users, audits);
         assertThrows(AccessDeniedException.class, () -> service.history(0, 20));
         verifyNoInteractions(audits);
     }
