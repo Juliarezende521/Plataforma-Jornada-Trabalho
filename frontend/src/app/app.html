@@ -59,9 +59,11 @@
     <nav aria-label="Navegação das jornadas">
       <button type="button" (click)="show('current')" [class.secondary]="view() !== 'current'" [attr.aria-current]="view() === 'current' ? 'page' : null" [disabled]="busy() || journeyBusy()">Jornada atual</button>
       <button type="button" (click)="show('history')" [class.secondary]="view() !== 'history'" [attr.aria-current]="view() === 'history' ? 'page' : null" [disabled]="busy() || journeyBusy()">Histórico</button>
+      @if (user.manager) { <button type="button" (click)="show('team')" [class.secondary]="view() !== 'team'" [attr.aria-current]="view() === 'team' ? 'page' : null" [disabled]="busy() || journeyBusy()">Minha equipe</button> }
     </nav>
     <app-journey [hidden]="view() !== 'current'" id="current-journey" [user]="user" (busyChange)="journeyBusy.set($event)" />
     <app-history [hidden]="view() !== 'history'" [user]="user" />
+    @if (user.manager) { <app-manager-dashboard [hidden]="view() !== 'team'" [user]="user" /> }
     }
   }
   <footer>Acesso restrito a colaboradores. Contas são provisionadas pela empresa.</footer>

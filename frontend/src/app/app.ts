@@ -7,10 +7,11 @@ import { authErrorMessage } from './auth/auth-feedback';
 import { HistoryComponent } from './history/history.component';
 import { HrDashboardComponent } from './hr/hr-dashboard.component';
 import { JourneyComponent } from './journey/journey.component';
+import { ManagerDashboardComponent } from './team/manager-dashboard.component';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule, JourneyComponent, HistoryComponent, HrDashboardComponent],
+  imports: [ReactiveFormsModule, JourneyComponent, HistoryComponent, HrDashboardComponent, ManagerDashboardComponent],
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
@@ -19,10 +20,10 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly busy = signal(false);
   protected readonly journeyBusy = signal(false);
-  protected readonly view = signal<'current' | 'history' | 'hr'>('current');
+  protected readonly view = signal<'current' | 'history' | 'team'>('current');
   private readonly journeyView = viewChild(JourneyComponent);
-  private readonly hrView = viewChild(HrDashboardComponent);
   private readonly historyView = viewChild(HistoryComponent);
+  private readonly teamView = viewChild(ManagerDashboardComponent);
   private readonly accessHeading = viewChild<ElementRef<HTMLElement>>('accessHeading');
   protected readonly checking = signal(true);
   protected readonly unavailable = signal(false);
@@ -41,14 +42,14 @@ export class App {
     effect(() => { if (!this.auth.user()) { this.journeyBusy.set(false); this.view.set('current'); } });
   }
 
-  protected show(view: 'current' | 'history' | 'hr'): void {
+  protected show(view: 'current' | 'history' | 'team'): void {
     if (this.busy() || this.journeyBusy()) return;
-    if (view === 'hr' && !this.auth.user()?.hrReader) return;
+    if (view === 'team' && !this.auth.user()?.manager) return;
     this.view.set(view);
     setTimeout(() => {
       if (this.destroyRef.destroyed) return;
       if (view === 'current') this.journeyView()?.focusHeading();
-      else if (view === 'hr') this.hrView()?.show('overview');
+      else if (view === 'team') this.teamView()?.focusHeading();
       else this.historyView()?.focusHeading();
     });
   }

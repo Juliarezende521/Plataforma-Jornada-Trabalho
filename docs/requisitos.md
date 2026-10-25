@@ -16,7 +16,13 @@ Este documento registra as decisões tomadas para preencher os pontos que o desa
 - Abre o histórico e o detalhe de uma pessoa específica.
 - Não cria nem altera marcações de outra pessoa.
 
-O perfil de gestor, o cadastro público e a administração de contas não fazem parte desta versão.
+### Gestor
+
+- Consulta a lista de colaboradores diretamente vinculados a ele na data atual.
+- Consulta histórico, detalhe e resumo apenas dessas pessoas.
+- Não registra marcações nem altera contratos, escalas ou fechamentos da equipe.
+
+O cadastro público e a administração de contas não fazem parte desta versão.
 
 ## Funcionalidades implementadas
 
@@ -42,6 +48,7 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 | Exceções de escala | RH substitui carga e tolerância em uma data para feriado, folga, treinamento ou jornada especial |
 | Auditoria | RH consulta em ordem cronológica as ações sensíveis, seus responsáveis e recursos afetados |
 | Contrato | RH registra versões de país, tipo de vínculo e carga semanal por colaborador |
+| Equipes | RH registra vínculos de gestor com vigência; gestores consultam somente jornadas de subordinados diretos |
 
 ## Regras de jornada
 
@@ -73,6 +80,8 @@ O perfil de gestor, o cadastro público e a administração de contas não fazem
 
 - Identidade, permissões e autoria são obtidas da sessão no servidor.
 - Recursos próprios são filtrados também pelo colaborador autenticado.
+- O papel de gestor é derivado dos vínculos vigentes e cada consulta revalida o vínculo no servidor.
+- Trocas de gestor criam versões imutáveis, impedem autoatribuição e ciclos e geram auditoria.
 - Senhas são armazenadas com hash adaptativo.
 - Mutações exigem token CSRF.
 - Chaves de idempotência impedem repetição da mesma intenção.

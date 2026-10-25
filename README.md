@@ -2,7 +2,7 @@
 
 Aplicação web para registro e consulta de jornada de trabalho, desenvolvida para o desafio técnico da Dungeons & Dragons Group.
 
-O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma remota e durante viagens. Por isso, além do fluxo básico de ponto, a aplicação trata fuso horário, concorrência entre marcações e consulta por RH.
+O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma remota e durante viagens. Por isso, além do fluxo básico de ponto, a aplicação trata fuso horário, concorrência entre marcações e consultas com escopo de RH e gestor.
 
 ![Tela de jornada em desktop](docs/evidencias/jornada/jornada-pausa-1280.png)
 
@@ -22,6 +22,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Consulta paginada da trilha de auditoria pelo RH.
 - Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.
 - Fechamento mensal auditável com fotografia de horas previstas, trabalhadas, saldo e tolerância.
+- Equipes versionadas por vigência, com consulta de jornadas limitada aos subordinados diretos do gestor.
 - Correções aprovadas podem pausar, retomar ou encerrar uma jornada aberta de forma auditável.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.
@@ -49,6 +50,7 @@ Angular e SQL Server seguem o contexto do desafio. Escolhi Java no backend por s
 - Uma chave de idempotência evita duplicar eventos após timeout ou repetição de uma requisição.
 - Marcações do mesmo colaborador são serializadas no banco; constraints e versionamento protegem o estado entre dispositivos.
 - Colaboradores consultam somente os próprios registros. A leitura do RH exige permissão específica revalidada no servidor.
+- Gestores consultam somente subordinados diretos vigentes; o vínculo é revalidado em cada recurso solicitado.
 - Flyway é a fonte de verdade do banco; o Hibernate apenas valida o schema.
 
 Detalhes e trade-offs estão em [Arquitetura](docs/arquitetura.md), [Requisitos](docs/requisitos.md) e [API de jornada](docs/api-jornada.md).
@@ -119,7 +121,7 @@ Ao executar `./scripts/local/backend.sh` sem configurar outra senha, use:
 | Conta | Perfil |
 |---|---|
 | `brasil@example.invalid` | Colaborador em São Paulo |
-| `europa@example.invalid` | Colaborador em Amsterdã |
+| `europa@example.invalid` | Colaborador em Amsterdã e gestor da conta Brasil |
 | `rh@example.invalid` | Consulta do RH |
 
 Para definir outra senha antes da primeira inicialização:

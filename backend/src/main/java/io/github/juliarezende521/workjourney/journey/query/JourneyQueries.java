@@ -105,7 +105,7 @@ public class JourneyQueries {
 
     public record Item(UUID id, WorkState state, LocalDate workDate, String referenceTimeZoneId,
                        Instant openedAtUtc, Instant closedAtUtc) {
-        static Item from(WorkSession s, Instant observed) {
+        public static Item from(WorkSession s, Instant observed) {
             return new Item(s.getId(),s.getState(),s.getWorkDate(),s.getReferenceTimeZoneId(),s.getOpenedAtUtc(),s.getClosedAtUtc());
         }
     }

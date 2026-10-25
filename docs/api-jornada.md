@@ -100,6 +100,9 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/{employeeId}/monthly-closures/{YYYY-MM}` | Consulta o fechamento de uma competência |
 | GET | `/api/hr/employees/{employeeId}/monthly-closures` | Lista fechamentos com paginação |
 | POST | `/api/hr/employees/{employeeId}/monthly-closures/{YYYY-MM}` | Fecha e audita uma competência encerrada |
+| GET | `/api/hr/employees/{employeeId}/manager-assignment?on=2026-11-01` | Consulta o gestor vigente na data |
+| GET | `/api/hr/employees/{employeeId}/manager-assignments` | Lista o histórico versionado de gestores |
+| POST | `/api/hr/employees/{employeeId}/manager-assignments` | Cria um vínculo de gestor com vigência e auditoria |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
@@ -109,6 +112,19 @@ As consultas de jornada são somente de leitura. A decisão de ajuste é termina
 Os resumos retornam `totalWorkDuration`, `plannedWorkDuration`, `scheduledDays`, `periodDays`, `balanceSeconds`, `toleranceSeconds` e `withinTolerance`. O saldo e a classificação só são calculados quando uma escala vigente cobre todas as datas do período; caso contrário, os campos derivados são `null`. A tolerância é somada apenas nos dias com carga planejada. Esses valores são comparativos operacionais e não representam cálculo legal de horas extras ou banco de horas.
 
 O fechamento mensal grava uma fotografia imutável do resumo. Ele exige mês já encerrado no fuso do colaborador, cobertura integral da escala, ausência de jornadas abertas e de ajustes pendentes. Depois do fechamento, solicitações de ajuste e alterações retroativas de escala que afetariam a competência são recusadas. A operação exige CSRF, permissão atual do RH e gera auditoria.
+
+O vínculo de gestor recebe `managerEmployeeId` e `effectiveFrom`. Uma nova vigência não altera versões anteriores. Autoatribuição, versão duplicada e ciclos na hierarquia são rejeitados.
+
+## Consulta do gestor
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/manager/team` | Lista os subordinados diretos vigentes, com paginação |
+| GET | `/api/manager/employees/{employeeId}/work-sessions` | Histórico de um subordinado direto |
+| GET | `/api/manager/employees/{employeeId}/work-sessions/summary` | Resumo do período do subordinado |
+| GET | `/api/manager/employees/{employeeId}/work-sessions/{id}` | Detalhe de uma jornada do subordinado |
+
+O papel é concedido quando a conta possui ao menos um vínculo vigente. A API não confia apenas nesse papel: cada consulta verifica novamente se o colaborador solicitado pertence diretamente à equipe atual. O acesso do gestor é somente de leitura e não inclui contrato, escala, fechamento ou decisões do RH.
 
 ## Erros
 

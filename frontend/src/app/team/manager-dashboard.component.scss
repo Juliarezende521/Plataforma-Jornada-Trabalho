@@ -1,0 +1,7 @@
+:host { display: block; }
+.team { margin-top: var(--space-6); }
+.people { list-style: none; padding: 0; display: grid; gap: var(--space-3); }
+.people li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.people h3, .people p { margin: 0; }
+.people p { color: var(--color-muted); margin-top: var(--space-1); }
+.pages { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }

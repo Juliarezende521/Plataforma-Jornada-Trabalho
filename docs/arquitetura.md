@@ -36,20 +36,23 @@ erDiagram
     EMPLOYEE ||--o{ IDEMPOTENCY_REQUEST : utiliza
     APP_USER ||--o{ AUDIT_ENTRY : realiza
     EMPLOYEE ||--o{ WORK_SCHEDULE : possui
+    EMPLOYEE ||--o{ TEAM_ASSIGNMENT : colaborador
+    EMPLOYEE ||--o{ TEAM_ASSIGNMENT : gestor
 ```
 
 | Tabela | Campos principais | Restrições |
 |---|---|---|
 | app_user | id UUID, email normalizado, password_hash, active | PK; email único; hash nunca exposto |
-| employee | id UUID, user_id, name, reference_time_zone_id, manager_id opcional P1 | user_id único e FK; manager FK se implementado |
+| employee | id UUID, user_id, name, reference_time_zone_id | user_id único e FK |
 | work_session | id UUID, employee_id, work_date, reference_time_zone_id, state, closed_at_utc, version bigint | FK; version não nulo; estado e encerramento coerentes |
 | work_event | id UUID, work_session_id, event_type, occurred_at_utc, recorded_at_utc, sequence, author_user_id | FKs; tipo permitido; sequence positiva e única por jornada |
 | idempotency_request | id UUID, employee_id, request_key, payload_hash, result_event_id | FK; chave única por colaborador; resultado do comando confirmado |
 | work_adjustment_request | id UUID, jornada, colaborador, evento proposto, instante, motivo, estado, decisão e version | Eventos originais permanecem imutáveis; decisão terminal |
 | audit_entry | id UUID, actor_user_id, action, entity_id, recorded_at_utc, details | Registro append-only das solicitações e decisões |
 | work_schedule | id UUID, employee_id, effective_from, minutos por dia, autoria e criação | Uma versão por colaborador/data; registros imutáveis |
+| team_assignment | id UUID, employee_id, manager_employee_id, effective_from, autoria e criação | Uma versão por colaborador/data; sem autoatribuição; registros imutáveis |
 
-As migrations V1–V12 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas semanais versionadas, exceções por data, consulta da auditoria e contratos versionados. O vínculo de gestor continua planejado.
+As migrations V1–V14 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas e exceções versionadas, auditoria, contratos, fechamentos mensais e vínculos de equipe versionados.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
@@ -94,6 +97,9 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | GET /api/hr/audit-entries | Página | Trilha cronológica das ações sensíveis, restrita ao RH |
 | GET/POST /api/hr/employees/{id}/employment-contracts | Página ou versão | Histórico e criação auditável de contratos |
 | GET/POST /api/hr/employees/{id}/monthly-closures | Competência ou página | Consulta, histórico e fechamento mensal auditável |
+| GET/POST /api/hr/employees/{id}/manager-assignments | Página ou vínculo | Histórico e criação auditável do gestor vigente |
+| GET /api/manager/team | Página | Subordinados diretos vigentes do gestor autenticado |
+| GET /api/manager/employees/{id}/work-sessions | Período/página | Histórico de um subordinado direto, com revalidação do vínculo |
 | POST /api/hr/work-adjustments/{id}/decision | Aprovar/rejeitar e observação | Decisão terminal e auditada, exclusiva do RH |
 
 Filtros `from` e `to` são datas de referência inclusivas, limitadas a 366 dias. A página inicial é 0; o tamanho padrão é 20 e o máximo é 100. A ordenação usa data e abertura decrescentes, com ID como desempate. Parâmetros inválidos retornam 400 e instantes usam ISO 8601 UTC.
@@ -112,4 +118,4 @@ As regras de negócio e prioridades são decisões propostas para o desafio, nã
 
 ## Estado atual
 
-POST de marcação, GET de recibo, jornada atual, histórico, detalhe, resumo efetivo, consultas do RH, fechamento mensal e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. O detalhe expõe separadamente registros persistidos e a projeção efetiva, com duração recalculada. O resumo usa a mesma projeção, lê jornadas e ajustes em lotes e sinaliza jornadas ainda abertas. O fechamento persiste uma fotografia do resumo somente após validar escala completa, jornadas encerradas e ausência de ajustes pendentes. Uma correção aprovada que pause, retome ou encerre uma jornada aberta é anexada como novo evento, atualiza checkpoint e versão e registra decisão/auditoria na mesma transação; eventos anteriores não são reescritos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500.
+POST de marcação, GET de recibo, jornada atual, histórico, detalhe, resumo efetivo, consultas do RH e do gestor, fechamento mensal e fluxo auditável de solicitação/decisão de ajustes estão implementados com DTOs explícitos. O vínculo de equipe é versionado por data, rejeita autoatribuição e ciclos, e cada consulta de gestor revalida a relação vigente. O detalhe expõe separadamente registros persistidos e a projeção efetiva, com duração recalculada. O resumo usa a mesma projeção, lê jornadas e ajustes em lotes e sinaliza jornadas ainda abertas. O fechamento persiste uma fotografia do resumo somente após validar escala completa, jornadas encerradas e ausência de ajustes pendentes. Uma correção aprovada que pause, retome ou encerre uma jornada aberta é anexada como novo evento, atualiza checkpoint e versão e registra decisão/auditoria na mesma transação; eventos anteriores não são reescritos. Consulta vazia retorna `session=null`; ações e duração da jornada aberta são provisórias. Falha transitória de banco retorna 503 sem recibo; demais falhas inesperadas retornam 500.

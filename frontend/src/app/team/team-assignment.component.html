@@ -1,0 +1,10 @@
+<section class="assignment" aria-labelledby="assignment-heading" [attr.aria-busy]="busy()">
+  <h3 id="assignment-heading">Gestor responsável</h3>
+  @if (current(); as assignment) { <p>Vigente: <strong>{{ assignment.managerName }}</strong>, desde {{ assignment.effectiveFrom }}.</p> }
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div><label for="team-manager">Novo gestor</label><select id="team-manager" formControlName="managerEmployeeId"><option value="">Selecione</option>@for (person of candidates(); track person.id) { <option [value]="person.id">{{ person.name }}</option> }</select></div>
+    <div><label for="team-effective">Início da vigência</label><input id="team-effective" type="date" formControlName="effectiveFrom" /></div>
+    <button type="submit" [disabled]="busy()">Registrar nova vigência</button>
+  </form>
+  <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
+</section>

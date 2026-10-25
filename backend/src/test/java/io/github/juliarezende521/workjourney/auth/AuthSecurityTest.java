@@ -88,7 +88,8 @@ class AuthSecurityTest {
         for (String path : new String[]{
                 "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedules",
                 "/api/hr/employees/00000000-0000-0000-0000-000000000001/work-schedule-exceptions",
-                "/api/hr/employees/00000000-0000-0000-0000-000000000001/employment-contracts"}) {
+                "/api/hr/employees/00000000-0000-0000-0000-000000000001/employment-contracts",
+                "/api/hr/employees/00000000-0000-0000-0000-000000000001/manager-assignments"}) {
             mvc.perform(post(path)
                     .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
                             .user(new AccountPrincipal(employee, encoder.encode("unused-password"), true)))
@@ -102,6 +103,27 @@ class AuthSecurityTest {
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{}"))
                     .andExpect(status().isNotFound());
         }
+    }
+
+    @Test
+    void onlyManagerCanReachManagerReadEndpoints() throws Exception {
+        var employee = new AccountPrincipal.Identity(UUID.randomUUID(), UUID.randomUUID(),
+                "employee@example.invalid", "Employee", "America/Sao_Paulo", false, false);
+        var manager = new AccountPrincipal.Identity(UUID.randomUUID(), UUID.randomUUID(),
+                "manager@example.invalid", "Manager", "America/Sao_Paulo", false, true);
+        mvc.perform(get("/api/manager/team")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                        .user(new AccountPrincipal(employee, encoder.encode("unused-password"), true))))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/manager/team")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                        .user(new AccountPrincipal(manager, encoder.encode("unused-password"), true))))
+                .andExpect(status().isNotFound());
+        mvc.perform(post("/api/manager/team")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                        .user(new AccountPrincipal(manager, encoder.encode("unused-password"), true)))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test

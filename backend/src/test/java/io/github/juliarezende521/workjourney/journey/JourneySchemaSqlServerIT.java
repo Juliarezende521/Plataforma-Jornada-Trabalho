@@ -163,6 +163,30 @@ class JourneySchemaSqlServerIT {
     }
 
     @Test
+    void teamAssignmentsRejectSelfManagementAndDuplicateEffectiveVersions() throws Exception {
+        try (var connection = transaction()) {
+            var employee = owner(connection);
+            var manager = owner(connection);
+            execute(connection, """
+                    INSERT INTO dbo.team_assignment
+                    (id, employee_id, manager_employee_id, effective_from, created_by_user_id, created_at_utc)
+                    VALUES (?, ?, ?, '2026-01-01', ?, ?)
+                    """, UUID.randomUUID(), employee.employeeId(), manager.employeeId(), manager.userId(), NOW);
+            assertSqlError(547, () -> execute(connection, """
+                    INSERT INTO dbo.team_assignment
+                    (id, employee_id, manager_employee_id, effective_from, created_by_user_id, created_at_utc)
+                    VALUES (?, ?, ?, '2026-02-01', ?, ?)
+                    """, UUID.randomUUID(), employee.employeeId(), employee.employeeId(), manager.userId(), NOW));
+            assertSqlError(2627, () -> execute(connection, """
+                    INSERT INTO dbo.team_assignment
+                    (id, employee_id, manager_employee_id, effective_from, created_by_user_id, created_at_utc)
+                    VALUES (?, ?, ?, '2026-01-01', ?, ?)
+                    """, UUID.randomUUID(), employee.employeeId(), manager.employeeId(), manager.userId(), NOW));
+            connection.rollback();
+        }
+    }
+
+    @Test
     void rollbackRemovesEventAndRestoresSessionStateAndVersion() throws Exception {
         try (var connection = transaction()) {
             var owner = owner(connection);

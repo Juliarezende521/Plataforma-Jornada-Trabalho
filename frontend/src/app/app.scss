@@ -27,7 +27,7 @@ nav button.secondary { border-color: transparent; background: transparent; color
 nav button.secondary:disabled { background: #e7ebf2; color: #59677e; border-color: #b7c2d2; }
 nav button[aria-current="page"] { box-shadow: 0 2px 5px rgb(23 43 73 / 12%); }
 footer { margin-top: var(--space-6); padding: var(--space-2) 0; color: var(--color-muted); font-size: .8rem; }
-app-journey[hidden], app-history[hidden] { display: none; }
+app-journey[hidden], app-history[hidden], app-manager-dashboard[hidden] { display: none; }
 @media (min-width: 640px) { .shell { padding: var(--space-8) var(--space-6); } nav button { flex: 0 1 auto; } }
 @media (max-width: 420px) { .account-actions, .account-actions button { width: 100%; } }
 

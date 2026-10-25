@@ -14,6 +14,7 @@ import { MonthlyClosureComponent } from '../closing/monthly-closure.component';
 export class HistoryComponent {
   readonly user = input.required<Identity>();
   readonly targetEmployee = input<EmployeeSummary | null>(null);
+  readonly targetAccess = input<'hr' | 'manager'>('hr');
   readonly initialWorkDate = input<string | null>(null);
   readonly referenceZone = computed(() => this.targetEmployee()?.referenceTimeZoneId ?? this.user().referenceTimeZoneId);
   private readonly api = inject(HistoryApi);
@@ -67,15 +68,15 @@ export class HistoryComponent {
     const filter=this.applied(); if (!filter || this.busy() || page<0) return;
     this.busy.set(true); this.result.set(null); this.detail.set(null); this.adjustmentsVisible.set(false); this.message.set('Consultando jornadas do período…');
     const employeeId=this.targetEmployee()?.id;
-    const summaryRequest=refreshSummary ? this.api.summary(filter,employeeId) : of(this.summary());
-    this.request=forkJoin({result:this.api.history(filter,page,employeeId),summary:summaryRequest}).subscribe({ next: response => { this.result.set(response.result); if(response.summary)this.summary.set(response.summary); this.busy.set(false);
+    const summaryRequest=refreshSummary ? this.api.summary(filter,employeeId,this.targetAccess()) : of(this.summary());
+    this.request=forkJoin({result:this.api.history(filter,page,employeeId,this.targetAccess()),summary:summaryRequest}).subscribe({ next: response => { this.result.set(response.result); if(response.summary)this.summary.set(response.summary); this.busy.set(false);
       this.message.set(response.result.totalElements ? 'Consulta concluída. Seus registros estão disponíveis.' : 'Nenhuma jornada encontrada no período selecionado.'); this.heading()?.nativeElement.focus(); },
       error: error => this.fail(error) });
   }
   open(id: string): void {
     if (this.busy()) return;
     this.busy.set(true); this.detail.set(null); this.adjustmentsVisible.set(false); this.message.set('Consultando os detalhes…');
-    this.request=this.api.detail(id,this.targetEmployee()?.id).subscribe({ next: detail => { this.detail.set(detail); this.busy.set(false); this.message.set('Detalhes consultados.');
+    this.request=this.api.detail(id,this.targetEmployee()?.id,this.targetAccess()).subscribe({ next: detail => { this.detail.set(detail); this.busy.set(false); this.message.set('Detalhes consultados.');
       setTimeout(() => { if (!this.destroyRef.destroyed) this.detailHeading()?.nativeElement.focus(); }); }, error: error => this.fail(error) });
   }
   showAdjustments(): void { this.adjustmentsVisible.set(true); }

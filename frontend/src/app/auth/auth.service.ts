@@ -9,6 +9,7 @@ export interface Identity {
   name: string;
   referenceTimeZoneId: string;
   hrReader?: boolean;
+  manager?: boolean;
 }
 interface CsrfToken { headerName: string; token: string; }
 const REQUEST_TIMEOUT_MS = 8000;

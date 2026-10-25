@@ -11,7 +11,7 @@
     <p id="period-help">Inclui as duas datas. Limite de 366 dias.</p>
     <p id="period-error" class="error" role="alert">{{ fieldError() }}</p>
   </form>
-  @if (targetEmployee(); as person) {
+  @if (targetAccess() === 'hr' && targetEmployee(); as person) {
     <app-employment-contract [employeeId]="person.id" />
     <app-monthly-closure [employeeId]="person.id" [timeZone]="person.referenceTimeZoneId" />
   }

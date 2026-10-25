@@ -7,8 +7,9 @@ import { AuthService, Identity } from '../auth/auth.service';
 import { HistoryComponent } from '../history/history.component';
 import { EmployeePage, EmployeeSummary } from '../history/history.types';
 import { WorkScheduleComponent } from '../schedule/work-schedule.component';
+import { TeamAssignmentComponent } from '../team/team-assignment.component';
 
-@Component({ selector: 'app-hr', imports: [ReactiveFormsModule, HistoryComponent, WorkScheduleComponent],
+@Component({ selector: 'app-hr', imports: [ReactiveFormsModule, HistoryComponent, WorkScheduleComponent, TeamAssignmentComponent],
   templateUrl: './hr.component.html', styleUrl: './hr.component.scss' })
 export class HrComponent {
   readonly user = input.required<Identity>();

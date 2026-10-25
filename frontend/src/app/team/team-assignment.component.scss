@@ -1,0 +1,5 @@
+.assignment { margin-top: var(--space-6); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.assignment h3 { margin-top: 0; }
+.assignment form { display: grid; gap: var(--space-3); align-items: end; }
+label { display: block; margin-bottom: var(--space-2); font-weight: 650; }
+@media (min-width: 760px) { .assignment form { grid-template-columns: 1fr 1fr auto; } }

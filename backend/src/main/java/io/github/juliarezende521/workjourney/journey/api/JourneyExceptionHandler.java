@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
         io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class,
         io.github.juliarezende521.workjourney.adjustment.AuditController.class,
         io.github.juliarezende521.workjourney.closing.MonthlyClosureController.class,
+        io.github.juliarezende521.workjourney.team.ManagerJourneyController.class,
+        io.github.juliarezende521.workjourney.team.TeamAssignmentController.class,
         io.github.juliarezende521.workjourney.contract.EmploymentContractController.class,
         io.github.juliarezende521.workjourney.schedule.WorkScheduleController.class})
 public class JourneyExceptionHandler {
@@ -64,6 +66,18 @@ public class JourneyExceptionHandler {
             case "PENDING_ADJUSTMENTS" -> "Monthly period has pending adjustments";
             case "PERIOD_CLOSED" -> "Monthly period is closed";
             default -> "Invalid monthly closure request";
+        };
+        return problem(error.status(), title);
+    }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.team.InvalidTeamAssignment.class)
+    ResponseEntity<Problem> invalidTeamAssignment(io.github.juliarezende521.workjourney.team.InvalidTeamAssignment error) {
+        String title = switch (error.reason()) {
+            case "SELF_ASSIGNMENT" -> "Employee cannot manage themself";
+            case "VERSION_EXISTS" -> "Manager assignment already exists for effective date";
+            case "CYCLE" -> "Manager assignment would create a cycle";
+            case "TOO_LARGE" -> "Request body too large";
+            default -> "Invalid manager assignment";
         };
         return problem(error.status(), title);
     }

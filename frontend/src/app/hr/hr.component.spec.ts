@@ -17,8 +17,14 @@ describe('Read-only HR screen', () => {
   function directory() {
     http.expectOne(r => r.url === '/api/hr/employees').flush({ items: [brazil, europe], page: 0, size: 20, totalElements: 2 }); fixture.detectChanges();
   }
+  function teamAssignment(employeeId: string) {
+    http.expectOne('/api/hr/employees?page=0&size=100').flush({ items: [brazil, europe], page: 0, size: 100, totalElements: 2 });
+    http.expectOne(`/api/hr/employees/${employeeId}/manager-assignment`).flush(null);
+    fixture.detectChanges();
+  }
   it('loads a bounded directory and routes selected history through HR without changing authenticated identity', () => {
     mount(); directory(); fixture.componentInstance.choice.setValue(brazil.id); fixture.detectChanges();
+    teamAssignment(brazil.id);
     http.expectOne('/api/hr/employees/brazil/work-schedule').flush(null);
     expect(fixture.nativeElement.textContent).toContain('Registros de Brasil');
     const from = fixture.nativeElement.querySelector('#history-from') as HTMLInputElement;
@@ -36,15 +42,17 @@ describe('Read-only HR screen', () => {
   it('cancels pending history and clears selected data when switching employees or accounts', () => {
     mount(); directory(); fixture.componentInstance.choice.setValue(brazil.id); fixture.detectChanges();
     const scheduleRequest = http.expectOne('/api/hr/employees/brazil/work-schedule');
+    const teamRequest = http.expectOne('/api/hr/employees?page=0&size=100');
     fixture.nativeElement.querySelector('app-history form').dispatchEvent(new Event('submit'));
     const request = http.expectOne(r => r.url === '/api/hr/employees/brazil/work-sessions');
     const summaryRequest=http.expectOne(r=>r.url==='/api/hr/employees/brazil/work-sessions/summary');
     fixture.componentInstance.choice.setValue(europe.id); fixture.detectChanges();
-    expect(request.cancelled).toBe(true); expect(summaryRequest.cancelled).toBe(true); expect(scheduleRequest.cancelled).toBe(true);
+    expect(request.cancelled).toBe(true); expect(summaryRequest.cancelled).toBe(true); expect(scheduleRequest.cancelled).toBe(true); expect(teamRequest.cancelled).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('Registros de Europa');
     const nextScheduleRequest = http.expectOne('/api/hr/employees/europe/work-schedule');
+    const nextTeamRequest = http.expectOne('/api/hr/employees?page=0&size=100');
     fixture.componentRef.setInput('user', { ...hr, hrReader: false }); fixture.detectChanges();
-    expect(nextScheduleRequest.cancelled).toBe(true);
+    expect(nextScheduleRequest.cancelled).toBe(true); expect(nextTeamRequest.cancelled).toBe(true);
     expect(fixture.nativeElement.querySelector('app-history')).toBeNull(); expect(fixture.componentInstance.directory()).toBeNull();
     http.expectNone('/api/hr/employees');
   });
