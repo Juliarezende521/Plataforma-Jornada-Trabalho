@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -11,6 +11,7 @@ import { AdjustmentPage, WorkAdjustment } from './adjustment.types';
 @Component({ selector:'app-adjustment-review', imports:[ReactiveFormsModule],
   templateUrl:'./adjustment-review.component.html', styleUrl:'./adjustment-review.component.scss' })
 export class AdjustmentReviewComponent {
+  readonly access=input<'hr'|'manager'>('hr');
   readonly page=signal<AdjustmentPage|null>(null);
   readonly selected=signal<WorkAdjustment|null>(null);
   readonly busy=signal(false);
@@ -22,12 +23,15 @@ export class AdjustmentReviewComponent {
   private readonly destroy=inject(DestroyRef);
   private readonly heading=viewChild<ElementRef<HTMLElement>>('heading');
   private request?:Subscription;
-  constructor() { this.destroy.onDestroy(() => this.request?.unsubscribe()); this.load(0); }
+  constructor() {
+    this.destroy.onDestroy(() => this.request?.unsubscribe());
+    effect(() => { this.access(); untracked(() => { this.request?.unsubscribe(); this.busy.set(false); this.load(0); }); });
+  }
   focusHeading():void { this.heading()?.nativeElement.focus(); }
   load(page:number):void {
     if(this.busy()||page<0)return;
     this.busy.set(true); this.message.set('Consultando solicitações pendentes…');
-    this.request=this.api.pending(page).subscribe({next:result=>{this.page.set(result);this.busy.set(false);this.selected.set(null);
+    this.request=this.api.pending(page,this.access()).subscribe({next:result=>{this.page.set(result);this.busy.set(false);this.selected.set(null);
       this.message.set(result.totalElements ? 'Solicitações pendentes disponíveis para análise.' : 'Não há solicitações pendentes.');},error:error=>this.fail(error)});
   }
   analyze(item:WorkAdjustment):void { this.selected.set(item); this.note.reset(''); this.message.set('Revise os dados antes de decidir.'); }
@@ -38,7 +42,7 @@ export class AdjustmentReviewComponent {
     const verb=decision==='APPROVED'?'aprovar':'rejeitar';
     if(!window.confirm(`Confirma ${verb} esta solicitação? A decisão ficará registrada na auditoria.`))return;
     this.busy.set(true); this.message.set('Registrando decisão…');
-    this.request=this.api.decide(item.id,decision,this.note.value.trim()||null).subscribe({next:()=>{
+    this.request=this.api.decide(item.id,decision,this.note.value.trim()||null,this.access()).subscribe({next:()=>{
       this.busy.set(false);this.selected.set(null);this.note.reset('');this.message.set(decision==='APPROVED'?'Solicitação aprovada e auditada.':'Solicitação rejeitada e auditada.');
       this.load(this.page()?.page??0);},error:error=>this.fail(error)});
   }

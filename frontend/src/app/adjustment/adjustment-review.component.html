@@ -1,6 +1,6 @@
 <section class="review" aria-labelledby="adjustment-review-heading" [attr.aria-busy]="busy()">
-  <h2 id="adjustment-review-heading" #heading tabindex="-1">Ajustes pendentes</h2>
-  <p>As marcações originais permanecem preservadas. Cada decisão registra responsável, horário e observação.</p>
+  <h2 id="adjustment-review-heading" #heading tabindex="-1">{{ access() === 'manager' ? 'Ajustes da equipe' : 'Ajustes pendentes' }}</h2>
+  <p>As marcações originais permanecem preservadas. Cada decisão registra responsável, horário e observação.@if (access() === 'manager') { Você visualiza somente solicitações de subordinados diretos. }</p>
   <button class="secondary" type="button" (click)="load(page()?.page ?? 0)" [disabled]="busy()">Atualizar lista</button>
   <p role="status" aria-live="polite">{{ message() }}</p>
   @if (selected(); as item) {

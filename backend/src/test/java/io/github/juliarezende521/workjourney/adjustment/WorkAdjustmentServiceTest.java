@@ -9,6 +9,7 @@ import io.github.juliarezende521.workjourney.journey.WorkEventType;
 import io.github.juliarezende521.workjourney.journey.WorkSession;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
+import io.github.juliarezende521.workjourney.team.ManagerAuthorization;
 import java.time.*;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.*;
 class WorkAdjustmentServiceTest {
     private final CurrentEmployeeIdentity identity=mock(CurrentEmployeeIdentity.class);
     private final HrAuthorization hrAuthorization=mock(HrAuthorization.class);
+    private final ManagerAuthorization managerAuthorization=mock(ManagerAuthorization.class);
     private final MonthlyClosureGuard closureGuard=mock(MonthlyClosureGuard.class);
     private final EmployeeRepository employees=mock(EmployeeRepository.class);
     private final JpaWorkSessionStore sessions=mock(JpaWorkSessionStore.class);
@@ -34,15 +36,42 @@ class WorkAdjustmentServiceTest {
     private WorkAdjustmentService service;
 
     @BeforeEach void setUp() {
-        service=new WorkAdjustmentService(identity,hrAuthorization,closureGuard,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
+        service=new WorkAdjustmentService(identity,hrAuthorization,managerAuthorization,closureGuard,employees,sessions,requests,audits,new EffectiveTimelineService(requests),clock);
         var actor=new CurrentEmployeeIdentity.Identity(userId,employee.getId());
         when(identity.require()).thenReturn(actor);
         when(hrAuthorization.require()).thenReturn(actor);
+        when(managerAuthorization.requireManager()).thenReturn(new ManagerAuthorization.Context(actor, LocalDate.of(2026,10,20)));
         when(employees.lockOwnedActive(employee.getId(),userId)).thenReturn(Optional.of(employee));
         when(employees.lockActive(employee.getId())).thenReturn(Optional.of(employee));
         when(requests.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(requests.findByWorkSessionIdAndStatusAndAppliedEventIdIsNullOrderByProposedOccurredAtUtcAscIdAsc(any(),eq(AdjustmentStatus.APPROVED)))
                 .thenReturn(java.util.List.of());
+    }
+
+    @Test void managerListsAndDecidesOnlyRequestsScopedByCurrentTeamQuery() {
+        var request=new WorkAdjustmentRequest(employee,userId,UUID.randomUUID(),WorkEventType.EXIT,
+                now.minusSeconds(60),"Saída esquecida no fim do expediente.",now.minusSeconds(30));
+        when(requests.findCurrentTeamPending(eq(employee.getId()),eq(LocalDate.of(2026,10,20)),
+                eq(AdjustmentStatus.PENDING),any())).thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(request)));
+        when(requests.lockCurrentTeamRequest(request.getId(),employee.getId(),LocalDate.of(2026,10,20)))
+                .thenReturn(Optional.of(request));
+
+        var page=service.teamPending(0,20);
+        var result=service.decideTeam(request.getId(),AdjustmentStatus.REJECTED,"Revisado pela gestão.");
+
+        assertEquals(1,page.totalElements());
+        assertEquals(AdjustmentStatus.REJECTED,result.status());
+        verify(requests,never()).lockById(request.getId());
+        verify(audits).save(any(AuditEntry.class));
+    }
+
+    @Test void managerCannotDecideARequestOutsideCurrentTeam() {
+        var id=UUID.randomUUID();
+        when(requests.lockCurrentTeamRequest(id,employee.getId(),LocalDate.of(2026,10,20))).thenReturn(Optional.empty());
+
+        assertThrows(AdjustmentNotVisible.class,
+                () -> service.decideTeam(id,AdjustmentStatus.APPROVED,null));
+        verifyNoInteractions(audits);
     }
 
     @Test void createsOwnedPendingRequestAndAuditWithoutChangingOriginalSession() {

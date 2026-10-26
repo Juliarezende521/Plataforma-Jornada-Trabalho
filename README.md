@@ -18,11 +18,12 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Exceções de escala por data para feriados, folgas, treinamentos e jornadas especiais.
 - Contrato versionado por colaborador, com país, tipo e carga semanal.
 - Visão de RH com panorama dos colaboradores e consulta individual.
-- Solicitação de marcação esquecida e decisão auditável pelo RH.
+- Solicitação de marcação esquecida e decisão auditável pelo RH ou gestor direto.
 - Consulta paginada da trilha de auditoria pelo RH.
 - Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.
 - Fechamento mensal auditável com fotografia de horas previstas, trabalhadas, saldo e tolerância.
 - Equipes versionadas por vigência, com consulta de jornadas limitada aos subordinados diretos do gestor.
+- Aprovação ou rejeição de ajustes pelo gestor, limitada à equipe direta e registrada na auditoria.
 - Correções aprovadas podem pausar, retomar ou encerrar uma jornada aberta de forma auditável.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.

@@ -20,6 +20,7 @@ Este documento registra as decisões tomadas para preencher os pontos que o desa
 
 - Consulta a lista de colaboradores diretamente vinculados a ele na data atual.
 - Consulta histórico, detalhe e resumo apenas dessas pessoas.
+- Analisa solicitações de ajuste pendentes apenas dessas pessoas.
 - Não registra marcações nem altera contratos, escalas ou fechamentos da equipe.
 
 O cadastro público e a administração de contas não fazem parte desta versão.
@@ -40,7 +41,7 @@ O cadastro público e a administração de contas não fazem parte desta versão
 | Modalidade | Guarda escritório, remoto ou viagem em cada marcação |
 | RH | Apresenta visão geral e consulta individual com permissão específica |
 | Recuperação | Reconcilia uma tentativa após timeout ou recarregamento sem duplicar o evento |
-| Ajustes | Colaborador solicita uma marcação esquecida; RH aprova ou rejeita com trilha de auditoria |
+| Ajustes | Colaborador solicita uma marcação esquecida; RH ou gestor direto aprova ou rejeita com trilha de auditoria |
 | Linha efetiva | Detalhe combina originais e ajustes aprovados e recalcula a duração sem alterar a origem |
 | Escala | RH configura minutos planejados por dia da semana e início de vigência para cada colaborador |
 | Comparativo | Resumo confronta tempo efetivo e planejado quando a escala cobre todo o período consultado |
@@ -62,7 +63,7 @@ O cadastro público e a administração de contas não fazem parte desta versão
 - Jornada aberta tem duração provisória e não deve ser tratada como total fechado.
 - Eventos já confirmados não são editados ou apagados.
 - Solicitações de ajuste não reescrevem os eventos originais.
-- Apenas o dono da jornada solicita um ajuste e somente o RH decide.
+- Apenas o dono da jornada solicita um ajuste; RH ou gestor direto vigente decide.
 - Uma decisão é terminal; novas alterações exigem uma nova solicitação.
 - Quando uma correção aprovada muda o estado atual de uma jornada aberta, ela é materializada como novo evento corretivo na mesma transação.
 - Pausa, retorno ou saída corretivos só podem ocorrer a partir do último evento persistido e precisam manter uma sequência válida.
@@ -101,7 +102,6 @@ O cadastro público e a administração de contas não fazem parte desta versão
 ## Fora desta versão
 
 - Cálculo legal de horas extras e banco de horas; a diferença e a tolerância operacional são apenas informativas e ainda não aplicam regras legais por país.
-- Aprovação de ajustes por gestor; nesta etapa, a decisão é exclusiva do RH.
 - Integração com folha de pagamento.
 - Cadastro, recuperação de senha e gestão de usuários.
 - Single sign-on corporativo.

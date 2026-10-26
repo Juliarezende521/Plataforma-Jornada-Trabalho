@@ -4,10 +4,11 @@ import { Subscription, timeout } from 'rxjs';
 import { AuthService, Identity } from '../auth/auth.service';
 import { HistoryComponent } from '../history/history.component';
 import { EmployeePage, EmployeeSummary } from '../history/history.types';
+import { AdjustmentReviewComponent } from '../adjustment/adjustment-review.component';
 
 @Component({
   selector: 'app-manager-dashboard',
-  imports: [HistoryComponent],
+  imports: [HistoryComponent, AdjustmentReviewComponent],
   templateUrl: './manager-dashboard.component.html',
   styleUrl: './manager-dashboard.component.scss',
 })
@@ -15,6 +16,7 @@ export class ManagerDashboardComponent {
   readonly user = input.required<Identity>();
   readonly team = signal<EmployeePage | null>(null);
   readonly selected = signal<EmployeeSummary | null>(null);
+  readonly view = signal<'team'|'adjustments'>('team');
   readonly busy = signal(false);
   readonly message = signal('');
   private readonly http = inject(HttpClient);
@@ -30,6 +32,8 @@ export class ManagerDashboardComponent {
   }
 
   focusHeading(): void { this.heading()?.nativeElement.focus(); }
+
+  show(view: 'team'|'adjustments'): void { this.selected.set(null); this.view.set(view); }
 
   load(page: number): void {
     if (this.busy() || page < 0) return;

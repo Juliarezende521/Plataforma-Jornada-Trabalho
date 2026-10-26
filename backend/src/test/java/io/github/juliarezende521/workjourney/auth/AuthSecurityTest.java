@@ -124,6 +124,19 @@ class AuthSecurityTest {
                         .user(new AccountPrincipal(manager, encoder.encode("unused-password"), true)))
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isForbidden());
+        var decisionPath="/api/manager/work-adjustments/00000000-0000-0000-0000-000000000001/decision";
+        mvc.perform(post(decisionPath)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                        .user(new AccountPrincipal(employee, encoder.encode("unused-password"), true)))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(decisionPath)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                        .user(new AccountPrincipal(manager, encoder.encode("unused-password"), true)))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

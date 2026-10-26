@@ -1,4 +1,10 @@
-@if (selected(); as person) {
+<nav class="manager-navigation" aria-label="Navegação da equipe">
+  <button type="button" (click)="show('team')" [class.secondary]="view() !== 'team'" [attr.aria-current]="view() === 'team' ? 'page' : null">Colaboradores</button>
+  <button type="button" (click)="show('adjustments')" [class.secondary]="view() !== 'adjustments'" [attr.aria-current]="view() === 'adjustments' ? 'page' : null">Ajustes pendentes</button>
+</nav>
+@if (view() === 'adjustments') {
+  <app-adjustment-review access="manager" />
+} @else if (selected(); as person) {
   <button class="secondary" type="button" (click)="back()">Voltar à equipe</button>
   <app-history [user]="user()" [targetEmployee]="person" targetAccess="manager" />
 } @else {

@@ -8,6 +8,7 @@ import io.github.juliarezende521.workjourney.journey.WorkState;
 import io.github.juliarezende521.workjourney.journey.marking.CurrentEmployeeIdentity;
 import io.github.juliarezende521.workjourney.journey.persistence.JpaWorkSessionStore;
 import io.github.juliarezende521.workjourney.time.UtcInstants;
+import io.github.juliarezende521.workjourney.team.ManagerAuthorization;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,6 +26,7 @@ public class WorkAdjustmentService {
     private static final int MAX_PAGE_SIZE = 50;
     private final CurrentEmployeeIdentity identity;
     private final HrAuthorization hrAuthorization;
+    private final ManagerAuthorization managerAuthorization;
     private final MonthlyClosureGuard closureGuard;
     private final EmployeeRepository employees;
     private final JpaWorkSessionStore sessions;
@@ -34,10 +36,12 @@ public class WorkAdjustmentService {
     private final Clock clock;
 
     public WorkAdjustmentService(CurrentEmployeeIdentity identity, HrAuthorization hrAuthorization,
+                                 ManagerAuthorization managerAuthorization,
                                  MonthlyClosureGuard closureGuard, EmployeeRepository employees,
                                  JpaWorkSessionStore sessions, WorkAdjustmentRepository requests,
                                  AuditEntryRepository audits, EffectiveTimelineService timelines, Clock clock) {
-        this.identity=identity; this.hrAuthorization=hrAuthorization; this.closureGuard=closureGuard;
+        this.identity=identity; this.hrAuthorization=hrAuthorization; this.managerAuthorization=managerAuthorization;
+        this.closureGuard=closureGuard;
         this.employees=employees; this.sessions=sessions;
         this.requests=requests; this.audits=audits; this.timelines=timelines; this.clock=clock;
     }
@@ -83,12 +87,33 @@ public class WorkAdjustmentService {
         return new Page(result.getContent().stream().map(View::from).toList(), page, size, result.getTotalElements());
     }
 
+    @Transactional(readOnly = true)
+    public Page teamPending(int page, int size) {
+        validatePage(page,size);
+        var context=managerAuthorization.requireManager();
+        var result=requests.findCurrentTeamPending(context.actor().employeeId(), context.referenceDate(),
+                AdjustmentStatus.PENDING, PageRequest.of(page,size));
+        return new Page(result.getContent().stream().map(View::from).toList(), page, size, result.getTotalElements());
+    }
+
     @Transactional(timeout = 15)
     public View decide(UUID id, AdjustmentStatus decision, String note) {
         var actor=hrAuthorization.require();
+        var request=requests.lockById(id).orElseThrow(AdjustmentNotVisible::new);
+        return decideLocked(request, decision, note, actor.userId());
+    }
+
+    @Transactional(timeout = 15)
+    public View decideTeam(UUID id, AdjustmentStatus decision, String note) {
+        var context=managerAuthorization.requireManager();
+        var request=requests.lockCurrentTeamRequest(id, context.actor().employeeId(), context.referenceDate())
+                .orElseThrow(AdjustmentNotVisible::new);
+        return decideLocked(request, decision, note, context.actor().userId());
+    }
+
+    private View decideLocked(WorkAdjustmentRequest request, AdjustmentStatus decision, String note, UUID actorUserId) {
         String validNote=text(note, 0, 500, false);
         Instant now=now();
-        var request=requests.lockById(id).orElseThrow(AdjustmentNotVisible::new);
         var employee=employees.lockActive(request.getEmployee().getId())
                 .orElseThrow(() -> new AccessDeniedException("Employee access denied"));
         if (decision==AdjustmentStatus.APPROVED) {
@@ -106,8 +131,8 @@ public class WorkAdjustmentService {
                 request.markApplied(corrected.getEvents().get(corrected.getEvents().size()-1).id());
             }
         }
-        request.decide(decision, actor.userId(), now, validNote);
-        audits.save(new AuditEntry(actor.userId(), decision==AdjustmentStatus.APPROVED
+        request.decide(decision, actorUserId, now, validNote);
+        audits.save(new AuditEntry(actorUserId, decision==AdjustmentStatus.APPROVED
                 ? "ADJUSTMENT_APPROVED" : "ADJUSTMENT_REJECTED", request.getId(), now, validNote));
         return View.from(request);
     }

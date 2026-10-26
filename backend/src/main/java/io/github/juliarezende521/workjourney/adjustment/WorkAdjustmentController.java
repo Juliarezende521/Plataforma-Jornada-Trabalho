@@ -39,4 +39,16 @@ public class WorkAdjustmentController {
         var command=reader.decision(request);
         return service.decide(id,command.decision(),command.note());
     }
+
+    @GetMapping("/api/manager/work-adjustments")
+    public WorkAdjustmentService.Page teamPending(@RequestParam(defaultValue="0") int page,
+                                                  @RequestParam(defaultValue="20") int size) {
+        return service.teamPending(page,size);
+    }
+
+    @PostMapping(value="/api/manager/work-adjustments/{id}/decision",consumes="application/json")
+    public WorkAdjustmentService.View decideTeam(@PathVariable UUID id,HttpServletRequest request) throws IOException {
+        var command=reader.decision(request);
+        return service.decideTeam(id,command.decision(),command.note());
+    }
 }

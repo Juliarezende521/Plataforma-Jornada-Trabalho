@@ -123,8 +123,10 @@ O vínculo de gestor recebe `managerEmployeeId` e `effectiveFrom`. Uma nova vig�
 | GET | `/api/manager/employees/{employeeId}/work-sessions` | Histórico de um subordinado direto |
 | GET | `/api/manager/employees/{employeeId}/work-sessions/summary` | Resumo do período do subordinado |
 | GET | `/api/manager/employees/{employeeId}/work-sessions/{id}` | Detalhe de uma jornada do subordinado |
+| GET | `/api/manager/work-adjustments` | Lista solicitações pendentes dos subordinados diretos |
+| POST | `/api/manager/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação da equipe |
 
-O papel é concedido quando a conta possui ao menos um vínculo vigente. A API não confia apenas nesse papel: cada consulta verifica novamente se o colaborador solicitado pertence diretamente à equipe atual. O acesso do gestor é somente de leitura e não inclui contrato, escala, fechamento ou decisões do RH.
+O papel é concedido quando a conta possui ao menos um vínculo vigente. A API não confia apenas nesse papel: cada consulta e decisão verifica novamente se o colaborador solicitado pertence diretamente à equipe atual. O gestor pode decidir ajustes da própria equipe, mas não altera contrato, escala ou fechamento e não acessa a fila global do RH. A decisão usa a mesma validação transacional do RH e registra o usuário responsável na auditoria.
 
 ## Erros
 

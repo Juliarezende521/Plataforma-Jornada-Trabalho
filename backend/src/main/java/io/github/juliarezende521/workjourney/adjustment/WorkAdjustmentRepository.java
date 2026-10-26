@@ -25,9 +25,35 @@ public interface WorkAdjustmentRepository extends JpaRepository<WorkAdjustmentRe
     @EntityGraph(attributePaths = "employee")
     Page<WorkAdjustmentRequest> findByStatusOrderByRequestedAtUtcAscIdAsc(AdjustmentStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = "employee")
+    @Query("""
+            SELECT request FROM WorkAdjustmentRequest request, TeamAssignment assignment
+            WHERE request.employee.id = assignment.employee.id
+              AND request.status = :status AND assignment.manager.id = :manager
+              AND assignment.effectiveFrom = (
+                SELECT MAX(current.effectiveFrom) FROM TeamAssignment current
+                WHERE current.employee.id = request.employee.id AND current.effectiveFrom <= :on)
+            ORDER BY request.requestedAtUtc ASC, request.id ASC
+            """)
+    Page<WorkAdjustmentRequest> findCurrentTeamPending(@Param("manager") UUID managerEmployeeId,
+            @Param("on") java.time.LocalDate on, @Param("status") AdjustmentStatus status, Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT request FROM WorkAdjustmentRequest request JOIN FETCH request.employee WHERE request.id=:id")
     Optional<WorkAdjustmentRequest> lockById(@Param("id") UUID id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT request FROM WorkAdjustmentRequest request JOIN FETCH request.employee,
+                 TeamAssignment assignment
+            WHERE request.id = :id AND request.employee.id = assignment.employee.id
+              AND assignment.manager.id = :manager
+              AND assignment.effectiveFrom = (
+                SELECT MAX(current.effectiveFrom) FROM TeamAssignment current
+                WHERE current.employee.id = request.employee.id AND current.effectiveFrom <= :on)
+            """)
+    Optional<WorkAdjustmentRequest> lockCurrentTeamRequest(@Param("id") UUID id,
+            @Param("manager") UUID managerEmployeeId, @Param("on") java.time.LocalDate on);
 
     List<WorkAdjustmentRequest> findByWorkSessionIdAndStatusAndAppliedEventIdIsNullOrderByProposedOccurredAtUtcAscIdAsc(
             UUID workSessionId, AdjustmentStatus status);
