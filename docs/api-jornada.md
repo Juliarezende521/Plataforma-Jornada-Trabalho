@@ -105,6 +105,7 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | POST | `/api/hr/employees/{employeeId}/manager-assignments` | Cria um vínculo de gestor com vigência e auditoria |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/report` | Exporta o resumo individual do período em CSV UTF-8 |
+| GET | `/api/hr/monthly-closures/report?competence=YYYY-MM` | Exporta os fechamentos concluídos da competência em CSV UTF-8 |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
 
@@ -115,6 +116,8 @@ Os resumos retornam `totalWorkDuration`, `plannedWorkDuration`, `scheduledDays`,
 O fechamento mensal grava uma fotografia imutável do resumo. Ele exige mês já encerrado no fuso do colaborador, cobertura integral da escala, ausência de jornadas abertas e de ajustes pendentes. Depois do fechamento, solicitações de ajuste e alterações retroativas de escala que afetariam a competência são recusadas. A operação exige CSRF, permissão atual do RH e gera auditoria.
 
 A exportação recebe `from` e `to` com o mesmo limite inclusivo de 366 dias do resumo. O arquivo usa separador `;`, codificação UTF-8 com BOM e cabeçalhos fixos. Campos iniciados por caracteres interpretáveis como fórmula são neutralizados antes da serialização. A resposta usa `Cache-Control: no-store`, e o nome do arquivo contém somente o período, sem nome, email ou identificador do colaborador. O relatório é operacional e não representa cálculo legal de folha, horas extras ou banco de horas.
+
+O relatório consolidado recebe uma competência e lê somente as fotografias mensais já fechadas, inclusive quando a conta do colaborador foi desativada posteriormente. A consulta usa projeção escalar única, ordena os resultados de forma estável e limita a exportação a 10.000 linhas; competências ainda não fechadas não são recalculadas nem incluídas.
 
 O vínculo de gestor recebe `managerEmployeeId` e `effectiveFrom`. Uma nova vigência não altera versões anteriores. Autoatribuição, versão duplicada e ciclos na hierarquia são rejeitados.
 

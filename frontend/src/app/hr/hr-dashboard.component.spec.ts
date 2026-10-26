@@ -69,4 +69,28 @@ describe('HR overview and separate individual consultation', () => {
     expect(fixture.nativeElement.querySelector('app-audit-log')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.overview')).toBeNull();
   });
+  it('downloads the consolidated report for a validated competence', () => {
+    loaded();
+    const create = vi.fn(() => 'blob:closures'); const revoke = vi.fn();
+    vi.stubGlobal('URL', { ...URL, createObjectURL: create, revokeObjectURL: revoke });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    try {
+      fixture.componentInstance.reportCompetence.set('2026-09');
+      fixture.componentInstance.downloadConsolidatedReport();
+      const request = http.expectOne('/api/hr/monthly-closures/report?competence=2026-09');
+      expect(request.request.responseType).toBe('blob');
+      request.flush(new Blob(['relatório'], { type: 'text/csv' }));
+      expect(create).toHaveBeenCalled(); expect(click).toHaveBeenCalled();
+      expect(revoke).toHaveBeenCalledWith('blob:closures');
+      expect(fixture.componentInstance.message()).toContain('baixado');
+    } finally {
+      click.mockRestore(); vi.unstubAllGlobals();
+    }
+  });
+  it('does not request a consolidated report with an invalid competence', () => {
+    loaded(); fixture.componentInstance.reportCompetence.set('2026-13');
+    fixture.componentInstance.downloadConsolidatedReport();
+    http.expectNone('/api/hr/monthly-closures/report');
+    expect(fixture.componentInstance.message()).toContain('válida');
+  });
 });

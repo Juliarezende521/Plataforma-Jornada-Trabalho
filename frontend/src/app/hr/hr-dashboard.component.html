@@ -21,7 +21,18 @@
     <h2 id="hr-overview-heading" #heading tabindex="-1">Visão do RH</h2>
     <p>Estados das jornadas por colaborador. Consulta somente de leitura.</p>
     <p>Jornadas abertas de dias anteriores continuam em destaque. Encerrada indica a última jornada da data atual no fuso de referência.</p>
-    <button class="secondary" type="button" (click)="load(page()?.page ?? 0)" [disabled]="busy()">Atualizar visão geral</button>
+    <div class="overview-actions">
+      <button class="secondary" type="button" (click)="load(page()?.page ?? 0)" [disabled]="busy()">Atualizar visão geral</button>
+      <div class="report-control">
+        <label for="consolidated-competence">Competência fechada</label>
+        <input id="consolidated-competence" type="month" [value]="reportCompetence()"
+          (input)="reportCompetence.set($any($event.target).value)" [disabled]="reportBusy()" />
+        <button class="secondary" type="button" (click)="downloadConsolidatedReport()" [disabled]="reportBusy()">
+          Baixar fechamentos CSV
+        </button>
+        <small>Inclui somente competências já fechadas, inclusive de colaboradores posteriormente desativados.</small>
+      </div>
+    </div>
     <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
     @if (page(); as result) {
       <p>Consultada em {{ observed(result.observedAtUtc) }}. Atualize para acompanhar novas marcações.</p>

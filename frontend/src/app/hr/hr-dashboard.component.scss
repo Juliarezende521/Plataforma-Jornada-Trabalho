@@ -1,5 +1,10 @@
 :host { display: block; min-width: 0; }
 .hr-navigation, .pages { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-6); }
+.overview-actions, .report-control { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
+.overview-actions { justify-content: space-between; }
+.report-control label { width: 100%; color: var(--color-muted); font-size: .875rem; font-weight: 700; }
+.report-control small { width: 100%; color: var(--color-muted); }
+.report-control input { min-height: 2.75rem; }
 .overview { padding: var(--space-4); margin-top: var(--space-6); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow-wrap: anywhere; }
 h2 { margin-top: 0; font-size: 2rem; } h3 { margin: 0; font-size: 1.1rem; }
 p, .pages span { color: var(--color-muted); font-size: .875rem; }
@@ -12,4 +17,4 @@ p, .pages span { color: var(--color-muted); font-size: .875rem; }
 .closed { color: var(--color-primary); background: var(--color-primary-soft); }
 .selected { font-size: 1.25rem; }
 @media (min-width: 700px) { .overview { padding: var(--space-8); } .people li { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; align-items: center; } }
-@media (max-width: 420px) { .hr-navigation button, .pages button, .people button { width: 100%; } }
+@media (max-width: 420px) { .hr-navigation button, .pages button, .people button, .overview-actions > button, .report-control, .report-control input, .report-control button { width: 100%; } }

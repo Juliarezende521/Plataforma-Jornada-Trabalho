@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
         io.github.juliarezende521.workjourney.adjustment.WorkAdjustmentController.class,
         io.github.juliarezende521.workjourney.adjustment.AuditController.class,
         io.github.juliarezende521.workjourney.closing.MonthlyClosureController.class,
+        io.github.juliarezende521.workjourney.closing.MonthlyClosureReportController.class,
         io.github.juliarezende521.workjourney.team.ManagerJourneyController.class,
         io.github.juliarezende521.workjourney.team.TeamAssignmentController.class,
         io.github.juliarezende521.workjourney.contract.EmploymentContractController.class,
@@ -65,6 +66,7 @@ public class JourneyExceptionHandler {
             case "INCOMPLETE_SCHEDULE" -> "Monthly period has incomplete schedule coverage";
             case "PENDING_ADJUSTMENTS" -> "Monthly period has pending adjustments";
             case "PERIOD_CLOSED" -> "Monthly period is closed";
+            case "REPORT_TOO_LARGE" -> "Monthly closure report is too large";
             default -> "Invalid monthly closure request";
         };
         return problem(error.status(), title);

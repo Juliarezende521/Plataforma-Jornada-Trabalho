@@ -20,6 +20,8 @@ export class HrDashboardComponent {
   readonly page = signal<OverviewPage | null>(null);
   readonly selected = signal<OverviewPerson | null>(null);
   readonly busy = signal(false);
+  readonly reportBusy = signal(false);
+  readonly reportCompetence = signal(previousMonth());
   readonly message = signal('');
   readonly labels = { WORKING: 'Trabalhando', PAUSED: 'Em pausa', CLOSED: 'Encerrada', NOT_STARTED: 'Sem jornada iniciada' };
   private readonly http = inject(HttpClient);
@@ -31,11 +33,13 @@ export class HrDashboardComponent {
   private readonly adjustments = viewChild(AdjustmentReviewComponent);
   private readonly audit = viewChild(AuditLogComponent);
   private request?: Subscription;
+  private reportRequest?: Subscription;
   readonly formatWorkDate = formatWorkDate;
   constructor() {
-    this.destroy.onDestroy(() => this.request?.unsubscribe());
+    this.destroy.onDestroy(() => { this.request?.unsubscribe(); this.reportRequest?.unsubscribe(); });
     effect(() => { const user = this.user(); untracked(() => {
-      this.request?.unsubscribe(); this.busy.set(false); this.page.set(null); this.selected.set(null); this.view.set('overview');
+      this.request?.unsubscribe(); this.reportRequest?.unsubscribe(); this.busy.set(false); this.reportBusy.set(false);
+      this.page.set(null); this.selected.set(null); this.view.set('overview');
       if (user.hrReader) this.load(0);
     }); });
   }
@@ -60,4 +64,36 @@ export class HrDashboardComponent {
     else this.heading()?.nativeElement.focus();
   }); }
   observed(instant: string): string { return formatInstant(instant, this.user().referenceTimeZoneId); }
+
+  downloadConsolidatedReport(): void {
+    const competence = this.reportCompetence();
+    if (this.reportBusy() || !/^\d{4}-(0[1-9]|1[0-2])$/.test(competence)) {
+      this.message.set('Informe uma competência válida.');
+      return;
+    }
+    this.reportBusy.set(true); this.message.set('Preparando relatório consolidado…');
+    this.reportRequest?.unsubscribe();
+    this.reportRequest = this.http.get('/api/hr/monthly-closures/report', {
+      params: { competence }, responseType: 'blob',
+    }).pipe(timeout(30000)).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob); const link = document.createElement('a');
+        link.href = url; link.download = `fechamentos-${competence}.csv`; link.click(); URL.revokeObjectURL(url);
+        this.reportBusy.set(false); this.message.set('Relatório consolidado baixado.');
+      },
+      error: (error: unknown) => {
+        this.reportBusy.set(false);
+        if (error instanceof HttpErrorResponse && error.status === 401) this.auth.invalidate();
+        this.message.set(error instanceof HttpErrorResponse && error.status === 403
+          ? 'Seu acesso de RH não está disponível. Verifique seu acesso.'
+          : 'Não foi possível gerar o relatório consolidado. Tente novamente.');
+      },
+    });
+  }
+}
+
+function previousMonth(): string {
+  const date = new Date();
+  date.setDate(1); date.setMonth(date.getMonth() - 1);
+  return `${date.getFullYear().toString().padStart(4, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
 }

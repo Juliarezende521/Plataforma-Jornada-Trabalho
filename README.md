@@ -25,6 +25,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Equipes versionadas por vigência, com consulta de jornadas limitada aos subordinados diretos do gestor.
 - Aprovação ou rejeição de ajustes pelo gestor, limitada à equipe direta e registrada na auditoria.
 - Exportação CSV do resumo individual pelo RH, com período limitado e proteção para abertura em planilhas.
+- Exportação consolidada dos fechamentos mensais do RH, baseada nas fotografias imutáveis da competência.
 - Correções aprovadas podem pausar, retomar ou encerrar uma jornada aberta de forma auditável.
 - Horários gravados em UTC, mantendo o fuso IANA informado pelo navegador.
 - Proteção contra requisições repetidas e concorrentes.
