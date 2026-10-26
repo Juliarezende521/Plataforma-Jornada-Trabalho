@@ -7,6 +7,7 @@
       <div><label for="history-from">Data inicial</label><input id="history-from" type="date" formControlName="from" aria-describedby="period-help period-error" [attr.aria-invalid]="!!fieldError()" /></div>
       <div><label for="history-to">Data final</label><input id="history-to" type="date" formControlName="to" aria-describedby="period-help period-error" [attr.aria-invalid]="!!fieldError()" /></div>
       <button type="submit" [disabled]="busy()">Consultar período</button>
+      @if (targetAccess() === 'hr' && targetEmployee()) { <button class="secondary" type="button" (click)="downloadReport()" [disabled]="busy()">Baixar relatório CSV</button> }
     </div>
     <p id="period-help">Inclui as duas datas. Limite de 366 dias.</p>
     <p id="period-error" class="error" role="alert">{{ fieldError() }}</p>

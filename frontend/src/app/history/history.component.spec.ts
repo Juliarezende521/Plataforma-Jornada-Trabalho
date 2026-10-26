@@ -108,4 +108,24 @@ describe('History and detail',()=>{
     expect(fixture.nativeElement.textContent).toContain('Não disponível');
     expect(fixture.nativeElement.textContent).toContain('10 de 31 dias');
   });
+  it('downloads the selected HR employee report with the validated period',()=>{
+    fixture.componentRef.setInput('targetEmployee',{id:'brasil',name:'Colaborador Brasil',referenceTimeZoneId:'America/Sao_Paulo'});fixture.detectChanges();
+    component().form.setValue({from:'2026-10-01',to:'2026-10-31'});
+    const originalCreate=URL.createObjectURL; const originalRevoke=URL.revokeObjectURL;
+    const create=vi.fn(()=>'blob:report'); const revoke=vi.fn();
+    const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
+    Object.defineProperty(URL,'createObjectURL',{value:create,configurable:true});
+    Object.defineProperty(URL,'revokeObjectURL',{value:revoke,configurable:true});
+    try {
+      component().downloadReport();
+      const request=http.expectOne('/api/hr/employees/brasil/work-sessions/report?from=2026-10-01&to=2026-10-31');
+      expect(request.request.responseType).toBe('blob'); request.flush(new Blob(['relatório'],{type:'text/csv'}));
+      expect(create).toHaveBeenCalled(); expect(revoke).toHaveBeenCalledWith('blob:report');
+      expect(component().message()).toContain('download');
+    } finally {
+      Object.defineProperty(URL,'createObjectURL',{value:originalCreate,configurable:true});
+      Object.defineProperty(URL,'revokeObjectURL',{value:originalRevoke,configurable:true});
+      click.mockRestore();
+    }
+  });
 });

@@ -50,6 +50,7 @@ O cadastro público e a administração de contas não fazem parte desta versão
 | Auditoria | RH consulta em ordem cronológica as ações sensíveis, seus responsáveis e recursos afetados |
 | Contrato | RH registra versões de país, tipo de vínculo e carga semanal por colaborador |
 | Equipes | RH registra vínculos de gestor com vigência; gestores consultam somente jornadas de subordinados diretos |
+| Relatório | RH exporta o resumo individual do período em CSV, usando os mesmos totais exibidos na consulta |
 
 ## Regras de jornada
 
@@ -90,6 +91,7 @@ O cadastro público e a administração de contas não fazem parte desta versão
 - Locks, versionamento e constraints do SQL Server protegem transições concorrentes.
 - Falha na transação não pode deixar evento, estado e recibo parcialmente gravados.
 - Consultas são limitadas a 366 dias e 100 itens por página.
+- Exportações CSV neutralizam células interpretáveis como fórmulas e não colocam dados pessoais no nome do arquivo.
 
 ## Requisitos de experiência
 

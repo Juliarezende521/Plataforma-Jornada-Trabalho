@@ -3,6 +3,7 @@ package io.github.juliarezende521.workjourney.journey.api;
 import io.github.juliarezende521.workjourney.journey.query.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Set;
+import org.springframework.http.*;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +52,16 @@ public class HrJourneyController {
     public JourneyQueries.Summary summary(@PathVariable String employeeId,HttpServletRequest request) {
         var filter=SummaryRequestFilter.read(request);
         return queries.summary(reader.uuid(employeeId),filter.from(),filter.to());
+    }
+
+    @GetMapping(value="/{employeeId}/work-sessions/report",produces="text/csv")
+    public ResponseEntity<byte[]> report(@PathVariable String employeeId,HttpServletRequest request) {
+        var filter=SummaryRequestFilter.read(request);
+        var report=queries.report(reader.uuid(employeeId),filter.from(),filter.to());
+        String filename="relatorio-jornada-"+filter.from()+"-a-"+filter.to()+".csv";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+filename+"\"")
+                .cacheControl(CacheControl.noStore()).body(JourneyReportCsv.write(report));
     }
 }

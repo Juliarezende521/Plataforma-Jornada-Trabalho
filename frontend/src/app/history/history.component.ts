@@ -57,12 +57,21 @@ export class HistoryComponent {
   consult(): void {
     if (this.busy()) return;
     const filter=this.form.getRawValue();
-    const day=(value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
-    const span=(Date.parse(filter.to)-Date.parse(filter.from))/86400000;
-    if (!day(filter.from) || !day(filter.to) || span<0 || span>365) {
+    if (!this.valid(filter)) {
       this.fieldError.set('Informe datas válidas, com o fim igual ou posterior ao início e no máximo 366 dias.'); return;
     }
     this.fieldError.set(''); this.applied.set(filter); this.load(0,true);
+  }
+  downloadReport(): void {
+    const employee=this.targetEmployee(); const filter=this.form.getRawValue();
+    if (!employee || this.targetAccess()!=='hr' || this.busy()) return;
+    if (!this.valid(filter)) { this.fieldError.set('Informe datas válidas, com o fim igual ou posterior ao início e no máximo 366 dias.'); return; }
+    this.fieldError.set(''); this.busy.set(true); this.message.set('Preparando relatório CSV…');
+    this.request=this.api.report(filter,employee.id).subscribe({next: blob => {
+      const url=URL.createObjectURL(blob); const link=document.createElement('a');
+      link.href=url; link.download=`relatorio-jornada-${filter.from}-a-${filter.to}.csv`; link.click(); URL.revokeObjectURL(url);
+      this.busy.set(false); this.message.set('Relatório CSV preparado para download.');
+    },error:error=>this.fail(error)});
   }
   load(page: number,refreshSummary=false): void {
     const filter=this.applied(); if (!filter || this.busy() || page<0) return;
@@ -86,5 +95,10 @@ export class HistoryComponent {
     const status=error instanceof HttpErrorResponse ? error.status : 0;
     if (status===401) { this.auth.invalidate(); return; }
     this.message.set(status===403 ? 'Seu acesso a estas jornadas não está disponível. Verifique seu acesso.' : status===404 ? 'Esta jornada não está disponível para sua conta. Volte ao histórico e consulte novamente.' : status===400 ? 'O período ou a página não é válido. Revise os filtros.' : 'Não foi possível concluir a consulta. Seus filtros foram preservados; tente consultar novamente.');
+  }
+  private valid(filter: HistoryFilter): boolean {
+    const day=(value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
+    const span=(Date.parse(filter.to)-Date.parse(filter.from))/86400000;
+    return day(filter.from)&&day(filter.to)&&span>=0&&span<=365;
   }
 }

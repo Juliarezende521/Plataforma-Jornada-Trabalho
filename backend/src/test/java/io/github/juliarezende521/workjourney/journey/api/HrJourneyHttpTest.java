@@ -4,7 +4,9 @@ import io.github.juliarezende521.workjourney.auth.AccountPrincipal;
 import io.github.juliarezende521.workjourney.config.SecurityConfiguration;
 import io.github.juliarezende521.workjourney.http.ProblemResponseWriter;
 import io.github.juliarezende521.workjourney.journey.query.HrJourneyQueries;
+import io.github.juliarezende521.workjourney.journey.query.JourneyQueries;
 import java.util.*;
+import java.time.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,7 +33,8 @@ class HrJourneyHttpTest {
         String root = "/api/hr/employees";
         mvc.perform(get(root)).andExpect(status().isUnauthorized());
         for (String path : List.of(root, root + "/overview", root + "/" + UUID.randomUUID() + "/work-sessions?from=2026-10-01&to=2026-10-14",
-                root + "/" + UUID.randomUUID() + "/work-sessions/" + UUID.randomUUID())) {
+                root + "/" + UUID.randomUUID() + "/work-sessions/" + UUID.randomUUID(),
+                root + "/" + UUID.randomUUID() + "/work-sessions/report?from=2026-10-01&to=2026-10-14")) {
             mvc.perform(get(path).with(user(principal(false)))).andExpect(status().isForbidden());
         }
         mvc.perform(post(root).with(user(principal(true))).with(csrf())).andExpect(status().isForbidden());
@@ -56,6 +59,23 @@ class HrJourneyHttpTest {
             mvc.perform(get("/api/hr/employees" + query).with(user(principal(true)))).andExpect(status().isBadRequest());
         }
         mvc.perform(get("/api/hr/employees/invalid/work-sessions?from=2026-10-01&to=2026-10-14")
+                .with(user(principal(true)))).andExpect(status().isBadRequest());
+    }
+
+    @Test void hrDownloadsBoundedCsvWithoutExposingAnIdentifierInTheFilename() throws Exception {
+        var employeeId=UUID.randomUUID();
+        var from=LocalDate.parse("2026-10-01"); var to=LocalDate.parse("2026-10-31");
+        var summary=new JourneyQueries.Summary(from,to,"PT8H","PT8H",0L,1800L,true,31,31,1,1,0,0,1,Instant.EPOCH);
+        when(queries.report(employeeId,from,to)).thenReturn(new HrJourneyQueries.Report(
+                new HrJourneyQueries.Person(employeeId,"=Nome perigoso","America/Sao_Paulo"),summary));
+
+        mvc.perform(get("/api/hr/employees/{id}/work-sessions/report?from=2026-10-01&to=2026-10-31",employeeId)
+                .with(user(principal(true))))
+                .andExpect(status().isOk()).andExpect(content().contentType("text/csv;charset=UTF-8"))
+                .andExpect(header().string("Cache-Control","no-store"))
+                .andExpect(header().string("Content-Disposition","attachment; filename=\"relatorio-jornada-2026-10-01-a-2026-10-31.csv\""))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("'=Nome perigoso")));
+        mvc.perform(get("/api/hr/employees/{id}/work-sessions/report?from=2026-01-01&to=2027-01-02",employeeId)
                 .with(user(principal(true)))).andExpect(status().isBadRequest());
     }
 }

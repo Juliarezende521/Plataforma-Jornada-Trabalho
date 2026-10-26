@@ -91,6 +91,17 @@ public class HrJourneyQueries {
         return JourneyQueries.summarize(store,timelines,schedules,employeeId,from,to,UtcInstants.normalize(clock.instant()));
     }
 
+    @Transactional
+    public Report report(UUID employeeId,LocalDate from,LocalDate to) {
+        hrAuthorization.require();
+        JourneyQueries.validateSummary(from,to);
+        var employee=employees.lockActive(employeeId).orElseThrow(JourneyQueries.NotVisible::new);
+        var summary=JourneyQueries.summarize(store,timelines,schedules,employeeId,from,to,
+                UtcInstants.normalize(clock.instant()));
+        return new Report(new Person(employee.getId(),employee.getName(),employee.getReferenceTimeZoneId()),summary);
+    }
+
     public record Person(UUID id, String name, String referenceTimeZoneId) { }
     public record Directory(List<Person> items, int page, int size, long totalElements) { }
+    public record Report(Person employee, JourneyQueries.Summary summary) { }
 }

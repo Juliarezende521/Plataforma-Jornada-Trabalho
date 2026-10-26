@@ -101,6 +101,7 @@ SQL Server Developer é destinado a desenvolvimento/teste. Verificar arquitetura
 | GET /api/manager/team | Página | Subordinados diretos vigentes do gestor autenticado |
 | GET /api/manager/employees/{id}/work-sessions | Período/página | Histórico de um subordinado direto, com revalidação do vínculo |
 | GET/POST /api/manager/work-adjustments | Página ou decisão | Fila e decisão de ajustes limitadas à equipe direta vigente |
+| GET /api/hr/employees/{id}/work-sessions/report | from/to | Resumo individual em CSV, com o mesmo cálculo em lotes da interface |
 | POST /api/hr/work-adjustments/{id}/decision | Aprovar/rejeitar e observação | Decisão terminal e auditada pela fila global do RH |
 
 Filtros `from` e `to` são datas de referência inclusivas, limitadas a 366 dias. A página inicial é 0; o tamanho padrão é 20 e o máximo é 100. A ordenação usa data e abertura decrescentes, com ID como desempate. Parâmetros inválidos retornam 400 e instantes usam ISO 8601 UTC.

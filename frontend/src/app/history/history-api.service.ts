@@ -12,6 +12,10 @@ export class HistoryApi {
     return this.http.get<PeriodSummary>(this.base(employeeId, access)+'/summary',{params:{from:filter.from,to:filter.to}}).pipe(timeout(15000));
   }
   detail(id: string, employeeId?: string, access: 'hr' | 'manager' = 'hr') { return this.http.get<JourneyDetail>(this.base(employeeId, access) + '/' + encodeURIComponent(id)).pipe(timeout(15000)); }
+  report(filter: HistoryFilter, employeeId: string) {
+    return this.http.get(`/api/hr/employees/${encodeURIComponent(employeeId)}/work-sessions/report`,
+      { params: { from: filter.from, to: filter.to }, responseType: 'blob' }).pipe(timeout(30000));
+  }
   private base(employeeId?: string, access: 'hr' | 'manager' = 'hr') {
     return employeeId ? `/api/${access}/employees/${encodeURIComponent(employeeId)}/work-sessions` : '/api/me/work-sessions';
   }
