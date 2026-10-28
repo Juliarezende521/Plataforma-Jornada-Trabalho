@@ -106,6 +106,9 @@ Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 | GET | `/api/hr/employees/{employeeId}/work-sessions/{id}` | Detalhe individual |
 | GET | `/api/hr/employees/{employeeId}/work-sessions/report` | Exporta o resumo individual do período em CSV UTF-8 |
 | GET | `/api/hr/monthly-closures/report?competence=YYYY-MM` | Exporta os fechamentos concluídos da competência em CSV UTF-8 |
+| GET | `/api/hr/work-policies/current?countryCode=BR&on=YYYY-MM-DD` | Consulta a política vigente do país |
+| GET | `/api/hr/work-policies?countryCode=BR` | Lista versões da política do país |
+| POST | `/api/hr/work-policies` | Cria uma versão imutável e auditável da política operacional |
 | GET | `/api/hr/work-adjustments` | Fila paginada de solicitações pendentes |
 | POST | `/api/hr/work-adjustments/{id}/decision` | Aprova ou rejeita uma solicitação |
 

@@ -13,4 +13,5 @@ GRANT SELECT, INSERT ON dbo.work_schedule_exception TO work_journey_app;
 GRANT SELECT, INSERT ON dbo.employment_contract TO work_journey_app;
 GRANT SELECT, INSERT ON dbo.monthly_closure TO work_journey_app;
 GRANT SELECT, INSERT ON dbo.team_assignment TO work_journey_app;
+GRANT SELECT, INSERT ON dbo.country_work_policy TO work_journey_app;
 GO

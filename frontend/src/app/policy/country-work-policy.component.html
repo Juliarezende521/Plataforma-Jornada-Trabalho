@@ -1,0 +1,34 @@
+<section class="policy" aria-labelledby="policy-heading" [attr.aria-busy]="busy()">
+  <h2 id="policy-heading" #heading tabindex="-1">Políticas de jornada por país</h2>
+  <p>Parâmetros internos e versionados para apoiar apurações futuras. Eles não substituem validação jurídica.</p>
+  <p role="status" aria-live="polite">{{ message() }}</p>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <label for="policy-country">País</label>
+    <select id="policy-country" formControlName="countryCode">
+      <option value="BR">Brasil</option><option value="PT">Portugal</option><option value="ES">Espanha</option>
+      <option value="FR">França</option><option value="DE">Alemanha</option><option value="NL">Países Baixos</option>
+    </select>
+    <label for="policy-from">Início da vigência</label><input id="policy-from" type="date" formControlName="effectiveFrom" required />
+    <label for="policy-weekly">Carga semanal de referência em minutos</label><input id="policy-weekly" type="number" min="1" max="10080" formControlName="standardWeeklyMinutes" required />
+    <label for="policy-daily">Limite diário de referência em minutos</label><input id="policy-daily" type="number" min="1" max="1440" formControlName="maximumDailyMinutes" required />
+    <label for="policy-break">Intervalo mínimo de referência em minutos</label><input id="policy-break" type="number" min="0" max="1440" formControlName="minimumBreakMinutes" required />
+    <label for="policy-tolerance">Tolerância operacional em minutos</label><input id="policy-tolerance" type="number" min="0" max="1440" formControlName="overtimeToleranceMinutes" required />
+    <div class="actions">
+      <button type="submit" [disabled]="busy()">Cadastrar nova versão</button>
+      <button class="secondary" type="button" (click)="loadCurrent()" [disabled]="busy()">Consultar vigente</button>
+      <button class="secondary" type="button" (click)="loadHistory()" [disabled]="busy()">Consultar histórico</button>
+    </div>
+  </form>
+  @if (current(); as item) {
+    <article><h3>{{ country(item.countryCode) }} · vigente desde {{ formatWorkDate(item.effectiveFrom) }}</h3>
+      <dl><div><dt>Carga semanal</dt><dd>{{ hours(item.standardWeeklyMinutes) }}</dd></div>
+        <div><dt>Limite diário</dt><dd>{{ hours(item.maximumDailyMinutes) }}</dd></div>
+        <div><dt>Intervalo mínimo</dt><dd>{{ item.minimumBreakMinutes }} min</dd></div>
+        <div><dt>Tolerância</dt><dd>{{ item.overtimeToleranceMinutes }} min</dd></div></dl>
+    </article>
+  }
+  @if (history(); as page) {
+    <ul>@for (item of page.items; track item.id) { <li><strong>{{ formatWorkDate(item.effectiveFrom) }}</strong><span>{{ hours(item.standardWeeklyMinutes) }} semanais · {{ hours(item.maximumDailyMinutes) }} diárias</span></li> }</ul>
+    <nav aria-label="Páginas das políticas"><button class="secondary" type="button" (click)="loadHistory(page.page - 1)" [disabled]="busy() || page.page === 0">Anterior</button><span>Página {{ page.page + 1 }}</span><button class="secondary" type="button" (click)="loadHistory(page.page + 1)" [disabled]="busy() || (page.page + 1) * page.size >= page.totalElements">Próxima</button></nav>
+  }
+</section>

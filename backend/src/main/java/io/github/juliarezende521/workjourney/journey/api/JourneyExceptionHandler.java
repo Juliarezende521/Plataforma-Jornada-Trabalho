@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
         io.github.juliarezende521.workjourney.team.ManagerJourneyController.class,
         io.github.juliarezende521.workjourney.team.TeamAssignmentController.class,
         io.github.juliarezende521.workjourney.contract.EmploymentContractController.class,
+        io.github.juliarezende521.workjourney.policy.CountryWorkPolicyController.class,
         io.github.juliarezende521.workjourney.schedule.WorkScheduleController.class})
 public class JourneyExceptionHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JourneyExceptionHandler.class);
@@ -55,6 +56,13 @@ public class JourneyExceptionHandler {
     @ExceptionHandler(io.github.juliarezende521.workjourney.contract.InvalidContract.class)
     ResponseEntity<Problem> invalidContract(io.github.juliarezende521.workjourney.contract.InvalidContract error) {
         return problem(error.status(),error.status()==413?"Request body too large":error.status()==409?"Contract already exists for effective date":"Invalid employment contract");
+    }
+
+    @ExceptionHandler(io.github.juliarezende521.workjourney.policy.InvalidCountryWorkPolicy.class)
+    ResponseEntity<Problem> invalidPolicy(io.github.juliarezende521.workjourney.policy.InvalidCountryWorkPolicy error) {
+        return problem(error.status(), error.status() == 413 ? "Request body too large"
+                : error.status() == 409 ? "Country work policy already exists for effective date"
+                : "Invalid country work policy");
     }
 
     @ExceptionHandler(io.github.juliarezende521.workjourney.closing.InvalidMonthlyClosure.class)

@@ -3,8 +3,11 @@
   <button type="button" (click)="show('individual')" [class.secondary]="view() === 'overview'" [attr.aria-current]="view() === 'individual' ? 'page' : null">Consulta individual</button>
   <button type="button" (click)="show('adjustments')" [class.secondary]="view() !== 'adjustments'" [attr.aria-current]="view() === 'adjustments' ? 'page' : null">Ajustes pendentes</button>
   <button type="button" (click)="show('audit')" [class.secondary]="view() !== 'audit'" [attr.aria-current]="view() === 'audit' ? 'page' : null">Auditoria</button>
+  <button type="button" (click)="show('policies')" [class.secondary]="view() !== 'policies'" [attr.aria-current]="view() === 'policies' ? 'page' : null">Políticas por país</button>
 </nav>
-@if (view() === 'audit') {
+@if (view() === 'policies') {
+  <app-country-work-policy />
+} @else if (view() === 'audit') {
   <app-audit-log [timeZone]="user().referenceTimeZoneId" />
 } @else if (view() === 'adjustments') {
   <app-adjustment-review />

@@ -187,6 +187,32 @@ class JourneySchemaSqlServerIT {
     }
 
     @Test
+    void countryPoliciesRejectDuplicateVersionsAndInvalidLimits() throws Exception {
+        try (var connection = transaction()) {
+            var owner = owner(connection);
+            execute(connection, """
+                    INSERT INTO dbo.country_work_policy
+                    (id, country_code, effective_from, standard_weekly_minutes, maximum_daily_minutes,
+                     minimum_break_minutes, overtime_tolerance_minutes, created_by_user_id, created_at_utc)
+                    VALUES (?, 'BR', '2026-01-01', 2400, 600, 60, 10, ?, ?)
+                    """, UUID.randomUUID(), owner.userId(), NOW);
+            assertSqlError(2627, () -> execute(connection, """
+                    INSERT INTO dbo.country_work_policy
+                    (id, country_code, effective_from, standard_weekly_minutes, maximum_daily_minutes,
+                     minimum_break_minutes, overtime_tolerance_minutes, created_by_user_id, created_at_utc)
+                    VALUES (?, 'BR', '2026-01-01', 2400, 600, 60, 10, ?, ?)
+                    """, UUID.randomUUID(), owner.userId(), NOW));
+            assertSqlError(547, () -> execute(connection, """
+                    INSERT INTO dbo.country_work_policy
+                    (id, country_code, effective_from, standard_weekly_minutes, maximum_daily_minutes,
+                     minimum_break_minutes, overtime_tolerance_minutes, created_by_user_id, created_at_utc)
+                    VALUES (?, 'PT', '2026-01-01', 2400, 1441, 60, 10, ?, ?)
+                    """, UUID.randomUUID(), owner.userId(), NOW));
+            connection.rollback();
+        }
+    }
+
+    @Test
     void rollbackRemovesEventAndRestoresSessionStateAndVersion() throws Exception {
         try (var connection = transaction()) {
             var owner = owner(connection);

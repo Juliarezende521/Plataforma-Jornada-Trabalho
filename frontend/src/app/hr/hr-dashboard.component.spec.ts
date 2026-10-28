@@ -69,6 +69,11 @@ describe('HR overview and separate individual consultation', () => {
     expect(fixture.nativeElement.querySelector('app-audit-log')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.overview')).toBeNull();
   });
+  it('opens country policies only when requested', () => {
+    loaded(); fixture.componentInstance.show('policies'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-country-work-policy')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.overview')).toBeNull();
+  });
   it('downloads the consolidated report for a validated competence', () => {
     loaded();
     const create = vi.fn(() => 'blob:closures'); const revoke = vi.fn();

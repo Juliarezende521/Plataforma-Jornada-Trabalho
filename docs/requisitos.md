@@ -52,6 +52,7 @@ O cadastro público e a administração de contas não fazem parte desta versão
 | Equipes | RH registra vínculos de gestor com vigência; gestores consultam somente jornadas de subordinados diretos |
 | Relatório | RH exporta o resumo individual do período em CSV, usando os mesmos totais exibidos na consulta |
 | Relatório consolidado | RH exporta em CSV os fechamentos concluídos de uma competência, sem recalcular resultados históricos |
+| Políticas por país | RH registra parâmetros operacionais versionados e auditáveis, sem apresentá-los como interpretação jurídica |
 
 ## Regras de jornada
 

@@ -51,8 +51,9 @@ erDiagram
 | audit_entry | id UUID, actor_user_id, action, entity_id, recorded_at_utc, details | Registro append-only das solicitações e decisões |
 | work_schedule | id UUID, employee_id, effective_from, minutos por dia, autoria e criação | Uma versão por colaborador/data; registros imutáveis |
 | team_assignment | id UUID, employee_id, manager_employee_id, effective_from, autoria e criação | Uma versão por colaborador/data; sem autoatribuição; registros imutáveis |
+| country_work_policy | id UUID, país, vigência, referências semanal/diária, intervalo, tolerância, autoria e criação | Uma versão por país/data; parâmetros internos imutáveis |
 
-As migrations V1–V14 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas e exceções versionadas, auditoria, contratos, fechamentos mensais e vínculos de equipe versionados.
+As migrations V1–V15 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas e exceções versionadas, auditoria, contratos, fechamentos mensais, vínculos de equipe e políticas operacionais por país versionadas.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 
