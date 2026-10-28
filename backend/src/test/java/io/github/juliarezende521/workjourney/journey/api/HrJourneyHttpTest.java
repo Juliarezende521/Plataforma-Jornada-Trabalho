@@ -42,7 +42,7 @@ class HrJourneyHttpTest {
         verifyNoInteractions(queries);
     }
     @Test void overviewAcceptsOnlyBoundedPaginationParameters() throws Exception {
-        when(queries.overview(0, 20)).thenReturn(new HrJourneyQueries.Overview(List.of(), 0, 20, 0, java.time.Instant.EPOCH));
+        when(queries.overview(0, 20, null)).thenReturn(new HrJourneyQueries.Overview(List.of(), 0, 20, 0, java.time.Instant.EPOCH));
         mvc.perform(get("/api/hr/employees/overview").with(user(principal(true)))).andExpect(status().isOk());
         for (String query : List.of("?employeeId=forged", "?page=0&page=1", "?size=bad")) {
             mvc.perform(get("/api/hr/employees/overview" + query).with(user(principal(true)))).andExpect(status().isBadRequest());
@@ -50,7 +50,7 @@ class HrJourneyHttpTest {
     }
 
     @Test void hrGetsMinimalDirectoryAndInvalidParametersAreRejected() throws Exception {
-        when(queries.employees(0, 20)).thenReturn(new HrJourneyQueries.Directory(
+        when(queries.employees(0, 20, null)).thenReturn(new HrJourneyQueries.Directory(
                 List.of(new HrJourneyQueries.Person(UUID.randomUUID(), "Brasil", "America/Sao_Paulo")), 0, 20, 1));
         mvc.perform(get("/api/hr/employees").with(user(principal(true))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].name").value("Brasil"))
@@ -77,5 +77,16 @@ class HrJourneyHttpTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("'=Nome perigoso")));
         mvc.perform(get("/api/hr/employees/{id}/work-sessions/report?from=2026-01-01&to=2027-01-02",employeeId)
                 .with(user(principal(true)))).andExpect(status().isBadRequest());
+    }
+
+    @Test void passesAValidatedNamePrefixToDirectoryAndOverview() throws Exception {
+        when(queries.employees(0, 20, " Júlia ")).thenReturn(new HrJourneyQueries.Directory(List.of(), 0, 20, 0));
+        when(queries.overview(0, 20, "Júlia")).thenReturn(new HrJourneyQueries.Overview(List.of(), 0, 20, 0, Instant.EPOCH));
+        mvc.perform(get("/api/hr/employees").queryParam("query", " Júlia ").with(user(principal(true))))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/hr/employees/overview").queryParam("query", "Júlia").with(user(principal(true))))
+                .andExpect(status().isOk());
+        verify(queries).employees(0, 20, " Júlia ");
+        verify(queries).overview(0, 20, "Júlia");
     }
 }

@@ -36,12 +36,19 @@ class HrJourneyQueriesTest {
         var queries = new HrJourneyQueries(new HrAuthorization(identity, users, employees), employees, store,
                 mock(io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService.class),
                 mock(io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan.class), clock);
-        var overview = queries.overview(0, 20);
+        var overview = queries.overview(0, 20, null);
         assertEquals("CLOSED", overview.items().get(0).state());
         assertEquals("NOT_STARTED", overview.items().get(1).state());
         assertNull(overview.items().get(1).workDate());
-        assertThrows(JourneyQueries.InvalidFilter.class, () -> queries.overview(-1, 20));
-        assertThrows(JourneyQueries.InvalidFilter.class, () -> queries.overview(0, 101));
+        assertThrows(JourneyQueries.InvalidFilter.class, () -> queries.overview(-1, 20, null));
+        assertThrows(JourneyQueries.InvalidFilter.class, () -> queries.overview(0, 101, null));
+        when(employees.findActiveByNamePrefix(eq("Ju~%lia~_"), any())).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(List.of(brazil)));
+        var filtered = queries.employees(0, 20, "  Ju%lia_  ");
+        assertEquals(1, filtered.items().size());
+        verify(employees).findActiveByNamePrefix(eq("Ju~%lia~_"), any());
+        assertThrows(JourneyQueries.InvalidFilter.class,
+                () -> queries.employees(0, 20, "a".repeat(81)));
     }
 
     @Test void databasePermissionAndOwnedActiveIdentityAreRequiredBeforeAnyDirectoryOrJourneyRead() {
@@ -54,14 +61,14 @@ class HrJourneyQueriesTest {
         var queries = new HrJourneyQueries(new HrAuthorization(identity, users, employees), employees, store,
                 mock(io.github.juliarezende521.workjourney.adjustment.EffectiveTimelineService.class),
                 mock(io.github.juliarezende521.workjourney.schedule.WorkSchedulePlan.class), Clock.systemUTC());
-        assertThrows(AccessDeniedException.class, () -> queries.employees(0, 20));
-        assertThrows(AccessDeniedException.class, () -> queries.overview(0, 20));
+        assertThrows(AccessDeniedException.class, () -> queries.employees(0, 20, null));
+        assertThrows(AccessDeniedException.class, () -> queries.overview(0, 20, null));
         assertThrows(AccessDeniedException.class, () -> queries.detail(UUID.randomUUID(), UUID.randomUUID()));
         verifyNoInteractions(store);
         verifyNoInteractions(employees);
         when(users.existsByIdAndActiveTrueAndHrReaderTrue(actor.userId())).thenReturn(true);
         when(employees.findOwnedActive(actor.employeeId(), actor.userId())).thenReturn(Optional.empty());
-        assertThrows(AccessDeniedException.class, () -> queries.employees(0, 20));
+        assertThrows(AccessDeniedException.class, () -> queries.employees(0, 20, null));
         verifyNoInteractions(store);
         verify(employees, never()).findActive(any());
     }

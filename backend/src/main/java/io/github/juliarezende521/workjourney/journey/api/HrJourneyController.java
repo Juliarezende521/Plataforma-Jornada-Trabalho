@@ -18,24 +18,26 @@ public class HrJourneyController {
     @GetMapping
     public HrJourneyQueries.Directory employees(HttpServletRequest request) {
         var page = page(request);
-        return queries.employees(page[0], page[1]);
+        return queries.employees(page.page(), page.size(), page.query());
     }
 
     @GetMapping("/overview")
     public HrJourneyQueries.Overview overview(HttpServletRequest request) {
         var page = page(request);
-        return queries.overview(page[0], page[1]);
+        return queries.overview(page.page(), page.size(), page.query());
     }
 
-    private int[] page(HttpServletRequest request) {
+    private PageFilter page(HttpServletRequest request) {
         var parameters = request.getParameterMap();
-        if (!Set.of("page", "size").containsAll(parameters.keySet())
+        if (!Set.of("page", "size", "query").containsAll(parameters.keySet())
                 || parameters.values().stream().anyMatch(values -> values.length != 1)) throw new JourneyQueries.InvalidFilter();
         try {
-            return new int[]{Integer.parseInt(request.getParameter("page") == null ? "0" : request.getParameter("page")),
-                    Integer.parseInt(request.getParameter("size") == null ? "20" : request.getParameter("size"))};
+            return new PageFilter(Integer.parseInt(request.getParameter("page") == null ? "0" : request.getParameter("page")),
+                    Integer.parseInt(request.getParameter("size") == null ? "20" : request.getParameter("size")),
+                    request.getParameter("query"));
         } catch (NumberFormatException invalid) { throw new JourneyQueries.InvalidFilter(); }
     }
+    private record PageFilter(int page, int size, String query) { }
 
     @GetMapping("/{employeeId}/work-sessions")
     public JourneyQueries.History history(@PathVariable String employeeId, HttpServletRequest request) {

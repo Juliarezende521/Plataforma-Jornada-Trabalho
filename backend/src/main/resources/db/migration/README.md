@@ -19,5 +19,6 @@ Flyway é a fonte de evolução do schema. Migrations já aplicadas não devem s
 | V13 | Fechamentos mensais imutáveis |
 | V14 | Vínculos versionados entre gestores e equipes |
 | V15 | Políticas operacionais versionadas por país |
+| V16 | Índice para busca prefixada de colaboradores |
 
 O Hibernate usa `ddl-auto=validate`: ele confere o mapeamento, mas não cria nem atualiza o schema. O perfil de avaliação provisiona contas fictícias depois que as migrations foram aplicadas.

@@ -40,6 +40,7 @@ O cadastro público e a administração de contas não fazem parte desta versão
 | Fusos | Permite visualizar instantes em São Paulo, Lisboa ou UTC sem alterar o registro |
 | Modalidade | Guarda escritório, remoto ou viagem em cada marcação |
 | RH | Apresenta visão geral e consulta individual com permissão específica |
+| Busca do RH | Filtra colaboradores ativos pelo início do nome, mantendo paginação e ordenação estáveis |
 | Recuperação | Reconcilia uma tentativa após timeout ou recarregamento sem duplicar o evento |
 | Ajustes | Colaborador solicita uma marcação esquecida; RH ou gestor direto aprova ou rejeita com trilha de auditoria |
 | Linha efetiva | Detalhe combina originais e ajustes aprovados e recalcula a duração sem alterar a origem |

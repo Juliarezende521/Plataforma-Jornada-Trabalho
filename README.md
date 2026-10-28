@@ -19,6 +19,7 @@ O cenário envolve pessoas trabalhando no Brasil e na Europa, inclusive de forma
 - Contrato versionado por colaborador, com país, tipo e carga semanal.
 - Políticas operacionais versionadas por país, com limites de referência e trilha de auditoria.
 - Visão de RH com panorama dos colaboradores e consulta individual.
+- Busca paginada de colaboradores pelo início do nome nas consultas do RH.
 - Solicitação de marcação esquecida e decisão auditável pelo RH ou gestor direto.
 - Consulta paginada da trilha de auditoria pelo RH.
 - Linha do tempo efetiva e duração recalculada após ajustes aprovados, sem apagar os originais.

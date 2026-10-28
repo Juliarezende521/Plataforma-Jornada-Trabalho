@@ -24,6 +24,13 @@
     <h2 id="hr-overview-heading" #heading tabindex="-1">Visão do RH</h2>
     <p>Estados das jornadas por colaborador. Consulta somente de leitura.</p>
     <p>Jornadas abertas de dias anteriores continuam em destaque. Encerrada indica a última jornada da data atual no fuso de referência.</p>
+    <form class="employee-search" (ngSubmit)="load(0)">
+      <label for="overview-search">Buscar pelo início do nome</label>
+      <input id="overview-search" type="search" maxlength="80" [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)" autocomplete="off" />
+      <button class="secondary" type="submit" [disabled]="busy()">Buscar</button>
+      <button class="secondary" type="button" (click)="clearSearch()" [disabled]="busy() || !searchTerm()">Limpar busca</button>
+    </form>
     <div class="overview-actions">
       <button class="secondary" type="button" (click)="load(page()?.page ?? 0)" [disabled]="busy()">Atualizar visão geral</button>
       <div class="report-control">

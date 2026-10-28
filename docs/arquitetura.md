@@ -53,7 +53,7 @@ erDiagram
 | team_assignment | id UUID, employee_id, manager_employee_id, effective_from, autoria e criação | Uma versão por colaborador/data; sem autoatribuição; registros imutáveis |
 | country_work_policy | id UUID, país, vigência, referências semanal/diária, intervalo, tolerância, autoria e criação | Uma versão por país/data; parâmetros internos imutáveis |
 
-As migrations V1–V15 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas e exceções versionadas, auditoria, contratos, fechamentos mensais, vínculos de equipe e políticas operacionais por país versionadas.
+As migrations V1–V16 implementam contas, colaboradores, jornadas, eventos, recibos idempotentes, permissão de leitura do RH, modalidade, solicitações auditáveis de ajuste, escalas e exceções versionadas, auditoria, contratos, fechamentos mensais, vínculos de equipe, políticas operacionais por país e o índice da busca de colaboradores.
 
 Jornada aberta: closed_at_utc nulo. Criar índice UNIQUE filtrado sobre employee_id WHERE closed_at_utc IS NULL. Adicionar CHECK que exija encerramento presente apenas em estado encerrado. Histórico indexado por employee_id/work_date, com ordenação estável também por id.
 

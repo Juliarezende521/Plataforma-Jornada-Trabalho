@@ -61,6 +61,13 @@ describe('HR overview and separate individual consultation', () => {
     fixture.detectChanges(); expect(fixture.nativeElement.textContent).toContain('Seu acesso de RH não está disponível');
     expect(fixture.componentInstance.page()).toBeNull();
   });
+  it('filters the overview by a trimmed name prefix', () => {
+    loaded(); fixture.componentInstance.searchTerm.set('  Júlia  '); fixture.componentInstance.load(0);
+    const request = http.expectOne(r => r.url === '/api/hr/employees/overview');
+    expect(request.request.params.get('query')).toBe('Júlia');
+    request.flush({ items: [], page: 0, size: 20, totalElements: 0, observedAtUtc: '2026-10-14T14:00:00Z' });
+    expect(fixture.componentInstance.message()).toContain('Nenhum');
+  });
   it('opens the audit screen only when requested', () => {
     loaded(); http.expectNone('/api/hr/audit-entries');
     fixture.componentInstance.show('audit'); fixture.detectChanges();

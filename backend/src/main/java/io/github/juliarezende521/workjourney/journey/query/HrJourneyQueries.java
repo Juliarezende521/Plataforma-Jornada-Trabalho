@@ -31,18 +31,20 @@ public class HrJourneyQueries {
     }
 
     @Transactional(readOnly = true)
-    public Directory employees(int page, int size) {
+    public Directory employees(int page, int size, String query) {
         hrAuthorization.require();
         if (page < 0 || page > Integer.MAX_VALUE / 100 || size < 1 || size > 100) throw new JourneyQueries.InvalidFilter();
-        var result = employees.findActive(PageRequest.of(page, size, Sort.by("name", "id")));
+        var prefix = searchPrefix(query);
+        var pageable = PageRequest.of(page, size, Sort.by("name", "id"));
+        var result = prefix == null ? employees.findActive(pageable) : employees.findActiveByNamePrefix(prefix, pageable);
         return new Directory(result.map(e -> new Person(e.getId(), e.getName(), e.getReferenceTimeZoneId())).getContent(),
                 page, size, result.getTotalElements());
     }
 
     @Transactional(readOnly = true)
-    public Overview overview(int page, int size) {
+    public Overview overview(int page, int size, String query) {
         // Directory enforces live HR permission and bounded pagination before any checkpoint read.
-        var directory = employees(page, size);
+        var directory = employees(page, size, query);
         var observed = UtcInstants.normalize(clock.instant());
         var latest = store.latestCheckpoints(directory.items().stream().map(Person::id).toList()).stream()
                 .collect(java.util.stream.Collectors.toMap(JpaWorkSessionStore.LatestCheckpoint::employeeId, c -> c));
@@ -104,4 +106,12 @@ public class HrJourneyQueries {
     public record Person(UUID id, String name, String referenceTimeZoneId) { }
     public record Directory(List<Person> items, int page, int size, long totalElements) { }
     public record Report(Person employee, JourneyQueries.Summary summary) { }
+
+    private static String searchPrefix(String query) {
+        if (query == null || query.isBlank()) return null;
+        var value = query.strip();
+        if (value.length() > 80 || value.codePoints().anyMatch(Character::isISOControl))
+            throw new JourneyQueries.InvalidFilter();
+        return value.replace("~", "~~").replace("%", "~%").replace("_", "~_");
+    }
 }
