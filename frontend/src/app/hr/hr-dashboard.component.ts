@@ -23,6 +23,7 @@ export class HrDashboardComponent {
   readonly busy = signal(false);
   readonly reportBusy = signal(false);
   readonly reportCompetence = signal(previousMonth());
+  readonly searchTerm = signal('');
   readonly message = signal('');
   readonly labels = { WORKING: 'Trabalhando', PAUSED: 'Em pausa', CLOSED: 'Encerrada', NOT_STARTED: 'Sem jornada iniciada' };
   private readonly http = inject(HttpClient);
@@ -41,14 +42,17 @@ export class HrDashboardComponent {
     this.destroy.onDestroy(() => { this.request?.unsubscribe(); this.reportRequest?.unsubscribe(); });
     effect(() => { const user = this.user(); untracked(() => {
       this.request?.unsubscribe(); this.reportRequest?.unsubscribe(); this.busy.set(false); this.reportBusy.set(false);
-      this.page.set(null); this.selected.set(null); this.view.set('overview');
+      this.page.set(null); this.selected.set(null); this.view.set('overview'); this.searchTerm.set('');
       if (user.hrReader) this.load(0);
     }); });
   }
   load(page: number): void {
     if (!this.user().hrReader || this.busy() || page < 0) return;
     this.page.set(null); this.busy.set(true); this.message.set('Consultando estados das jornadas…');
-    this.request = this.http.get<OverviewPage>('/api/hr/employees/overview', { params: { page, size: 20 } }).pipe(timeout(15000)).subscribe({
+    const query = this.searchTerm().trim();
+    const params: Record<string, string | number> = { page, size: 20 };
+    if (query) params['query'] = query;
+    this.request = this.http.get<OverviewPage>('/api/hr/employees/overview', { params }).pipe(timeout(15000)).subscribe({
       next: result => { this.page.set(result); this.busy.set(false); this.message.set(result.items.length ? 'Consulta concluída.' : 'Nenhum colaborador disponível.'); },
       error: (error: unknown) => { this.busy.set(false); this.page.set(null);
         if (error instanceof HttpErrorResponse && error.status === 401) this.auth.invalidate();
@@ -67,6 +71,7 @@ export class HrDashboardComponent {
     else this.heading()?.nativeElement.focus();
   }); }
   observed(instant: string): string { return formatInstant(instant, this.user().referenceTimeZoneId); }
+  clearSearch(): void { this.searchTerm.set(''); this.load(0); }
 
   downloadConsolidatedReport(): void {
     const competence = this.reportCompetence();

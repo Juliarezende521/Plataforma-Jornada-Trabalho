@@ -82,6 +82,8 @@ O horário não pode estar no futuro, a justificativa aceita de 10 a 500 caracte
 
 Todas as rotas abaixo exigem a permissão persistida de leitura do RH:
 
+O diretório e a visão geral aceitam `query` opcional de até 80 caracteres. A busca considera o início do nome, trata `%` e `_` como texto comum e mantém a paginação ordenada por nome e identificador.
+
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/api/hr/employees` | Diretório paginado de colaboradores ativos |

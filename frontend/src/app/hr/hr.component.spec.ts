@@ -63,4 +63,16 @@ describe('Read-only HR screen', () => {
     expect(fixture.nativeElement.textContent).toContain('Seu acesso de RH não está disponível');
     expect(fixture.componentInstance.directory()).toBeNull(); expect(fixture.componentInstance.selected()).toBeNull();
   });
+  it('searches by a trimmed name prefix and keeps it while paging', () => {
+    mount(); directory(); fixture.componentInstance.search.setValue('  Júlia  ');
+    fixture.componentInstance.load(0);
+    let request = http.expectOne(r => r.url === '/api/hr/employees');
+    expect(request.request.params.get('query')).toBe('Júlia');
+    request.flush({ items: [brazil], page: 0, size: 20, totalElements: 21 });
+    fixture.componentInstance.load(1);
+    request = http.expectOne(r => r.url === '/api/hr/employees');
+    expect(request.request.params.get('query')).toBe('Júlia');
+    expect(request.request.params.get('page')).toBe('1');
+    request.flush({ items: [], page: 1, size: 20, totalElements: 21 });
+  });
 });

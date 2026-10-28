@@ -2,7 +2,12 @@
   <h2 id="hr-heading" #heading tabindex="-1">Visão do RH</h2>
   <p>Consulte jornadas e cadastre novas vigências de escala. As marcações continuam protegidas contra alterações por este acesso.</p>
   <p role="status" aria-live="polite" aria-atomic="true">{{ message() }}</p>
-  <button class="secondary" type="button" (click)="load(0)" [disabled]="busy()">Atualizar colaboradores</button>
+  <form class="search" (ngSubmit)="load(0)">
+    <label for="hr-search">Buscar pelo início do nome</label>
+    <input id="hr-search" type="search" maxlength="80" [formControl]="search" autocomplete="off" />
+    <button class="secondary" type="submit" [disabled]="busy()">Buscar</button>
+    <button class="secondary" type="button" (click)="clearSearch()" [disabled]="busy() || !search.value">Limpar busca</button>
+  </form>
   @if (directory(); as page) {
     <label for="hr-employee">Colaborador</label>
     <select id="hr-employee" [formControl]="choice">

@@ -19,6 +19,7 @@ export class HrComponent {
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
   private request?: Subscription;
   readonly choice = new FormControl('', { nonNullable: true });
+  readonly search = new FormControl('', { nonNullable: true });
   readonly directory = signal<EmployeePage | null>(null);
   readonly selected = signal<EmployeeSummary | null>(null);
   readonly busy = signal(false);
@@ -27,6 +28,7 @@ export class HrComponent {
     this.destroy.onDestroy(() => this.request?.unsubscribe());
     effect(() => { const user = this.user(); untracked(() => {
       this.request?.unsubscribe(); this.busy.set(false); this.directory.set(null); this.clearSelection();
+      this.search.setValue('', { emitEvent: false });
       if (user.hrReader) this.load(0);
     }); });
     this.choice.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe(id => {
@@ -38,7 +40,10 @@ export class HrComponent {
   load(page: number): void {
     if (this.busy() || page < 0 || !this.user().hrReader) return;
     this.clearSelection(); this.directory.set(null); this.busy.set(true); this.message.set('Consultando colaboradores…');
-    this.request = this.http.get<EmployeePage>('/api/hr/employees', { params: { page, size: 20 } }).pipe(timeout(15000)).subscribe({
+    const query = this.search.value.trim();
+    const params: Record<string, string | number> = { page, size: 20 };
+    if (query) params['query'] = query;
+    this.request = this.http.get<EmployeePage>('/api/hr/employees', { params }).pipe(timeout(15000)).subscribe({
       next: result => { this.directory.set(result); this.busy.set(false);
         this.message.set(result.items.length ? 'Selecione um colaborador para consultar seus registros.' : 'Nenhum colaborador disponível.'); },
       error: (error: unknown) => { this.busy.set(false); this.directory.set(null); this.clearSelection();
@@ -47,4 +52,5 @@ export class HrComponent {
           ? 'Seu acesso de RH não está disponível. Verifique seu acesso.' : 'Não foi possível consultar colaboradores. Tente novamente.'); },
     });
   }
+  clearSearch(): void { this.search.setValue(''); this.load(0); }
 }

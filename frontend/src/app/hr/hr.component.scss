@@ -3,6 +3,9 @@
 h2 { margin-top: 0; } p { color: var(--color-muted); }
 label { display: block; font-weight: 700; margin: var(--space-6) 0 var(--space-2); }
 nav { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-4); }
+.search { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; margin-top: var(--space-4); }
+.search label { width: 100%; margin: 0; }
+.search input { min-width: min(100%, 18rem); }
 nav span { color: var(--color-muted); }
 .selected { overflow-wrap: anywhere; margin: var(--space-6) 0 0; }
 @media (min-width: 640px) { .hr { padding: var(--space-8); } }
