@@ -17,6 +17,13 @@ async function login(page: Page, email: string) {
   }
 }
 
+async function logout(page: Page) {
+  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  // Wait for the logout request and redirect before starting another login.
+  await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
+  expect((await page.request.get('/api/me')).status()).toBe(401);
+}
+
 test.afterEach(async ({ page }) => {
   const response = await page.request.get('/api/me/work-sessions/current');
   if (response.status() !== 200) return;
@@ -39,8 +46,7 @@ test('HR reads another employee history and detail while an employee remains iso
   const journey = (await (await page.request.get('/api/me/work-sessions/current')).json()).session;
   await page.getByRole('button', { name: 'Encerrar jornada', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Registrar entrada', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
+  await logout(page);
   await login(page, 'rh@example.invalid');
   await expect(page.getByRole('heading', { name: 'Visão do RH', exact: true })).toBeVisible();
   await expect(page.locator('.people li').filter({ hasText: 'Colaborador Brasil' })).toContainText('Encerrada');
@@ -58,7 +64,7 @@ test('HR reads another employee history and detail while an employee remains iso
   await page.getByRole('button', { name: 'Consultar período', exact: true }).click();
   await expect(page.getByTestId('history-feedback')).toContainText('Consulta concluída');
   await page.getByRole('button', { name: /^Ver detalhes da jornada de/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Marcações originais', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Marcações registradas', exact: true })).toBeVisible();
   await expect(page.locator('.events li')).toHaveCount(2);
   await expect(page.locator('.event-work-mode').first()).toHaveText('Modalidade: Viagem');
   expect((await page.request.get('/api/me/work-sessions/' + journey.id)).status()).toBe(404);
@@ -67,12 +73,14 @@ test('HR reads another employee history and detail while an employee remains iso
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath(`hr-detail-${width}.png`), fullPage: true });
   }
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Entrar', exact: true })).toBeVisible();
+  await logout(page);
   expect((await page.request.get('/api/hr/employees')).status()).toBe(401);
 });
 
-test('HR manages contract, schedule exception and reads their audit trail', async ({ page }) => {
+test('HR manages contract, schedule exception and reads their audit trail', async ({ page }, testInfo) => {
+  const projectDay = testInfo.project.name === 'desktop' ? '01' : '02';
+  const contractDate = `2027-01-${projectDay}`;
+  const exceptionDate = `2027-01-${testInfo.project.name === 'desktop' ? '25' : '26'}`;
   await login(page, 'rh@example.invalid');
   const directory = await (await page.request.get('/api/hr/employees?size=20&page=0')).json();
   const employee = directory.items.find((item: { name: string }) => item.name === 'Colaborador Brasil');
@@ -82,28 +90,30 @@ test('HR manages contract, schedule exception and reads their audit trail', asyn
 
   const contract = await page.request.post(`/api/hr/employees/${employee.id}/employment-contracts`, {
     headers,
-    data: { effectiveFrom: '2027-01-01', countryCode: 'BR', employmentType: 'FULL_TIME', weeklyMinutes: 2400 },
+    data: { effectiveFrom: contractDate, countryCode: 'BR', employmentType: 'FULL_TIME', weeklyMinutes: 2400 },
   });
   expect(contract.status()).toBe(201);
+  const createdContract = await contract.json();
   const exception = await page.request.post(`/api/hr/employees/${employee.id}/work-schedule-exceptions`, {
     headers,
-    data: { workDate: '2027-01-25', plannedMinutes: 0, toleranceMinutes: 0, category: 'HOLIDAY', reason: 'Feriado local' },
+    data: { workDate: exceptionDate, plannedMinutes: 0, toleranceMinutes: 0, category: 'HOLIDAY', reason: 'Feriado local' },
   });
   expect(exception.status()).toBe(201);
-  expect((await page.request.get(`/api/hr/employees/${employee.id}/employment-contract?on=2027-01-02`)).status()).toBe(200);
+  const createdException = await exception.json();
+  expect((await page.request.get(`/api/hr/employees/${employee.id}/employment-contract?on=${contractDate}`)).status()).toBe(200);
   expect((await page.request.get(`/api/hr/employees/${employee.id}/work-schedule-exceptions?page=0&size=20`)).status()).toBe(200);
 
   await page.getByRole('button', { name: 'Auditoria', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Auditoria', exact: true })).toBeVisible();
-  await expect(page.getByText('Contrato cadastrado', { exact: true })).toBeVisible();
-  await expect(page.getByText('Exceção de escala cadastrada', { exact: true })).toBeVisible();
+  await expect(page.locator('.audit li').filter({ hasText: createdContract.id })).toContainText('Contrato cadastrado');
+  await expect(page.locator('.audit li').filter({ hasText: createdException.id })).toContainText('Exceção de escala cadastrada');
 
-  await page.getByRole('button', { name: 'Sair', exact: true }).click();
+  await logout(page);
   await login(page, 'brasil@example.invalid');
   const employeeCsrf = await (await page.request.get('/api/auth/csrf')).json();
   const denied = await page.request.post(`/api/hr/employees/${employee.id}/employment-contracts`, {
     headers: { [employeeCsrf.headerName]: employeeCsrf.token },
-    data: { effectiveFrom: '2027-02-01', countryCode: 'BR', employmentType: 'FULL_TIME', weeklyMinutes: 2400 },
+    data: { effectiveFrom: `2027-02-${projectDay}`, countryCode: 'BR', employmentType: 'FULL_TIME', weeklyMinutes: 2400 },
   });
   expect(denied.status()).toBe(403);
 });
