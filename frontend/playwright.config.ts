@@ -8,7 +8,10 @@ export default defineConfig({
   forbidOnly: true,
   timeout: 120_000,
   globalTimeout: 300_000,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', {
+    open: 'never',
+    outputFolder: process.env['PLAYWRIGHT_HTML_OUTPUT_DIR'] ?? 'playwright-report',
+  }]],
   use: {
     baseURL: 'https://localhost:8443',
     // Ephemeral self-signed certificate in CI only; production must validate certificates.

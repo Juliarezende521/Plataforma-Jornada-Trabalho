@@ -27,8 +27,8 @@ class MigrationUpgradeSqlServerIT {
             statement.executeUpdate("INSERT INTO dbo.work_event(id,work_session_id,author_user_id,sequence,event_type,occurred_at_utc,recorded_at_utc,recorded_time_zone_id) VALUES ('00000000-0000-0000-0000-000000000008','00000000-0000-0000-0000-000000000007','00000000-0000-0000-0000-000000000005',1,'ENTRY','2026-10-14T14:00:00+00:00','2026-10-14T14:00:00+00:00','Europe/Lisbon')");
         }
         var latest = configuration().load();
-        assertEquals(10, latest.migrate().migrationsExecuted);
-        assertEquals("15", latest.info().current().getVersion().getVersion());
+        assertEquals(11, latest.migrate().migrationsExecuted);
+        assertEquals("16", latest.info().current().getVersion().getVersion());
         try (var connection = java.sql.DriverManager.getConnection(System.getenv("DB_URL"),
                 System.getenv("DB_MIGRATION_USERNAME"), System.getenv("DB_MIGRATION_PASSWORD"));
              var statement = connection.createStatement()) {

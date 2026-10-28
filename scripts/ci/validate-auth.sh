@@ -131,5 +131,14 @@ for attempt in $(seq 1 20); do
   sleep 1
 done
 [[ "$ready" == true ]] || { echo 'HTTPS test origin did not become ready.'; exit 1; }
-(cd frontend && npx playwright test)
+# Each browser profile receives a fresh in-memory login limiter while both use
+# the same database. This keeps authentication load isolated without weakening
+# the production limit and still exposes cross-project data collisions.
+(cd frontend && PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report/desktop npx playwright test --project=desktop)
+kill "$backend_pid"
+wait "$backend_pid" || true
+backend_pid=''
+start_backend
+assert_evaluation_seed
+(cd frontend && PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report/mobile-360 npx playwright test --project=mobile-360)
 echo 'SQL Server mapping, repeated seed and real HTTPS browser authentication passed.'

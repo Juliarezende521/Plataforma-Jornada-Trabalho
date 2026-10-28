@@ -130,7 +130,7 @@ test('real journey, lost responses, explicit retry, keyboard and responsive refl
   expect(history.items[0].state).toBe('CLOSED');
   const latest = history.items[0];
   await page.getByRole('button', { name: /^Ver detalhes da jornada de/ }).first().click();
-  await expect(page.getByRole('heading', { name: 'Marcações originais' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Marcações registradas', exact: true })).toBeVisible();
   await expect(page.locator('.events li')).toHaveCount(5);
   const detail = await (await page.request.get('/api/me/work-sessions/' + latest.id)).json();
   expect(detail.events.at(-1).type).toBe('EXIT');
